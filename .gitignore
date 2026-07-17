@@ -1,0 +1,27 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Laravel / PHP
+app/vendor/
+app/node_modules/
+app/.env
+app/.env.production
+app/.env.backup
+app/storage/logs/*.log
+app/storage/framework/cache/data/*
+app/storage/framework/sessions/*
+app/storage/framework/views/*
+app/storage/app/public/*
+app/bootstrap/cache/*.php
+app/public/hot
+app/public/storage
+
+# Build assets (di-generate saat deploy)
+app/public/build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
