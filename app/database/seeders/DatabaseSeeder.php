@@ -76,7 +76,7 @@ class DatabaseSeeder extends Seeder
         );
 
         // 5. Baca berkas CSV data pegawai
-        $csvPath = '/Users/nanditomonlievpassa/Documents/Antigravity/cuti-app/docs/Data Pegawai Inspektorat Trenggalek.csv';
+        $csvPath = base_path('../docs/Data Pegawai Inspektorat Trenggalek.csv');
         if (!file_exists($csvPath)) {
             $this->command->error("File CSV tidak ditemukan di: {$csvPath}");
             return;
