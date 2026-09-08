@@ -102,8 +102,14 @@ class DatabaseSeeder extends Seeder
             $golongan = trim($row[9]);
             $jabatan = trim($row[10]);
 
-            if (empty($nip) || empty($email)) {
+            if (empty($nip)) {
                 continue;
+            }
+
+            $namaTanpaGelar = trim($row[1] ?? '');
+            if (empty($email)) {
+                $cleanName = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $namaTanpaGelar ?: $namaLengkap));
+                $email = ($cleanName ?: $nip) . '@inspektorat.trenggalekkab.go.id';
             }
 
             // Normalisasi Unit Kerja berdasarkan Kolom BIDANG
@@ -129,12 +135,24 @@ class DatabaseSeeder extends Seeder
                 }
             }
 
-            // Hitung TMT CPNS dari NIP (digit 9-14: YYYYMM)
+            // Tentukan jenis pegawai (PPPK jika digit 13-14 adalah 21/kontrak atau sesuai pola)
+            $isPppk = false;
+            if (strlen($nip) >= 14 && substr($nip, 12, 2) === '21') {
+                $isPppk = true;
+            }
+
+            // Hitung TMT CPNS / Pengangkatan dari NIP (digit 9-14: YYYYMM)
             $tmtCpnsDate = Carbon::parse('2020-01-01'); // fallback default
             if (strlen($nip) >= 14) {
-                $tmtCpnsStr = substr($nip, 8, 6); // Ambil YYYYMM
-                if (numeric_check($tmtCpnsStr)) {
-                    $tmtCpnsDate = Carbon::createFromFormat('Ym', $tmtCpnsStr)->startOfMonth();
+                $tahunMasuk = substr($nip, 8, 4);
+                $bulanMasuk = substr($nip, 12, 2);
+                if (is_numeric($tahunMasuk)) {
+                    $bulanInt = (int)$bulanMasuk;
+                    if ($bulanInt >= 1 && $bulanInt <= 12) {
+                        $tmtCpnsDate = Carbon::createFromDate((int)$tahunMasuk, $bulanInt, 1)->startOfMonth();
+                    } else {
+                        $tmtCpnsDate = Carbon::createFromDate((int)$tahunMasuk, 1, 1)->startOfMonth();
+                    }
                 }
             }
 
@@ -163,6 +181,8 @@ class DatabaseSeeder extends Seeder
                 ]
             );
 
+            $pangkatGolongan = !empty($pangkat) ? "{$golongan} - {$pangkat}" : $golongan;
+
             // 2. Buat/Update Profil Pegawai
             $pegawai = Pegawai::updateOrCreate(
                 ['user_id' => $user->id],
@@ -171,11 +191,11 @@ class DatabaseSeeder extends Seeder
                     'nama_lengkap' => $namaLengkap,
                     'jenis_kelamin' => $jenisKelamin,
                     'tmt_cpns' => $tmtCpnsDate,
-                    'tmt_pns' => $tmtCpnsDate->copy()->addYear(), // PNS diasumsikan +1 tahun dari CPNS
-                    'pangkat_golongan' => "{$golongan} - {$pangkat}",
+                    'tmt_pns' => $isPppk ? null : $tmtCpnsDate->copy()->addYear(), // PNS diasumsikan +1 tahun dari CPNS
+                    'pangkat_golongan' => $pangkatGolongan,
                     'jabatan' => $jabatan,
                     'unit_kerja_id' => $unitKerjaId,
-                    'jenis_pegawai' => 'PNS',
+                    'jenis_pegawai' => $isPppk ? 'PPPK' : 'PNS',
                     'nomor_hp' => $nomorHp,
                     'aktif' => true
                 ]

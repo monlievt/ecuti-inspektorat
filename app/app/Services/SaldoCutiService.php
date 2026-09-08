@@ -209,9 +209,21 @@ class SaldoCutiService
             $terpakai -= $potongT;
             $sisaT = $t - $potongT; // ini hangus
 
-            // Aturan carry-over ke tahun baru
-            $carryN1Baru = min($sisaJ, 6);
-            $carryN2Baru = min($sisaN1, 6);
+            // Cek jenis pegawai & status penangguhan
+            $pegawai = Pegawai::find($pegawaiId);
+            $isPppk = $pegawai && $pegawai->jenis_pegawai === 'PPPK';
+
+            if ($isPppk) {
+                // Sesuai PP 49/2018: PPPK tidak memiliki hak carry-over ke tahun berikutnya
+                $carryN1Baru = 0;
+                $carryN2Baru = 0;
+            } else {
+                // Aturan carry-over PNS:
+                // Jika ditangguhkan oleh PyBMC karena dinas mendesak, sisa jatah bisa dibawa penuh (hingga 12 hari)
+                $maxCarryJatah = $saldoLama->ditangguhkan ? 12 : 6;
+                $carryN1Baru = min($sisaJ, $maxCarryJatah);
+                $carryN2Baru = min($sisaN1, 6);
+            }
 
             $saldoBaru = CutiSaldoTahunan::updateOrCreate(
                 ['pegawai_id' => $pegawaiId, 'tahun' => $tahunBaru],

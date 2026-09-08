@@ -74,6 +74,18 @@
                                         <a href="{{ route('admin.master.koreksi') }}" class="block px-4 py-2 text-xs text-slate-700 hover:bg-slate-50">Koreksi Saldo Manual</a>
                                     </div>
                                 </div>
+
+                                <!-- Dropdown Laporan Admin -->
+                                <div class="relative inline-flex items-center pt-1" x-data="{ openLaporan: false }">
+                                    <button @click="openLaporan = !openLaporan" class="inline-flex items-center border-b-2 {{ request()->routeIs('admin.laporan*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 py-1.5 text-sm font-medium focus:outline-none">
+                                        Laporan &amp; Monitoring
+                                        <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div x-show="openLaporan" @click.away="openLaporan = false" class="absolute left-0 top-full mt-2 w-52 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 z-20">
+                                        <a href="{{ route('admin.laporan.rekapitulasi') }}" class="block px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 font-medium">Rekapitulasi Cuti</a>
+                                        <a href="{{ route('admin.laporan.early-warning') }}" class="block px-4 py-2 text-xs text-rose-700 hover:bg-rose-50 font-medium">Early Warning Saldo Hangus</a>
+                                    </div>
+                                </div>
                             @endif
                         </div>
                     @endauth

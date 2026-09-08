@@ -87,5 +87,12 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/master/koreksi', [\App\Http\Controllers\Admin\MasterDataController::class, 'koreksiSaldo'])->name('admin.master.koreksi');
         Route::post('/master/koreksi', [\App\Http\Controllers\Admin\MasterDataController::class, 'storeKoreksiSaldo']);
+
+        // Laporan & Rekapitulasi Cuti
+        Route::get('/laporan/rekapitulasi', [\App\Http\Controllers\Admin\LaporanController::class, 'rekapitulasi'])->name('admin.laporan.rekapitulasi');
+        Route::get('/laporan/ekspor-excel', [\App\Http\Controllers\Admin\LaporanController::class, 'eksporExcel'])->name('admin.laporan.ekspor-excel');
+        Route::get('/laporan/ekspor-pdf', [\App\Http\Controllers\Admin\LaporanController::class, 'eksporPdf'])->name('admin.laporan.ekspor-pdf');
+        Route::get('/laporan/early-warning', [\App\Http\Controllers\Admin\LaporanController::class, 'earlyWarning'])->name('admin.laporan.early-warning');
+        Route::post('/laporan/kirim-reminder-wa/{pegawai}', [\App\Http\Controllers\Admin\LaporanController::class, 'kirimReminderWa'])->name('admin.laporan.kirim-reminder-wa');
     });
 });

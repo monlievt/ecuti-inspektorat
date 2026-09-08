@@ -182,4 +182,32 @@ class ValidasiPengajuanServiceTest extends TestCase
         $hasil = $this->validasiService->validasi($this->pegawai, $this->cutiAlasanPenting, $data, ['surat_rawat_inap']);
         $this->assertTrue($hasil['status']);
     }
+
+    public function test_validasi_pppk_dilarang_mengajukan_cuti_besar_dan_cltn(): void
+    {
+        // Ubah pegawai menjadi PPPK
+        $this->pegawai->update(['jenis_pegawai' => 'PPPK', 'tmt_cpns' => now()->subYears(6)]);
+
+        $mulai = Carbon::parse('next monday');
+        $selesai = $mulai->copy()->addMonths(2);
+
+        $data = [
+            'tanggal_mulai' => $mulai->toDateString(),
+            'tanggal_selesai' => $selesai->toDateString(),
+        ];
+
+        // 1. Cuti Besar harus ditolak untuk PPPK
+        $hasilBesar = $this->validasiService->validasi($this->pegawai, $this->cutiBesar, $data);
+        $this->assertFalse($hasilBesar['status']);
+        $this->assertStringContainsStringIgnoringCase('tidak berhak mengajukan', $hasilBesar['pesan']);
+
+        // 2. Cuti Tahunan tetap diizinkan untuk PPPK
+        $dataTahunan = [
+            'tanggal_mulai' => $mulai->toDateString(),
+            'tanggal_selesai' => $mulai->copy()->addDays(2)->toDateString(),
+        ];
+        $hasilTahunan = $this->validasiService->validasi($this->pegawai, $this->cutiTahunan, $dataTahunan);
+        $this->assertTrue($hasilTahunan['status']);
+    }
 }
+

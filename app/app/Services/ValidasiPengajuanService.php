@@ -34,6 +34,17 @@ class ValidasiPengajuanService
         $tanggalMulai = \Carbon\Carbon::parse($data['tanggal_mulai']);
         $tanggalSelesai = \Carbon\Carbon::parse($data['tanggal_selesai']);
 
+        // 0. Validasi Hak Cuti Berdasarkan Jenis Pegawai (PNS vs PPPK)
+        if ($pegawai->jenis_pegawai === 'PPPK') {
+            $cutiDilarangPppk = [CutiJenis::BESAR, CutiJenis::CLTN];
+            if (in_array($jenisCuti->kode, $cutiDilarangPppk)) {
+                return [
+                    'status' => false,
+                    'pesan' => 'Berdasarkan PP No. 49 Tahun 2018 tentang Manajemen PPPK, Pegawai Pemerintah dengan Perjanjian Kerja (PPPK) tidak berhak mengajukan ' . $jenisCuti->nama . '. PPPK hanya berhak atas Cuti Tahunan, Cuti Sakit, Cuti Melahirkan, dan Cuti Bersama.'
+                ];
+            }
+        }
+
         // 1. Hitung durasi pengajuan
         $satuanHari = $rules['satuan'] ?? 'hari_kerja';
         if ($satuanHari === 'hari_kalender') {

@@ -44,10 +44,24 @@
                 <select id="jenis_cuti_id" name="jenis_cuti_id" x-model="jenisCuti" required
                         class="mt-1.5 block w-full rounded-xl border-slate-300 py-3 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                     <option value="">-- Pilih Jenis Cuti --</option>
+                    @php
+                        $isPppk = auth()->user()->pegawai && auth()->user()->pegawai->jenis_pegawai === 'PPPK';
+                    @endphp
                     @foreach($jenisCuti as $jc)
-                        <option value="{{ $jc->id }}">{{ $jc->nama }}</option>
+                        @php
+                            $isForbiddenForPppk = $isPppk && in_array($jc->kode, ['besar', 'cltn']);
+                        @endphp
+                        <option value="{{ $jc->id }}" {{ $isForbiddenForPppk ? 'disabled class=text-slate-400' : '' }}>
+                            {{ $jc->nama }} {{ $isForbiddenForPppk ? '(Khusus PNS - PP 49/2018)' : '' }}
+                        </option>
                     @endforeach
                 </select>
+                @if($isPppk)
+                    <p class="mt-1.5 text-xs text-amber-600 flex items-center">
+                        <svg class="h-4 w-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                        Sebagai pegawai <strong>PPPK</strong>, Anda berhak atas Cuti Tahunan, Cuti Sakit, Cuti Melahirkan, dan Cuti Bersama sesuai PP 49/2018.
+                    </p>
+                @endif
                 @error('jenis_cuti_id')
                     <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                 @enderror
