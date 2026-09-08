@@ -35,19 +35,39 @@
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white/10 backdrop-blur-md py-8 px-4 shadow-2xl rounded-2xl border border-white/10 sm:px-10">
-            <form class="space-y-6" action="{{ route('login') }}" method="POST">
+            
+            <!-- Global Error Banner -->
+            @if($errors->any() || session('error'))
+                <div class="mb-6 rounded-xl bg-rose-500/20 border border-rose-500/40 p-4 text-sm text-rose-200">
+                    <div class="flex items-center gap-2 font-semibold text-rose-300">
+                        <svg class="h-5 w-5 text-rose-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                        Gagal Masuk:
+                    </div>
+                    <ul class="mt-2 list-disc list-inside space-y-1 text-xs text-rose-200">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                        @if(session('error'))
+                            <li>{{ session('error') }}</li>
+                        @endif
+                    </ul>
+                </div>
+            @endif
+
+            <form class="space-y-5" action="{{ route('login') }}" method="POST">
                 @csrf
 
                 <div>
                     <label for="email" class="block text-sm font-medium text-slate-200">
-                        Email / Username
+                        Email atau NIP Pegawai
                     </label>
                     <div class="mt-1">
-                        <input id="email" name="email" type="email" autocomplete="email" required value="{{ old('email') }}"
-                            class="block w-full rounded-xl border-0 py-3 px-4 text-slate-900 bg-white/90 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6">
+                        <input id="email" name="email" type="text" autocomplete="username" required value="{{ old('email') }}"
+                            placeholder="contoh: admin@cuti.test atau NIP 18 Digit"
+                            class="block w-full rounded-xl border-0 py-3 px-4 text-slate-900 bg-white/95 shadow-sm ring-1 ring-inset {{ $errors->has('email') ? 'ring-rose-500 bg-rose-50' : 'ring-slate-300' }} placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6">
                     </div>
                     @error('email')
-                        <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                        <p class="mt-1.5 text-xs text-rose-300">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -57,10 +77,11 @@
                     </label>
                     <div class="mt-1">
                         <input id="password" name="password" type="password" autocomplete="current-password" required
-                            class="block w-full rounded-xl border-0 py-3 px-4 text-slate-900 bg-white/90 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6">
+                            placeholder="Masukkan kata sandi akun"
+                            class="block w-full rounded-xl border-0 py-3 px-4 text-slate-900 bg-white/95 shadow-sm ring-1 ring-inset {{ $errors->has('password') ? 'ring-rose-500 bg-rose-50' : 'ring-slate-300' }} placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6">
                     </div>
                     @error('password')
-                        <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                        <p class="mt-1.5 text-xs text-rose-300">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -68,29 +89,29 @@
                     <div class="flex items-center">
                         <input id="remember" name="remember" type="checkbox"
                             class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600">
-                        <label for="remember" class="ml-2 block text-sm text-slate-300">
-                            Ingat saya
+                        <label for="remember" class="ml-2 block text-xs text-slate-300">
+                            Ingat saya di perangkat ini
                         </label>
                     </div>
                 </div>
 
                 <!-- Captcha Security Widget -->
-                <div class="mt-4">
+                <div class="mt-4 rounded-xl bg-white/5 border border-white/10 p-3.5">
                     @if(env('RECAPTCHA_ENABLED', false) && env('RECAPTCHA_SITE_KEY'))
                         <div class="g-recaptcha" data-sitekey="{{ env('RECAPTCHA_SITE_KEY') }}"></div>
                         @error('g-recaptcha-response')
-                            <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                            <p class="mt-2 text-xs text-rose-300">{{ $message }}</p>
                         @enderror
                     @else
-                        <label for="captcha" class="block text-sm font-medium text-slate-200">
-                            Keamanan Captcha: <span class="text-indigo-300 font-bold font-mono">{{ $captchaQuestion }}</span>
+                        <label for="captcha" class="block text-xs font-semibold text-slate-200">
+                            Verifikasi Keamanan: <span class="text-amber-300 font-bold font-mono text-sm ml-1">{{ $captchaQuestion }}</span>
                         </label>
-                        <div class="mt-1">
-                            <input id="captcha" name="captcha" type="text" required placeholder="Jawab angka saja"
-                                class="block w-full rounded-xl border-0 py-3 px-4 text-slate-900 bg-white/90 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6">
+                        <div class="mt-1.5">
+                            <input id="captcha" name="captcha" type="text" inputmode="numeric" required placeholder="Tulis hasil angka saja"
+                                class="block w-full rounded-xl border-0 py-2.5 px-3.5 text-slate-900 bg-white/95 shadow-sm ring-1 ring-inset {{ $errors->has('captcha') ? 'ring-rose-500 bg-rose-50' : 'ring-slate-300' }} placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6">
                         </div>
                         @error('captcha')
-                            <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+                            <p class="mt-1.5 text-xs text-rose-300">{{ $message }}</p>
                         @enderror
                     @endif
                 </div>
@@ -104,8 +125,8 @@
             </form>
 
             <div class="mt-6 border-t border-white/10 pt-4 text-center">
-                <p class="text-xs text-slate-500">
-                    Gunakan kredensial pengujian Anda (budi@cuti.test atau sekretaris@cuti.test) dengan kata sandi "password".
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Masuk menggunakan <strong>Email</strong> atau <strong>NIP 18 Digit</strong> dengan kata sandi default <code class="text-amber-300 bg-white/10 px-1.5 py-0.5 rounded">password</code>
                 </p>
             </div>
         </div>

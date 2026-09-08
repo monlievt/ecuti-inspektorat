@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Pegawai;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 
@@ -32,8 +35,11 @@ class LoginController extends Controller
     {
         // 1. Validasi Input Dasar
         $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
+            'email' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ], [
+            'email.required' => 'Email atau NIP wajib diisi.',
+            'password.required' => 'Kata sandi wajib diisi.',
         ]);
 
         // 2. Verifikasi Captcha (Google reCAPTCHA atau Math Captcha Offline)
@@ -56,21 +62,28 @@ class LoginController extends Controller
 
             if (!$response->successful() || !$response->json('success')) {
                 throw ValidationException::withMessages([
-                    'g-recaptcha-response' => ['Verifikasi reCAPTCHA Google gagal. Silakan coba kembali.'],
+                    'captcha' => ['Verifikasi reCAPTCHA Google gagal. Silakan coba kembali.'],
                 ]);
             }
         } else {
             // Math Captcha Verification (Offline Fallback)
             $request->validate([
-                'captcha' => 'required|integer',
+                'captcha' => 'required',
             ], [
-                'captcha.required' => 'Silakan isi hasil perhitungan captcha.',
-                'captcha.integer' => 'Hasil perhitungan captcha harus berupa angka.',
+                'captcha.required' => 'Silakan isi hasil perhitungan captcha matematika.',
             ]);
 
-            if ((int)$request->input('captcha') !== (int)session('captcha_ans')) {
+            $jawabanInput = (int)$request->input('captcha');
+            $jawabanBenar = session('captcha_ans');
+
+            if ($jawabanInput !== (int)$jawabanBenar) {
+                // Buat pertanyaan baru
+                $num1 = rand(1, 9);
+                $num2 = rand(1, 9);
+                session(['captcha_ans' => $num1 + $num2]);
+
                 throw ValidationException::withMessages([
-                    'captcha' => ['Jawaban perhitungan matematika salah. Silakan coba kembali.'],
+                    'captcha' => ['Jawaban perhitungan matematika salah. Silakan coba kembali dengan soal baru.'],
                 ]);
             }
         }
@@ -78,18 +91,49 @@ class LoginController extends Controller
         // Hapus session captcha setelah divalidasi
         session()->forget('captcha_ans');
 
-        // 3. Proses Attempt Login
-        $credentials = $request->only('email', 'password');
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
+        // 3. Proses Pencarian User berdasarkan Email atau NIP Pegawai
+        $loginInput = trim($request->input('email'));
+        $password = $request->input('password');
 
-            // Arahkan ke dashboard
-            return redirect()->intended(route('dashboard'));
+        // Cari via Email
+        $user = User::where('email', $loginInput)->first();
+
+        // Jika tidak ditemukan via email, cari via NIP Pegawai
+        if (!$user) {
+            $cleanNip = preg_replace('/[^0-9]/', '', $loginInput);
+            if (!empty($cleanNip)) {
+                $pegawai = Pegawai::where('nip', $cleanNip)->first();
+                if ($pegawai && $pegawai->user) {
+                    $user = $pegawai->user;
+                }
+            }
         }
 
-        throw ValidationException::withMessages([
-            'email' => __('Kredensial yang diberikan tidak cocok dengan catatan kami.'),
-        ]);
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'email' => ["Akun dengan Email atau NIP '{$loginInput}' tidak ditemukan dalam sistem e-Cuti."],
+            ]);
+        }
+
+        // Cek apakah password cocok
+        if (!Hash::check($password, $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['Kata sandi yang Anda masukkan salah. Silakan periksa kembali kata sandi Anda.'],
+            ]);
+        }
+
+        // Cek status keaktifan pegawai jika bukan admin murni
+        if ($user->pegawai && !$user->pegawai->aktif) {
+            throw ValidationException::withMessages([
+                'email' => ['Akun pegawai ini berstatus non-aktif. Silakan hubungi Admin Kepegawaian.'],
+            ]);
+        }
+
+        // Login Berhasil
+        Auth::login($user, $request->boolean('remember'));
+        $request->session()->regenerate();
+
+        return redirect()->intended(route('dashboard'));
     }
 
     /**
