@@ -117,6 +117,7 @@ class LoginController extends Controller
 
         // Cek apakah password cocok
         if (!Hash::check($password, $user->password)) {
+            \Illuminate\Support\Facades\Log::warning("Login gagal: Password salah untuk user {$user->email}");
             throw ValidationException::withMessages([
                 'password' => ['Kata sandi yang Anda masukkan salah. Silakan periksa kembali kata sandi Anda.'],
             ]);
@@ -124,6 +125,7 @@ class LoginController extends Controller
 
         // Cek status keaktifan pegawai jika bukan admin murni
         if ($user->pegawai && !$user->pegawai->aktif) {
+            \Illuminate\Support\Facades\Log::warning("Login ditolak: Pegawai non-aktif untuk user {$user->email}");
             throw ValidationException::withMessages([
                 'email' => ['Akun pegawai ini berstatus non-aktif. Silakan hubungi Admin Kepegawaian.'],
             ]);
@@ -132,6 +134,7 @@ class LoginController extends Controller
         // Login Berhasil
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
+        \Illuminate\Support\Facades\Log::info("Login sukses: {$user->email} (Role: {$user->role})");
 
         return redirect()->intended(route('dashboard'));
     }
