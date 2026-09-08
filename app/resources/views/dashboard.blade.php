@@ -164,8 +164,9 @@
                                         <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
                                             <div class="flex space-x-2">
                                                 <a href="{{ route('pengajuan.show', $pengajuan->id) }}" class="text-indigo-600 hover:text-indigo-900 font-medium">Detail</a>
-                                                @if($pengajuan->status === 'diterbitkan')
-                                                    <a href="{{ route('pengajuan.pdf', $pengajuan->id) }}" class="text-emerald-600 hover:text-emerald-900 font-medium" target="_blank">PDF</a>
+                                                @if(in_array($pengajuan->status, ['diterbitkan', 'disetujui_pybmc', 'disetujui_pyBMC']))
+                                                    <a href="{{ route('pengajuan.surat-izin-pdf', $pengajuan->id) }}" class="text-emerald-600 hover:text-emerald-900 font-medium" target="_blank" title="Surat Izin Cuti Dinas">Surat Izin</a>
+                                                    <a href="{{ route('pengajuan.pdf', $pengajuan->id) }}" class="text-slate-500 hover:text-slate-800 font-medium" target="_blank" title="Formulir Cuti BKN">BKN 1.b</a>
                                                 @endif
                                             </div>
                                         </td>

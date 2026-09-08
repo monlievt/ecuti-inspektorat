@@ -36,6 +36,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/pengajuan', [PengajuanCutiController::class, 'store'])->name('pengajuan.store');
     Route::get('/pengajuan/{pengajuan}', [PengajuanCutiController::class, 'show'])->name('pengajuan.show');
     Route::get('/pengajuan/{pengajuan}/pdf', [PengajuanCutiController::class, 'pdf'])->name('pengajuan.pdf');
+    Route::get('/pengajuan/{pengajuan}/surat-izin-pdf', [PengajuanCutiController::class, 'suratIzinDinasPdf'])->name('pengajuan.surat-izin-pdf');
     
     // Download Private Lampiran
     Route::get('/dokumen/{dokumen}/unduh', [PengajuanCutiController::class, 'unduhDokumen'])->name('dokumen.unduh');

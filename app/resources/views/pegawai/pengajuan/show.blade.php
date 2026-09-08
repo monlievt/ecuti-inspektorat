@@ -147,13 +147,25 @@
             </div>
         </div>
 
-        @if($pengajuan->status === 'diterbitkan' && $pengajuan->suratTerbit)
-            <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 text-center shadow-sm">
-                <h4 class="text-sm font-semibold text-emerald-900">Surat Izin Cuti Diterbitkan</h4>
-                <p class="text-xs text-emerald-600 mt-1">Nomor: {{ $pengajuan->suratTerbit->nomor_surat }}</p>
-                <a href="{{ route('pengajuan.pdf', $pengajuan->id) }}" class="mt-4 inline-flex w-full justify-center rounded-xl bg-emerald-600 py-2.5 px-4 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 transition" target="_blank">
-                    Unduh Surat Izin Cuti (PDF)
-                </a>
+        @if(in_array($pengajuan->status, ['diterbitkan', 'disetujui_pybmc', 'disetujui_pyBMC']))
+            <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 text-center shadow-sm space-y-3">
+                <div class="flex items-center justify-center h-10 w-10 rounded-full bg-emerald-100 text-emerald-600 mx-auto">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h4 class="text-sm font-bold text-emerald-900">Permohonan Cuti Disetujui</h4>
+                <p class="text-xs text-emerald-700">Nomor: {{ $pengajuan->suratTerbit?->nomor_surat ?? ("800.1.11.4 / " . str_pad($pengajuan->id, 3, '0', STR_PAD_LEFT) . " / 406.008 / " . $pengajuan->tanggal_mulai->year) }}</p>
+                
+                <div class="pt-2 space-y-2">
+                    <a href="{{ route('pengajuan.surat-izin-pdf', $pengajuan->id) }}" class="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 py-2.5 px-4 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 transition" target="_blank">
+                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Cetak Surat Izin Cuti Dinas (Inspektorat)
+                    </a>
+                    
+                    <a href="{{ route('pengajuan.pdf', $pengajuan->id) }}" class="inline-flex w-full items-center justify-center rounded-xl border border-emerald-300 bg-white py-2 px-4 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition" target="_blank">
+                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Cetak Formulir Permintaan Cuti (BKN 1.b)
+                    </a>
+                </div>
             </div>
         @endif
     </div>

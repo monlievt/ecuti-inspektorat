@@ -219,7 +219,33 @@ class PengajuanCutiController extends Controller
         // Generate PDF
         $pdf = $pdfService->generateAnakLampiran1b($pengajuan);
         
-        $filename = "surat_izin_cuti_" . str_replace('/', '_', $pengajuan->nomor_pengajuan) . ".pdf";
+        $filename = "formulir_cuti_bkn_" . str_replace('/', '_', $pengajuan->nomor_pengajuan) . ".pdf";
+        return $pdf->stream($filename);
+    }
+
+    /**
+     * Download PDF Surat Keputusan Izin Cuti Resmi Inspektorat (Template Pengantar Cuti).
+     */
+    public function suratIzinDinasPdf(CutiPengajuan $pengajuan, Request $request, \App\Services\SuratCutiPdfService $pdfService)
+    {
+        $pegawai = $request->user()->pegawai;
+
+        // Validasi hak akses: hanya pemilik, atasannya, PyBMC, atau admin kepegawaian
+        if ($pengajuan->pegawai_id !== $pegawai->id && !$request->user()->isAdminCuti()) {
+            $isAtasan = CutiPemetaanAtasan::where('pegawai_id', $pengajuan->pegawai_id)
+                ->where('atasan_id', $pegawai->id)
+                ->aktif()
+                ->exists();
+
+            if (!$isAtasan) {
+                abort(403, 'Anda tidak diizinkan mengakses dokumen cetak ini.');
+            }
+        }
+
+        // Generate PDF Surat Izin Cuti Resmi Inspektorat
+        $pdf = $pdfService->generateSuratIzinInspektorat($pengajuan);
+        
+        $filename = "surat_izin_cuti_inspektorat_" . str_replace('/', '_', $pengajuan->nomor_pengajuan) . ".pdf";
         return $pdf->stream($filename);
     }
 

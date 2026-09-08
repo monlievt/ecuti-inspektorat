@@ -147,8 +147,9 @@
                             </td>
                             <td class="py-4 px-4 text-right text-xs">
                                 <a href="{{ route('pengajuan.show', $p->id) }}" class="text-indigo-600 hover:text-indigo-900 font-semibold mr-2">Detail</a>
-                                @if($p->status === 'disetujui_pybmc')
-                                    <a href="{{ route('pengajuan.pdf', $p->id) }}" target="_blank" class="text-emerald-600 hover:text-emerald-900 font-semibold">PDF</a>
+                                @if(in_array($p->status, ['disetujui_pybmc', 'disetujui_pyBMC', 'diterbitkan']))
+                                    <a href="{{ route('pengajuan.surat-izin-pdf', $p->id) }}" target="_blank" class="text-emerald-600 hover:text-emerald-900 font-semibold mr-1.5" title="Surat Izin Cuti Dinas">Izin Dinas</a>
+                                    <a href="{{ route('pengajuan.pdf', $p->id) }}" target="_blank" class="text-slate-500 hover:text-slate-800 font-semibold" title="Formulir BKN 1.b">BKN 1.b</a>
                                 @endif
                             </td>
                         </tr>
