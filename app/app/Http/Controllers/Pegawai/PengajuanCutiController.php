@@ -65,12 +65,24 @@ class PengajuanCutiController extends Controller
             'jenis_cuti_id' => 'required|exists:cuti_jenis,id',
             'alasan' => 'required|string',
             'alasan_kategori' => 'nullable|string',
-            'tanggal_mulai' => 'required|date|after_or_equal:today',
+            'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
-            'alamat_selama_cuti' => 'nullable|string|max:255',
-            'telp_selama_cuti' => 'nullable|string|max:30',
+            'alamat_selama_cuti' => 'required|string|max:255',
+            'telp_selama_cuti' => 'required|string|max:30',
             'kategori_dokter' => 'nullable|string|in:pns,faskes_pemerintah,swasta',
             'lampiran' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+        ], [
+            'jenis_cuti_id.required' => 'Silakan pilih jenis cuti.',
+            'alasan.required' => 'Alasan mengambil cuti wajib diisi.',
+            'tanggal_mulai.required' => 'Tanggal mulai cuti wajib diisi.',
+            'tanggal_mulai.date' => 'Format tanggal mulai tidak valid.',
+            'tanggal_selesai.required' => 'Tanggal selesai cuti wajib diisi.',
+            'tanggal_selesai.date' => 'Format tanggal selesai tidak valid.',
+            'tanggal_selesai.after_or_equal' => 'Tanggal selesai tidak boleh lebih awal dari tanggal mulai.',
+            'alamat_selama_cuti.required' => 'Alamat selama menjalankan cuti wajib diisi.',
+            'telp_selama_cuti.required' => 'Nomor telepon aktif yang dapat dihubungi wajib diisi.',
+            'lampiran.max' => 'Ukuran berkas lampiran maksimal 2MB.',
+            'lampiran.mimes' => 'Format berkas lampiran harus berupa PDF, JPG, JPEG, atau PNG.',
         ]);
 
         try {
@@ -80,10 +92,12 @@ class PengajuanCutiController extends Controller
             $uploadedDocs = [];
             $tempPath = null;
             if ($request->hasFile('lampiran')) {
-                // Tentukan tipe dokumen
-                $jenisDok = $jenisCuti->kode === CutiJenis::SAKIT ? 'surat_dokter' : 'surat_pendukung';
-                if ($jenisCuti->kode === CutiJenis::ALASAN_PENTING && $request->alasan_kategori === 'keluarga_sakit_keras') {
+                // Tentukan tipe dokumen sesuai konfigurasi cuti-rules
+                $jenisDok = $jenisCuti->kode === CutiJenis::SAKIT ? 'surat_keterangan_dokter' : 'surat_pendukung';
+                if ($jenisCuti->kode === CutiJenis::ALASAN_PENTING && in_array($request->alasan_kategori, ['keluarga_sakit_keras', 'istri_melahirkan_caesar'])) {
                     $jenisDok = 'surat_rawat_inap';
+                } elseif ($jenisCuti->kode === CutiJenis::ALASAN_PENTING && $request->alasan_kategori === 'musibah_bencana') {
+                    $jenisDok = 'surat_keterangan_rt';
                 }
 
                 $uploadedDocs[] = $jenisDok;
