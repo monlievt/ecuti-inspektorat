@@ -70,7 +70,7 @@ class LaporanController extends Controller
         $prosesCount = (clone $query)->whereIn('status', [
             CutiPengajuan::STATUS_DIAJUKAN,
             CutiPengajuan::STATUS_DISETUJUI_ATASAN,
-            CutiPengajuan::STATUS_IZIN_SEMENTARA_BERJALAN
+            CutiPengajuan::STATUS_IZIN_SEMENTARA_AKTIF
         ])->count();
         $ditolakCount = (clone $query)->whereIn('status', [
             CutiPengajuan::STATUS_DITOLAK_ATASAN,
