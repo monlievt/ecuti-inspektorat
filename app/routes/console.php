@@ -13,3 +13,9 @@ Schedule::command('cuti:rollover-saldo --force')
     ->yearlyOn(1, 1, '00:01')
     ->runInBackground();
 
+// Jadwal Backup Database Otomatis ke Telegram Setiap Hari Pukul 02:00 WIB
+Schedule::command('cuti:backup-db --keep-days=7')
+    ->dailyAt('02:00')
+    ->withoutOverlapping()
+    ->runInBackground();
+

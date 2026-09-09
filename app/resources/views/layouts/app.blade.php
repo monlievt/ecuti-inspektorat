@@ -86,6 +86,10 @@
                                         <a href="{{ route('admin.laporan.early-warning') }}" class="block px-4 py-2 text-xs text-rose-700 hover:bg-rose-50 font-medium">Early Warning Saldo Hangus</a>
                                     </div>
                                 </div>
+
+                                <a href="{{ route('admin.backup.index') }}" class="inline-flex items-center border-b-2 {{ request()->routeIs('admin.backup*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 pt-1 text-sm font-medium">
+                                    Backup DB
+                                </a>
                             @endif
                         </div>
                     @endauth

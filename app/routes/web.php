@@ -95,5 +95,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/laporan/ekspor-pdf', [\App\Http\Controllers\Admin\LaporanController::class, 'eksporPdf'])->name('admin.laporan.ekspor-pdf');
         Route::get('/laporan/early-warning', [\App\Http\Controllers\Admin\LaporanController::class, 'earlyWarning'])->name('admin.laporan.early-warning');
         Route::post('/laporan/kirim-reminder-wa/{pegawai}', [\App\Http\Controllers\Admin\LaporanController::class, 'kirimReminderWa'])->name('admin.laporan.kirim-reminder-wa');
+
+        // Backup Database & Telegram
+        Route::get('/backup', [\App\Http\Controllers\Admin\BackupController::class, 'index'])->name('admin.backup.index');
+        Route::post('/backup/proses', [\App\Http\Controllers\Admin\BackupController::class, 'prosesBackup'])->name('admin.backup.proses');
+        Route::get('/backup/unduh/{filename}', [\App\Http\Controllers\Admin\BackupController::class, 'unduh'])->name('admin.backup.unduh');
     });
 });
