@@ -66,12 +66,17 @@
                                         Data Master &amp; Saldo
                                         <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                     </button>
-                                    <div x-show="openMaster" @click.away="openMaster = false" class="absolute left-0 top-full mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 z-20">
+                                    <div x-show="openMaster" @click.away="openMaster = false" class="absolute left-0 top-full mt-2 w-52 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 z-20">
                                         <a href="{{ route('admin.master.atasan') }}" class="block px-4 py-2 text-xs text-slate-700 hover:bg-slate-50">Pemetaan Atasan</a>
                                         <a href="{{ route('admin.master.pejabat') }}" class="block px-4 py-2 text-xs text-slate-700 hover:bg-slate-50">Delegasi PyBMC</a>
                                         <a href="{{ route('admin.master.libur') }}" class="block px-4 py-2 text-xs text-slate-700 hover:bg-slate-50">Hari Libur Nasional</a>
                                         <a href="{{ route('admin.master.cuti-bersama') }}" class="block px-4 py-2 text-xs text-slate-700 hover:bg-slate-50">Cuti Bersama</a>
                                         <a href="{{ route('admin.master.koreksi') }}" class="block px-4 py-2 text-xs text-slate-700 hover:bg-slate-50">Koreksi Saldo Manual</a>
+                                        <div class="border-t border-slate-100 my-1"></div>
+                                        <a href="{{ route('admin.backup.index') }}" class="block px-4 py-2 text-xs text-indigo-600 hover:bg-indigo-50 font-semibold flex items-center justify-between">
+                                            <span>Backup Database</span>
+                                            <span class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-bold">Telegram</span>
+                                        </a>
                                     </div>
                                 </div>
 

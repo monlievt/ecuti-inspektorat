@@ -179,10 +179,36 @@
                 </div>
             </div>
 
+            <!-- Backup Database & Telegram Quick Widget -->
+            <div class="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-sm space-y-4">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-sky-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.12.03-1.99 1.27-5.61 3.72-.53.36-1.01.54-1.44.53-.47-.01-1.38-.27-2.06-.49-.83-.27-1.49-.42-1.43-.88.03-.24.38-.49 1.03-.75 4.04-1.76 6.74-2.92 8.09-3.5 3.86-1.61 4.66-1.89 5.19-1.9.11 0 .37.03.54.17.14.12.18.28.2.45-.02.07-.02.21-.04.35z"/>
+                        </svg>
+                        Backup Database &amp; Telegram
+                    </h4>
+                    <span class="text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                        Auto 02:00 WIB
+                    </span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Sistem otomatis mengekspor seluruh database terkompresi Gzip dan mengirimkannya ke Channel/Grup Telegram setiap hari.
+                </p>
+                <div class="pt-2">
+                    <a href="{{ route('admin.backup.index') }}" class="w-full inline-flex items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 text-xs font-semibold shadow-sm transition gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Buka Halaman Backup Database
+                    </a>
+                </div>
+            </div>
+
             <!-- Quick Info System -->
-            <div class="bg-indigo-900 rounded-2xl p-6 text-white shadow-sm">
-                <h4 class="text-sm font-semibold text-indigo-200">Panduan Admin e-Cuti</h4>
-                <ul class="mt-4 space-y-3 text-xs text-indigo-100 list-disc list-inside">
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 text-slate-700 shadow-sm">
+                <h4 class="text-sm font-semibold text-slate-900">Panduan Admin e-Cuti</h4>
+                <ul class="mt-4 space-y-3 text-xs text-slate-600 list-disc list-inside">
                     <li>Gunakan menu "Unit Kerja" dan "Pegawai" untuk penataan dasar.</li>
                     <li>Pemetaan Atasan &amp; Delegasi PyBMC harus selalu diperbarui agar alur persetujuan lancar.</li>
                     <li>Kalender libur dan cuti bersama memengaruhi kalkulasi otomatis hari kerja secara real-time.</li>
