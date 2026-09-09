@@ -18,6 +18,9 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // 0. Inisialisasi Pengaturan Sistem Default
+        \App\Services\SettingService::seedDefaults();
+
         // 1. Inisialisasi Jenis Cuti (Wajib)
         $jenisCuti = [
             ['kode' => CutiJenis::TAHUNAN, 'nama' => 'Cuti Tahunan', 'deskripsi' => 'Cuti tahunan PNS', 'aktif' => true],

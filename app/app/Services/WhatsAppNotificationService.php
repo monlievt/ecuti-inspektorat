@@ -9,11 +9,13 @@ class WhatsAppNotificationService
 {
     protected string $wahaBaseUrl;
     protected string $session;
+    protected ?string $apiKey;
 
     public function __construct()
     {
-        $this->wahaBaseUrl = config('services.waha.base_url', env('WAHA_BASE_URL', 'http://localhost:3000'));
-        $this->session = config('services.waha.session', env('WAHA_SESSION', 'default'));
+        $this->wahaBaseUrl = SettingService::get('waha_base_url', config('services.waha.base_url', env('WAHA_BASE_URL', 'http://localhost:3000')));
+        $this->session = SettingService::get('waha_session', config('services.waha.session', env('WAHA_SESSION', 'default')));
+        $this->apiKey = SettingService::get('waha_api_key', config('services.waha.api_key', env('WAHA_API_KEY', '')));
     }
 
     /**

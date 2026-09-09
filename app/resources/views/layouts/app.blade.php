@@ -95,6 +95,10 @@
                                 <a href="{{ route('admin.backup.index') }}" class="inline-flex items-center border-b-2 {{ request()->routeIs('admin.backup*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 pt-1 text-sm font-medium">
                                     Backup DB
                                 </a>
+
+                                <a href="{{ route('admin.setting.index') }}" class="inline-flex items-center border-b-2 {{ request()->routeIs('admin.setting*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 pt-1 text-sm font-medium">
+                                    Pengaturan
+                                </a>
                             @endif
                         </div>
                     @endauth
@@ -118,6 +122,11 @@
                                     @endif
                                     <span class="mt-1 inline-block text-xs font-medium px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700">{{ strtoupper(str_replace('_', ' ', auth()->user()->role)) }}</span>
                                 </div>
+                                @if(auth()->user()->isAdminCuti())
+                                    <a href="{{ route('admin.setting.index') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 font-medium" role="menuitem">
+                                        Pengaturan Sistem
+                                    </a>
+                                @endif
                                 <a href="{{ route('profil.ubah-password') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50" role="menuitem">
                                     Ubah Password
                                 </a>

@@ -100,5 +100,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/backup', [\App\Http\Controllers\Admin\BackupController::class, 'index'])->name('admin.backup.index');
         Route::post('/backup/proses', [\App\Http\Controllers\Admin\BackupController::class, 'prosesBackup'])->name('admin.backup.proses');
         Route::get('/backup/unduh/{filename}', [\App\Http\Controllers\Admin\BackupController::class, 'unduh'])->name('admin.backup.unduh');
+
+        // Pengaturan Sistem & Integrasi (Telegram, WAHA, reCAPTCHA, Profil)
+        Route::get('/setting', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.setting.index');
+        Route::put('/setting', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('admin.setting.update');
+        Route::post('/setting/test-telegram', [\App\Http\Controllers\Admin\SettingController::class, 'testTelegram'])->name('admin.setting.test-telegram');
+        Route::post('/setting/test-whatsapp', [\App\Http\Controllers\Admin\SettingController::class, 'testWhatsApp'])->name('admin.setting.test-whatsapp');
     });
 });

@@ -43,10 +43,10 @@ class LoginController extends Controller
         ]);
 
         // 2. Verifikasi Captcha (Google reCAPTCHA atau Math Captcha Offline)
-        $recaptchaEnabled = env('RECAPTCHA_ENABLED', false);
-        $recaptchaSecret = env('RECAPTCHA_SECRET_KEY');
+        $recaptchaEnabled = \App\Services\SettingService::get('recaptcha_enabled', env('RECAPTCHA_ENABLED', false));
+        $recaptchaSecret = \App\Services\SettingService::get('recaptcha_secret_key', env('RECAPTCHA_SECRET_KEY'));
 
-        if ($recaptchaEnabled && $recaptchaSecret) {
+        if ($recaptchaEnabled && !empty($recaptchaSecret)) {
             // Google reCAPTCHA Verification
             $request->validate([
                 'g-recaptcha-response' => 'required',

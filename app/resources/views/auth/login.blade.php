@@ -19,7 +19,12 @@
     <!-- Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    @if(env('RECAPTCHA_ENABLED', false) && env('RECAPTCHA_SITE_KEY'))
+    @php
+        $isRecaptchaActive = \App\Services\SettingService::get('recaptcha_enabled', env('RECAPTCHA_ENABLED', false));
+        $recaptchaSiteKey = \App\Services\SettingService::get('recaptcha_site_key', env('RECAPTCHA_SITE_KEY'));
+    @endphp
+
+    @if($isRecaptchaActive && !empty($recaptchaSiteKey))
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     @endif
 </head>
@@ -97,8 +102,8 @@
 
                 <!-- Captcha Security Widget -->
                 <div class="mt-4 rounded-xl bg-white/5 border border-white/10 p-3.5">
-                    @if(env('RECAPTCHA_ENABLED', false) && env('RECAPTCHA_SITE_KEY'))
-                        <div class="g-recaptcha" data-sitekey="{{ env('RECAPTCHA_SITE_KEY') }}"></div>
+                    @if($isRecaptchaActive && !empty($recaptchaSiteKey))
+                        <div class="g-recaptcha" data-sitekey="{{ $recaptchaSiteKey }}"></div>
                         @error('g-recaptcha-response')
                             <p class="mt-2 text-xs text-rose-300">{{ $message }}</p>
                         @enderror

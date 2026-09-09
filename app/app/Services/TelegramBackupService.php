@@ -19,8 +19,8 @@ class TelegramBackupService
 
     public function __construct()
     {
-        $this->botToken = config('services.telegram.bot_token');
-        $this->chatId = config('services.telegram.chat_id');
+        $this->botToken = SettingService::get('telegram_bot_token', config('services.telegram.bot_token', env('TELEGRAM_BACKUP_BOT_TOKEN')));
+        $this->chatId = SettingService::get('telegram_chat_id', config('services.telegram.chat_id', env('TELEGRAM_BACKUP_CHAT_ID')));
         $this->backupDir = storage_path('app/backups');
 
         if (!File::isDirectory($this->backupDir)) {
