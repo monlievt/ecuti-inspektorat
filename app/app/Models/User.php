@@ -59,4 +59,38 @@ class User extends Authenticatable
             ->where(fn($q) => $q->whereNull('berlaku_sampai')->orWhere('berlaku_sampai', '>=', now()->toDateString()))
             ->exists();
     }
+
+    /**
+     * Cek apakah user berhak mengakses monitoring & laporan (Admin Cuti, PyBMC, Atasan, atau Pimpinan OPD).
+     */
+    public function isPimpinanOrAtasan(): bool
+    {
+        if ($this->isAdminCuti()) {
+            return true;
+        }
+
+        if (!$this->pegawai) {
+            return false;
+        }
+
+        // Cek apakah user adalah atasan bagi pegawai lain
+        $isAtasan = CutiPemetaanAtasan::where('atasan_id', $this->pegawai->id)->aktif()->exists();
+        if ($isAtasan) {
+            return true;
+        }
+
+        // Cek apakah memiliki delegasi PyBMC aktif
+        $isPyBMC = CutiPemetaanPejabatBerwenang::where('pejabat_id', $this->pegawai->id)->aktif()->exists();
+        if ($isPyBMC) {
+            return true;
+        }
+
+        // Cek jabatan pimpinan (Inspektur, Sekretaris, Irban)
+        $jabatanUpper = strtoupper($this->pegawai->jabatan ?? '');
+        if (\Illuminate\Support\Str::contains($jabatanUpper, ['INSPEKTUR', 'SEKRETARIS', 'IRBAN'])) {
+            return true;
+        }
+
+        return false;
+    }
 }

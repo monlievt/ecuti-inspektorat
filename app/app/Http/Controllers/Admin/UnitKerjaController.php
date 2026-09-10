@@ -62,4 +62,24 @@ class UnitKerjaController extends Controller
 
         return redirect()->route('admin.unit-kerja.index')->with('success', 'Unit Kerja berhasil diperbarui.');
     }
+
+    public function destroy(UnitKerja $unitKerja)
+    {
+        if ($unitKerja->pegawai()->exists()) {
+            $total = $unitKerja->pegawai()->count();
+            return redirect()->route('admin.unit-kerja.index')
+                ->with('error', "Unit Kerja '{$unitKerja->nama}' tidak dapat dihapus karena masih memiliki {$total} data pegawai aktif.");
+        }
+
+        if ($unitKerja->children()->exists()) {
+            $totalSub = $unitKerja->children()->count();
+            return redirect()->route('admin.unit-kerja.index')
+                ->with('error', "Unit Kerja '{$unitKerja->nama}' tidak dapat dihapus karena masih memiliki {$totalSub} sub-unit bawahan.");
+        }
+
+        $nama = $unitKerja->nama;
+        $unitKerja->delete();
+
+        return redirect()->route('admin.unit-kerja.index')->with('success', "Unit Kerja '{$nama}' berhasil dihapus.");
+    }
 }

@@ -75,9 +75,15 @@
                                     {{ $unit->aktif ? 'Aktif' : 'Non-aktif' }}
                                 </span>
                             </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm font-medium">
+                            <td class="whitespace-nowrap px-6 py-4 text-sm font-medium flex items-center gap-3">
                                 <button @click="editingUnit = { id: {{ $unit->id }}, kode: '{{ $unit->kode }}', nama: '{{ $unit->nama }}', parent_id: '{{ $unit->parent_id }}', aktif: {{ $unit->aktif ? 'true' : 'false' }} }" 
                                         class="text-indigo-600 hover:text-indigo-900 font-semibold">Edit</button>
+                                
+                                <form action="{{ route('admin.unit-kerja.destroy', $unit->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus unit kerja \'{{ $unit->nama }}\'?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-rose-600 hover:text-rose-900 font-semibold">Hapus</button>
+                                </form>
                             </td>
                         </tr>
                     @endforeach
@@ -90,17 +96,18 @@
             <div @click.away="editingUnit = null" class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden text-left">
                 <form :action="'/admin/unit-kerja/' + (editingUnit ? editingUnit.id : '')" method="POST" class="p-6 space-y-4">
                     @csrf
+                    @method('PUT')
                     <h3 class="text-lg font-bold text-slate-900">Edit Unit Kerja</h3>
                     
                     <div>
                         <label for="edit_kode" class="block text-sm font-semibold text-slate-700">Kode Unit</label>
-                        <input type="text" name="edit_kode" id="edit_kode" required :value="editingUnit ? editingUnit.kode : ''" name="kode"
+                        <input type="text" name="kode" id="edit_kode" required :value="editingUnit ? editingUnit.kode : ''"
                                class="mt-1.5 block w-full rounded-xl border-slate-300 py-2.5 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                     </div>
 
                     <div>
                         <label for="edit_nama" class="block text-sm font-semibold text-slate-700">Nama Unit Kerja</label>
-                        <input type="text" name="edit_nama" id="edit_nama" required :value="editingUnit ? editingUnit.nama : ''" name="nama"
+                        <input type="text" name="nama" id="edit_nama" required :value="editingUnit ? editingUnit.nama : ''"
                                class="mt-1.5 block w-full rounded-xl border-slate-300 py-2.5 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                     </div>
 

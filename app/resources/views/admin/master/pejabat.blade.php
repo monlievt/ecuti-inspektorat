@@ -53,9 +53,10 @@
                 </div>
 
                 <div>
-                    <label for="nomor_sk_delegasi" class="block text-xs font-semibold text-slate-700">Nomor SK Pendelegasian</label>
-                    <input type="text" name="nomor_sk_delegasi" id="nomor_sk_delegasi" required placeholder="mis. SK-800/12/406.012/2026"
+                    <label for="nomor_sk_delegasi" class="block text-xs font-semibold text-slate-700">Nomor SK Pendelegasian <span class="text-slate-400 font-normal">(Opsional)</span></label>
+                    <input type="text" name="nomor_sk_delegasi" id="nomor_sk_delegasi" placeholder="Kosongkan jika wewenang melekat pada SOTK jabatan"
                            class="mt-1 block w-full rounded-xl border-slate-300 py-2.5 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-xs">
+                    <p class="mt-1 text-[11px] text-slate-400">Jika wewenang melekat pada pimpinan OPD/Plt secara otomatis, nomor SK tidak wajib diisi.</p>
                 </div>
 
                 <div>
@@ -107,7 +108,7 @@
                                     <td class="px-4 py-3 font-semibold text-slate-900">{{ $p->unitKerja ? $p->unitKerja->nama : 'Seluruh Unit' }}</td>
                                     <td class="px-4 py-3 text-slate-950 font-semibold">{{ $p->pejabat->nama_lengkap }}</td>
                                     <td class="px-4 py-3 text-slate-500 font-semibold">{{ $p->jenisCuti->nama }}</td>
-                                    <td class="px-4 py-3 text-slate-500">{{ $p->nomor_sk_delegasi }}</td>
+                                    <td class="px-4 py-3 text-slate-500">{{ $p->nomor_sk_delegasi ?: '-' }}</td>
                                     <td class="px-4 py-3">
                                         @php
                                             $isAktif = !$p->berlaku_sampai || $p->berlaku_sampai->isFuture() || $p->berlaku_sampai->isToday();

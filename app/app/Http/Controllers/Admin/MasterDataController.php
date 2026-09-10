@@ -77,7 +77,7 @@ class MasterDataController extends Controller
             'unit_kerja_id' => 'required|exists:unit_kerja,id',
             'pejabat_id' => 'required|exists:pegawai,id',
             'jenis_cuti_id' => 'required|exists:cuti_jenis,id',
-            'nomor_sk_delegasi' => 'required|string|max:100',
+            'nomor_sk_delegasi' => 'nullable|string|max:100',
             'berlaku_mulai' => 'required|date',
         ]);
 

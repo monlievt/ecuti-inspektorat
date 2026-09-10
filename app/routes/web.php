@@ -64,7 +64,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/unit-kerja/create', [\App\Http\Controllers\Admin\UnitKerjaController::class, 'create'])->name('admin.unit-kerja.create');
         Route::post('/unit-kerja', [\App\Http\Controllers\Admin\UnitKerjaController::class, 'store'])->name('admin.unit-kerja.store');
         Route::get('/unit-kerja/{unitKerja}/edit', [\App\Http\Controllers\Admin\UnitKerjaController::class, 'edit'])->name('admin.unit-kerja.edit');
-        Route::post('/unit-kerja/{unitKerja}', [\App\Http\Controllers\Admin\UnitKerjaController::class, 'update'])->name('admin.unit-kerja.update');
+        Route::match(['post', 'put', 'patch'], '/unit-kerja/{unitKerja}', [\App\Http\Controllers\Admin\UnitKerjaController::class, 'update'])->name('admin.unit-kerja.update');
+        Route::delete('/unit-kerja/{unitKerja}', [\App\Http\Controllers\Admin\UnitKerjaController::class, 'destroy'])->name('admin.unit-kerja.destroy');
 
         // CRUD Pegawai
         Route::get('/pegawai', [\App\Http\Controllers\Admin\PegawaiController::class, 'index'])->name('admin.pegawai.index');

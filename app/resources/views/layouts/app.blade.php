@@ -37,21 +37,15 @@
                             <a href="{{ route('pengajuan.create') }}" class="inline-flex items-center border-b-2 {{ request()->routeIs('pengajuan.create') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 pt-1 text-sm font-medium">Ajukan Cuti</a>
                             @endif
                             
-                            @if(auth()->user()->pegawai && auth()->user()->pegawai->pemetaanAtasanAktif()->exists())
-                                <!-- Atasan Langsung Menu -->
-                                @php
-                                    // Cek apakah user ini adalah atasan bagi pegawai lain
-                                    $isAtasan = \App\Models\CutiPemetaanAtasan::where('atasan_id', auth()->user()->pegawai->id)->aktif()->exists();
-                                @endphp
-                                @if($isAtasan)
-                                    <a href="{{ route('approval.atasan') }}" class="inline-flex items-center border-b-2 {{ request()->routeIs('approval.atasan*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 pt-1 text-sm font-medium">Persetujuan Atasan</a>
-                                @endif
+                            @php
+                                $isAtasan = auth()->user()->pegawai ? \App\Models\CutiPemetaanAtasan::where('atasan_id', auth()->user()->pegawai->id)->aktif()->exists() : false;
+                                $isPyBMC = auth()->user()->pegawai ? \App\Models\CutiPemetaanPejabatBerwenang::where('pejabat_id', auth()->user()->pegawai->id)->aktif()->exists() : false;
+                            @endphp
+
+                            @if($isAtasan)
+                                <a href="{{ route('approval.atasan') }}" class="inline-flex items-center border-b-2 {{ request()->routeIs('approval.atasan*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 pt-1 text-sm font-medium">Persetujuan Atasan</a>
                             @endif
 
-                            @php
-                                // Cek apakah user ini didelegasikan wewenang PyBMC
-                                $isPyBMC = \App\Models\CutiPemetaanPejabatBerwenang::where('pejabat_id', auth()->user()->pegawai?->id)->aktif()->exists();
-                            @endphp
                             @if($isPyBMC)
                                 <a href="{{ route('approval.pejabat') }}" class="inline-flex items-center border-b-2 {{ request()->routeIs('approval.pejabat*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 pt-1 text-sm font-medium">Persetujuan PyBMC</a>
                             @endif
@@ -80,7 +74,17 @@
                                     </div>
                                 </div>
 
-                                <!-- Dropdown Laporan Admin -->
+                                <a href="{{ route('admin.backup.index') }}" class="inline-flex items-center border-b-2 {{ request()->routeIs('admin.backup*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 pt-1 text-sm font-medium">
+                                    Backup DB
+                                </a>
+
+                                <a href="{{ route('admin.setting.index') }}" class="inline-flex items-center border-b-2 {{ request()->routeIs('admin.setting*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 pt-1 text-sm font-medium">
+                                    Pengaturan
+                                </a>
+                            @endif
+
+                            @if(auth()->user()->isAdminCuti() || auth()->user()->isPimpinanOrAtasan())
+                                <!-- Dropdown Laporan & Monitoring -->
                                 <div class="relative inline-flex items-center pt-1" x-data="{ openLaporan: false }">
                                     <button @click="openLaporan = !openLaporan" class="inline-flex items-center border-b-2 {{ request()->routeIs('admin.laporan*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 py-1.5 text-sm font-medium focus:outline-none">
                                         Laporan &amp; Monitoring
@@ -91,14 +95,6 @@
                                         <a href="{{ route('admin.laporan.early-warning') }}" class="block px-4 py-2 text-xs text-rose-700 hover:bg-rose-50 font-medium">Early Warning Saldo Hangus</a>
                                     </div>
                                 </div>
-
-                                <a href="{{ route('admin.backup.index') }}" class="inline-flex items-center border-b-2 {{ request()->routeIs('admin.backup*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 pt-1 text-sm font-medium">
-                                    Backup DB
-                                </a>
-
-                                <a href="{{ route('admin.setting.index') }}" class="inline-flex items-center border-b-2 {{ request()->routeIs('admin.setting*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 pt-1 text-sm font-medium">
-                                    Pengaturan
-                                </a>
                             @endif
                         </div>
                     @endauth
@@ -120,7 +116,21 @@
                                     @if(auth()->user()->pegawai)
                                         <p class="text-xs text-slate-500 truncate">{{ auth()->user()->pegawai->jabatan }}</p>
                                     @endif
-                                    <span class="mt-1 inline-block text-xs font-medium px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700">{{ strtoupper(str_replace('_', ' ', auth()->user()->role)) }}</span>
+                                    @php
+                                        $roleBadge = 'PEGAWAI';
+                                        if (auth()->user()->isSuperAdmin()) {
+                                            $roleBadge = 'SUPER ADMIN';
+                                        } elseif (auth()->user()->isAdminCuti()) {
+                                            $roleBadge = 'ADMIN KEPEGAWAIAN';
+                                        } elseif ($isPyBMC && $isAtasan) {
+                                            $roleBadge = 'ATASAN & PyBMC';
+                                        } elseif ($isPyBMC) {
+                                            $roleBadge = 'PyBMC / PIMPINAN';
+                                        } elseif ($isAtasan) {
+                                            $roleBadge = 'ATASAN LANGSUNG';
+                                        }
+                                    @endphp
+                                    <span class="mt-1 inline-block text-[11px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">{{ $roleBadge }}</span>
                                 </div>
                                 @if(auth()->user()->isAdminCuti())
                                     <a href="{{ route('admin.setting.index') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 font-medium" role="menuitem">

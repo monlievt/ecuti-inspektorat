@@ -28,6 +28,11 @@ class EnsureRole
             return $next($request);
         }
 
+        // Khusus rute laporan & monitoring: izinkan Pimpinan / Atasan / PyBMC
+        if ($request->is('admin/laporan*') && method_exists($request->user(), 'isPimpinanOrAtasan') && $request->user()->isPimpinanOrAtasan()) {
+            return $next($request);
+        }
+
         abort(403, 'Anda tidak memiliki wewenang untuk mengakses halaman ini.');
     }
 }
