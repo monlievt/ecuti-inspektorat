@@ -192,7 +192,24 @@ class SettingService
         ];
 
         foreach ($defaults as $d) {
-            PengaturanSistem::updateOrCreate(['key' => $d['key']], $d);
+            $existing = PengaturanSistem::where('key', $d['key'])->first();
+            if (!$existing) {
+                PengaturanSistem::create($d);
+            } else {
+                $updateData = [
+                    'kategori' => $d['kategori'],
+                    'tipe' => $d['tipe'],
+                    'label' => $d['label'],
+                    'deskripsi' => $d['deskripsi'],
+                ];
+
+                // Hanya isi value default jika di database masih kosong/null dan di default ada nilainya
+                if (($existing->value === null || $existing->value === '') && !empty($d['value'])) {
+                    $updateData['value'] = $d['value'];
+                }
+
+                $existing->update($updateData);
+            }
         }
     }
 }

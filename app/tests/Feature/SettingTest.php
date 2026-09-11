@@ -136,4 +136,24 @@ class SettingTest extends TestCase
         $response->assertRedirect(route('admin.setting.index'));
         $response->assertSessionHas('success');
     }
+
+    public function test_settings_persist_after_seed_defaults_and_index_page_visit(): void
+    {
+        // 1. Simpan token & chat ID
+        SettingService::set('telegram_bot_token', '123456:BOT-TOKEN-TEST');
+        SettingService::set('telegram_chat_id', '-100987654321');
+
+        // 2. Jalankan seedDefaults() berulang kali
+        SettingService::seedDefaults();
+
+        // 3. Kunjungi halaman index admin setting
+        $response = $this->actingAs($this->adminUser)->get(route('admin.setting.index'));
+        $response->assertStatus(200);
+
+        // 4. Pastikan nilai TIDAK HILANG / TIDAK TERTIMPA
+        $this->assertEquals('123456:BOT-TOKEN-TEST', SettingService::get('telegram_bot_token'));
+        $this->assertEquals('-100987654321', SettingService::get('telegram_chat_id'));
+        $response->assertSee('123456:BOT-TOKEN-TEST');
+        $response->assertSee('-100987654321');
+    }
 }

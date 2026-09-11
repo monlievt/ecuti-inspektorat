@@ -60,8 +60,19 @@ class SettingController extends Controller
      */
     public function testTelegram(Request $request)
     {
-        $botToken = $request->input('telegram_bot_token') ?: SettingService::get('telegram_bot_token');
-        $chatId = $request->input('telegram_chat_id') ?: SettingService::get('telegram_chat_id');
+        $inputToken = trim($request->input('telegram_bot_token', ''));
+        $inputChatId = trim($request->input('telegram_chat_id', ''));
+
+        // Jika user mengisi token/chat ID saat klik tes, langsung simpan agar tidak hilang
+        if (!empty($inputToken)) {
+            SettingService::set('telegram_bot_token', $inputToken, 'telegram', 'Telegram Bot Token', 'password');
+        }
+        if (!empty($inputChatId)) {
+            SettingService::set('telegram_chat_id', $inputChatId, 'telegram', 'Telegram Chat ID / Channel ID', 'string');
+        }
+
+        $botToken = $inputToken ?: SettingService::get('telegram_bot_token');
+        $chatId = $inputChatId ?: SettingService::get('telegram_chat_id');
 
         if (empty($botToken) || empty($chatId)) {
             return redirect()->route('admin.setting.index')
@@ -103,6 +114,17 @@ class SettingController extends Controller
      */
     public function testWhatsApp(Request $request, WhatsAppNotificationService $waService)
     {
+        // Simpan konfigurasi WAHA jika diisi saat tes
+        if ($request->filled('waha_base_url')) {
+            SettingService::set('waha_base_url', $request->input('waha_base_url'), 'whatsapp', 'URL Server WAHA Gateway', 'string');
+        }
+        if ($request->filled('waha_session')) {
+            SettingService::set('waha_session', $request->input('waha_session'), 'whatsapp', 'Nama Sesi WAHA (Session Name)', 'string');
+        }
+        if ($request->has('waha_api_key')) {
+            SettingService::set('waha_api_key', $request->input('waha_api_key'), 'whatsapp', 'API Key / Token WAHA (Opsional)', 'password');
+        }
+
         $nomor = $request->input('test_nomor_wa') ?: auth()->user()->pegawai?->nomor_hp;
         if (empty($nomor)) {
             return redirect()->route('admin.setting.index')
