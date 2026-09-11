@@ -20,12 +20,16 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @php
+        $rawRecaptchaEnabled = \App\Services\SettingService::get('recaptcha_enabled', env('RECAPTCHA_ENABLED', false));
+        $dbSiteKey = trim((string)\App\Services\SettingService::get('recaptcha_site_key', env('RECAPTCHA_SITE_KEY', '')));
+
         $isRecaptchaActive = isset($isRecaptchaActive) 
             ? (bool)$isRecaptchaActive 
-            : filter_var(\App\Services\SettingService::get('recaptcha_enabled', env('RECAPTCHA_ENABLED', false)), FILTER_VALIDATE_BOOLEAN);
-        $recaptchaSiteKey = isset($recaptchaSiteKey) 
+            : (filter_var($rawRecaptchaEnabled, FILTER_VALIDATE_BOOLEAN) && !empty($dbSiteKey));
+
+        $recaptchaSiteKey = (isset($recaptchaSiteKey) && !empty($recaptchaSiteKey)) 
             ? trim((string)$recaptchaSiteKey) 
-            : trim((string)\App\Services\SettingService::get('recaptcha_site_key', env('RECAPTCHA_SITE_KEY', '')));
+            : $dbSiteKey;
     @endphp
 
     @if($isRecaptchaActive && !empty($recaptchaSiteKey))

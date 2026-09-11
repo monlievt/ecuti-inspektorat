@@ -213,4 +213,39 @@ class SettingTest extends TestCase
         $response->assertSee('Verifikasi Keamanan:');
         $response->assertSee('Tulis hasil angka saja');
     }
+
+    public function test_setting_page_renders_cleanly_and_without_error(): void
+    {
+        $response = $this->actingAs($this->adminUser)->get(route('admin.setting.index'));
+        $response->assertStatus(200);
+        $response->assertSee('Pengaturan Sistem');
+        $response->assertSee('Telegram (Backup)');
+        $response->assertSee('WhatsApp Gateway (WAHA)');
+        $response->assertSee('reCAPTCHA &amp; Keamanan', false);
+    }
+
+    public function test_admin_can_save_recaptcha_settings(): void
+    {
+        $response = $this->actingAs($this->adminUser)->put(route('admin.setting.update'), [
+            'recaptcha_enabled' => '1',
+            'recaptcha_site_key' => '6LeIx0cD_LIVE_KEY_TEST',
+            'recaptcha_secret_key' => '6LeIx0cD_SECRET_TEST',
+        ]);
+
+        $response->assertRedirect(route('admin.setting.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertTrue(SettingService::get('recaptcha_enabled'));
+        $this->assertEquals('6LeIx0cD_LIVE_KEY_TEST', SettingService::get('recaptcha_site_key'));
+        $this->assertEquals('6LeIx0cD_SECRET_TEST', SettingService::get('recaptcha_secret_key'));
+
+        // Logout user first so /login doesn't redirect to /dashboard
+        auth()->logout();
+
+        // Check login page immediately shows recaptcha
+        $loginRes = $this->get(route('login'));
+        $loginRes->assertStatus(200);
+        $loginRes->assertSee('class="g-recaptcha"', false);
+        $loginRes->assertSee('data-sitekey="6LeIx0cD_LIVE_KEY_TEST"', false);
+    }
 }

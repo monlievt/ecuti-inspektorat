@@ -4,6 +4,16 @@
 
 @section('content')
 <div class="space-y-6" x-data="{ activeTab: 'telegram' }">
+    @if(isset($hasTable) && !$hasTable)
+        <div class="rounded-2xl bg-rose-50 border border-rose-200 p-4 text-sm text-rose-800 flex items-start gap-3">
+            <svg class="w-5 h-5 text-rose-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+            <div>
+                <p class="font-bold">Tabel Database Belum Dimigrasi</p>
+                <p class="mt-1 text-xs text-rose-700">Tabel <code class="font-mono font-semibold">pengaturan_sistem</code> belum ada di database server Anda. Silakan jalankan perintah terminal: <code class="bg-rose-100 px-1.5 py-0.5 rounded font-mono font-bold">php artisan migrate</code> di server untuk mengaktifkannya.</p>
+            </div>
+        </div>
+    @endif
+
     <!-- Header -->
     <div class="sm:flex sm:items-center sm:justify-between">
         <div>
@@ -11,7 +21,7 @@
             <p class="mt-1 text-sm text-slate-500">Kelola kredensial API Telegram, WhatsApp Gateway, Google reCAPTCHA, dan profil instansi tanpa perlu edit file .env manual.</p>
         </div>
         <div class="mt-4 sm:mt-0">
-            <a href="{{ route('admin.backup.index') }}" class="inline-flex items-center rounded-xl bg-white border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 shadow-sm transition gap-2">
+            <a href="{{ Route::has('admin.backup.index') ? route('admin.backup.index') : url('/admin/backup') }}" class="inline-flex items-center rounded-xl bg-white border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 shadow-sm transition gap-2">
                 <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
@@ -62,7 +72,7 @@
     </div>
 
     <!-- Form Utama Simpan Pengaturan -->
-    <form action="{{ route('admin.setting.update') }}" method="POST">
+    <form action="{{ url('/admin/setting') }}" method="POST">
         @csrf
         @method('PUT')
 
@@ -115,13 +125,13 @@
                         <p class="text-[11px] text-slate-500">Gunakan deteksi otomatis jika belum mengetahui angka Chat ID grup Anda.</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button type="submit" formaction="{{ route('admin.setting.detect-telegram-chat-id') }}"
+                        <button type="submit" formaction="{{ url('/admin/setting/detect-telegram-chat-id') }}"
                                 title="Mendeteksi Chat ID secara otomatis dari pesan terakhir yang masuk ke bot"
                                 class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                             Deteksi Chat ID Otomatis
                         </button>
-                        <button type="submit" formaction="{{ route('admin.setting.test-telegram') }}"
+                        <button type="submit" formaction="{{ url('/admin/setting/test-telegram') }}"
                                 class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-sky-700 bg-sky-100 hover:bg-sky-200 border border-sky-300 transition">
                             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -168,9 +178,9 @@
                         <p class="text-[11px] text-slate-500">Ketikkan nomor WhatsApp Anda untuk mencoba mengirim pesan uji coba dari gateway WAHA.</p>
                     </div>
                     <div class="flex items-center gap-3">
-                        <input type="text" name="test_nomor_wa" placeholder="Contoh: 081234567890" value="{{ auth()->user()->pegawai?->nomor_hp }}"
+                        <input type="text" name="test_nomor_wa" placeholder="Contoh: 081234567890" value="{{ auth()->user()?->pegawai?->nomor_hp ?? '' }}"
                                class="rounded-xl border-slate-300 text-xs py-2 px-3 focus:border-indigo-500 focus:ring-indigo-500 w-64">
-                        <button type="submit" formaction="{{ route('admin.setting.test-whatsapp') }}"
+                        <button type="submit" formaction="{{ url('/admin/setting/test-whatsapp') }}"
                                 class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 transition">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" />
@@ -188,48 +198,96 @@
                     <p class="text-xs text-slate-500 mt-1">Mencegah serangan brute-force dan bot otomatis pada formulir login pegawai e-Cuti.</p>
                 </div>
 
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 space-y-1">
-                    <p class="font-bold flex items-center gap-1.5">
-                        <svg class="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-                        Catatan Fallback Keamanan:
-                    </p>
-                    <p>• Jika Google reCAPTCHA <strong>dinonaktifkan</strong> atau kunci belum diisi, sistem otomatis mengaktifkan <strong>Math Captcha (Perhitungan Matematika Acak)</strong> secara lokal tanpa memerlukan internet luar.</p>
-                    <p>• Dapatkan Site Key &amp; Secret Key dari Google reCAPTCHA Admin Console (pilih tipe <strong>reCAPTCHA v2 Checkbox</strong>).</p>
+                @php
+                    $secSettings = isset($settings['keamanan']) ? $settings['keamanan']->keyBy('key') : collect();
+                    $recaptchaEnabledVal = $secSettings->get('recaptcha_enabled')?->value ?? '0';
+                    $isRecaptchaActiveSetting = filter_var($recaptchaEnabledVal, FILTER_VALIDATE_BOOLEAN);
+                    $siteKeySetting = old('recaptcha_site_key', $secSettings->get('recaptcha_site_key')?->value ?? '');
+                    $secretKeySetting = old('recaptcha_secret_key', $secSettings->get('recaptcha_secret_key')?->value ?? '');
+                    $isFullyConfigured = $isRecaptchaActiveSetting && !empty($siteKeySetting) && !empty($secretKeySetting);
+                @endphp
+
+                <!-- Status Banner -->
+                @if($isFullyConfigured)
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-xs text-emerald-900 flex items-start gap-3">
+                        <div class="p-1 bg-emerald-100 rounded-full text-emerald-600 mt-0.5">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm text-emerald-800">Status Keamanan: Google reCAPTCHA v2 AKTIF di Halaman Login</p>
+                            <p class="mt-0.5 text-emerald-700">Setiap pegawai yang masuk di halaman login akan memverifikasi checkbox keamanan Google reCAPTCHA sebelum autentikasi diproses.</p>
+                        </div>
+                    </div>
+                @else
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 flex items-start gap-3">
+                        <div class="p-1 bg-amber-100 rounded-full text-amber-600 mt-0.5">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm text-amber-800">Status Keamanan: Math Captcha (Perhitungan Matematika Offline) AKTIF</p>
+                            <p class="mt-0.5 text-amber-700">Untuk mengaktifkan Google reCAPTCHA: 1) Centang kotak "Aktifkan Google reCAPTCHA", 2) Isi <strong>Site Key</strong> dan <strong>Secret Key</strong> (tipe <strong>reCAPTCHA v2 "I'm not a robot" Checkbox</strong>), 3) Klik tombol "Simpan Semua Pengaturan" di bawah.</p>
+                        </div>
+                    </div>
+                @endif
+
+                <div class="space-y-5 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                    <!-- Toggle Checkbox -->
+                    <div class="flex items-start">
+                        <div class="flex h-5 items-center">
+                            <input type="hidden" name="recaptcha_enabled" value="0">
+                            <input id="recaptcha_enabled" name="recaptcha_enabled" type="checkbox" value="1"
+                                   {{ $isRecaptchaActiveSetting ? 'checked' : '' }}
+                                   class="h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="recaptcha_enabled" class="font-bold text-slate-800 cursor-pointer">
+                                Aktifkan Google reCAPTCHA
+                            </label>
+                            <p class="text-xs text-slate-500 mt-0.5">Jika dicentang, formulir login akan menampilkan widget Google reCAPTCHA. Jika tidak dicentang, sistem otomatis menggunakan Math Captcha offline.</p>
+                        </div>
+                    </div>
+
+                    <!-- Site Key -->
+                    <div>
+                        <label for="recaptcha_site_key" class="block text-sm font-semibold text-slate-700">
+                            Google reCAPTCHA Site Key
+                        </label>
+                        <div class="mt-1.5">
+                            <input type="text" name="recaptcha_site_key" id="recaptcha_site_key"
+                                   value="{{ $siteKeySetting }}"
+                                   placeholder="Contoh: 6LeIx0cD..."
+                                   class="block w-full rounded-xl border-slate-300 py-2.5 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono bg-white">
+                        </div>
+                        <p class="mt-1 text-xs text-slate-400">Kunci publik dari Google reCAPTCHA Admin Console (pilih tipe: <strong>reCAPTCHA v2 "I'm not a robot" Checkbox</strong>).</p>
+                    </div>
+
+                    <!-- Secret Key -->
+                    <div>
+                        <label for="recaptcha_secret_key" class="block text-sm font-semibold text-slate-700">
+                            Google reCAPTCHA Secret Key
+                        </label>
+                        <div class="mt-1.5">
+                            <input type="text" name="recaptcha_secret_key" id="recaptcha_secret_key"
+                                   value="{{ $secretKeySetting }}"
+                                   placeholder="Contoh: 6LeIx0cD..."
+                                   class="block w-full rounded-xl border-slate-300 py-2.5 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono bg-white">
+                        </div>
+                        <p class="mt-1 text-xs text-slate-400">Kunci rahasia untuk verifikasi backend ke server Google API.</p>
+                    </div>
                 </div>
 
-                @if(isset($settings['keamanan']))
-                    <div class="space-y-5">
-                        @foreach($settings['keamanan'] as $s)
-                            @if($s->tipe === 'boolean')
-                                <div class="flex items-start">
-                                    <div class="flex h-5 items-center">
-                                        <input id="{{ $s->key }}" name="{{ $s->key }}" type="checkbox" value="1"
-                                               {{ filter_var($s->value, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}
-                                               class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                                    </div>
-                                    <div class="ml-3 text-sm">
-                                        <label for="{{ $s->key }}" class="font-semibold text-slate-800">{{ $s->label }}</label>
-                                        <p class="text-xs text-slate-500">{{ $s->deskripsi }}</p>
-                                    </div>
-                                </div>
-                            @else
-                                <div>
-                                    <label for="{{ $s->key }}" class="block text-sm font-semibold text-slate-700">
-                                        {{ $s->label }}
-                                    </label>
-                                    <div class="mt-1.5">
-                                        <input type="text" 
-                                               name="{{ $s->key }}" id="{{ $s->key }}" 
-                                               value="{{ old($s->key, $s->value) }}"
-                                               placeholder="Masukkan {{ $s->label }}"
-                                               class="block w-full rounded-xl border-slate-300 py-2.5 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono">
-                                    </div>
-                                    @if($s->deskripsi)
-                                        <p class="mt-1 text-xs text-slate-400">{{ $s->deskripsi }}</p>
-                                    @endif
-                                </div>
-                            @endif
-                        @endforeach
+                <!-- Live Preview Widget -->
+                @if(!empty($siteKeySetting))
+                    <div class="border border-slate-200 rounded-2xl p-5 bg-white space-y-3">
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs font-bold text-slate-800">Pratinjau Widget reCAPTCHA Anda di Browser:</p>
+                            <span class="text-[11px] text-slate-400">Domain saat ini: {{ request()->getHost() }}</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+                            <div class="g-recaptcha" data-sitekey="{{ $siteKeySetting }}"></div>
+                        </div>
+                        <p class="text-[11px] text-slate-500">💡 <em>Catatan: Jika kotak reCAPTCHA di atas menampilkan teks merah "ERROR for site owner: Invalid domain for site key", pastikan domain <code>{{ request()->getHost() }}</code> sudah ditambahkan ke daftar Domains di Google reCAPTCHA Admin Console.</em></p>
                     </div>
                 @endif
             </div>

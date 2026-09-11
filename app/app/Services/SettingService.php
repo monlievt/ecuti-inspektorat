@@ -21,50 +21,63 @@ class SettingService
             return self::$memo[$key];
         }
 
-        if (!Schema::hasTable('pengaturan_sistem')) {
+        try {
+            if (!Schema::hasTable('pengaturan_sistem')) {
+                return $default;
+            }
+
+            $setting = PengaturanSistem::where('key', $key)->first();
+            if ($setting) {
+                if ($setting->tipe === 'boolean' || $key === 'recaptcha_enabled') {
+                    $val = filter_var($setting->value, FILTER_VALIDATE_BOOLEAN);
+                } else {
+                    $val = ($setting->value !== null && $setting->value !== '') ? $setting->value : $default;
+                }
+            } else {
+                $val = $default;
+            }
+
+            self::$memo[$key] = $val;
+            return $val;
+        } catch (\Throwable $e) {
             return $default;
         }
-
-        $setting = PengaturanSistem::where('key', $key)->first();
-        if ($setting) {
-            if ($setting->tipe === 'boolean' || $key === 'recaptcha_enabled') {
-                $val = filter_var($setting->value, FILTER_VALIDATE_BOOLEAN);
-            } else {
-                $val = ($setting->value !== null && $setting->value !== '') ? $setting->value : $default;
-            }
-        } else {
-            $val = $default;
-        }
-
-        self::$memo[$key] = $val;
-        return $val;
     }
 
     /**
      * Simpan atau perbarui nilai pengaturan.
      */
-    public static function set(string $key, $value, ?string $kategori = 'umum', ?string $label = null, ?string $tipe = 'string', ?string $deskripsi = null): PengaturanSistem
+    public static function set(string $key, $value, ?string $kategori = 'umum', ?string $label = null, ?string $tipe = 'string', ?string $deskripsi = null): ?PengaturanSistem
     {
-        // Khusus recaptcha_enabled, pastikan tipenya selalu boolean
-        if ($key === 'recaptcha_enabled') {
-            $tipe = 'boolean';
+        try {
+            if (!Schema::hasTable('pengaturan_sistem')) {
+                return null;
+            }
+
+            // Khusus recaptcha_enabled, pastikan tipenya selalu boolean
+            if ($key === 'recaptcha_enabled') {
+                $tipe = 'boolean';
+            }
+
+            $setting = PengaturanSistem::updateOrCreate(
+                ['key' => $key],
+                [
+                    'value' => is_bool($value) ? ($value ? '1' : '0') : $value,
+                    'kategori' => $kategori ?? 'umum',
+                    'label' => $label ?? ucwords(str_replace('_', ' ', $key)),
+                    'tipe' => $tipe ?? 'string',
+                    'deskripsi' => $deskripsi,
+                ]
+            );
+
+            unset(self::$memo[$key]);
+            Cache::forget(self::CACHE_PREFIX . $key);
+
+            return $setting;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Gagal menyimpan setting {$key}: " . $e->getMessage());
+            return null;
         }
-
-        $setting = PengaturanSistem::updateOrCreate(
-            ['key' => $key],
-            [
-                'value' => is_bool($value) ? ($value ? '1' : '0') : $value,
-                'kategori' => $kategori ?? 'umum',
-                'label' => $label ?? ucwords(str_replace('_', ' ', $key)),
-                'tipe' => $tipe ?? 'string',
-                'deskripsi' => $deskripsi,
-            ]
-        );
-
-        unset(self::$memo[$key]);
-        Cache::forget(self::CACHE_PREFIX . $key);
-
-        return $setting;
     }
 
     /**
@@ -73,9 +86,16 @@ class SettingService
     public static function clearCache(): void
     {
         self::$memo = [];
-        $keys = PengaturanSistem::pluck('key');
-        foreach ($keys as $k) {
-            Cache::forget(self::CACHE_PREFIX . $k);
+        try {
+            if (!Schema::hasTable('pengaturan_sistem')) {
+                return;
+            }
+            $keys = PengaturanSistem::pluck('key');
+            foreach ($keys as $k) {
+                Cache::forget(self::CACHE_PREFIX . $k);
+            }
+        } catch (\Throwable $e) {
+            // Ignore cache clear failures
         }
     }
 
@@ -84,6 +104,10 @@ class SettingService
      */
     public static function seedDefaults(): void
     {
+        try {
+            if (!Schema::hasTable('pengaturan_sistem')) {
+                return;
+            }
         $defaults = [
             // ── Telegram Backup ─────────────────────────────────────────────
             [
@@ -225,6 +249,9 @@ class SettingService
 
                 $existing->update($updateData);
             }
+        }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('seedDefaults error: ' . $e->getMessage());
         }
     }
 }

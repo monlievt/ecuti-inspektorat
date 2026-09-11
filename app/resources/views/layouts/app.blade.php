@@ -78,7 +78,7 @@
                                     Backup DB
                                 </a>
 
-                                <a href="{{ route('admin.setting.index') }}" class="inline-flex items-center border-b-2 {{ request()->routeIs('admin.setting*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 pt-1 text-sm font-medium">
+                                <a href="{{ Route::has('admin.setting.index') ? route('admin.setting.index') : url('/admin/setting') }}" class="inline-flex items-center border-b-2 {{ request()->is('admin/setting*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 pt-1 text-sm font-medium">
                                     Pengaturan
                                 </a>
                             @endif
@@ -133,7 +133,7 @@
                                     <span class="mt-1 inline-block text-[11px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">{{ $roleBadge }}</span>
                                 </div>
                                 @if(auth()->user()->isAdminCuti())
-                                    <a href="{{ route('admin.setting.index') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 font-medium" role="menuitem">
+                                    <a href="{{ Route::has('admin.setting.index') ? route('admin.setting.index') : url('/admin/setting') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 font-medium" role="menuitem">
                                         Pengaturan Sistem
                                     </a>
                                 @endif

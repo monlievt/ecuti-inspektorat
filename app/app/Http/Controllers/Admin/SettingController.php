@@ -17,11 +17,24 @@ class SettingController extends Controller
      */
     public function index()
     {
-        SettingService::seedDefaults();
+        $hasTable = false;
+        try {
+            $hasTable = \Illuminate\Support\Facades\Schema::hasTable('pengaturan_sistem');
+            if ($hasTable) {
+                SettingService::seedDefaults();
+            }
+        } catch (Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Gagal seedDefaults setting: ' . $e->getMessage());
+        }
 
-        $settings = PengaturanSistem::all()->groupBy('kategori');
+        try {
+            $settings = $hasTable ? PengaturanSistem::all()->groupBy('kategori') : collect();
+        } catch (Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Gagal mengambil pengaturan sistem: ' . $e->getMessage());
+            $settings = collect();
+        }
 
-        return view('admin.setting.index', compact('settings'));
+        return view('admin.setting.index', compact('settings', 'hasTable'));
     }
 
     /**
@@ -36,7 +49,7 @@ class SettingController extends Controller
         // Khusus checkbox boolean: jika tidak dicentang, nilainya '0'
         $booleanKeys = ['recaptcha_enabled'];
         foreach ($booleanKeys as $bKey) {
-            $data[$bKey] = $request->has($bKey) ? '1' : '0';
+            $data[$bKey] = ($request->input($bKey) === '1' || $request->input($bKey) === 'on' || $request->boolean($bKey)) ? '1' : '0';
         }
 
         foreach ($data as $key => $value) {
@@ -50,6 +63,8 @@ class SettingController extends Controller
                 $existing?->deskripsi
             );
         }
+
+        SettingService::clearCache();
 
         return redirect()->route('admin.setting.index')
             ->with('success', 'Konfigurasi pengaturan sistem berhasil disimpan dan langsung diterapkan.');
@@ -187,7 +202,7 @@ class SettingController extends Controller
             SettingService::set('waha_api_key', $request->input('waha_api_key'), 'whatsapp', 'API Key / Token WAHA (Opsional)', 'password');
         }
 
-        $nomor = $request->input('test_nomor_wa') ?: auth()->user()->pegawai?->nomor_hp;
+        $nomor = $request->input('test_nomor_wa') ?: auth()->user()?->pegawai?->nomor_hp;
         if (empty($nomor)) {
             return redirect()->route('admin.setting.index')
                 ->with('error', 'Nomor WhatsApp penerima uji coba wajib diisi.');
