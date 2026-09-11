@@ -156,4 +156,35 @@ class SettingTest extends TestCase
         $response->assertSee('123456:BOT-TOKEN-TEST');
         $response->assertSee('-100987654321');
     }
+
+    public function test_admin_can_detect_telegram_chat_id(): void
+    {
+        Http::fake([
+            'https://api.telegram.org/*/getUpdates' => Http::response([
+                'ok' => true,
+                'result' => [
+                    [
+                        'update_id' => 1234567,
+                        'message' => [
+                            'message_id' => 10,
+                            'chat' => [
+                                'id' => -1001987654321,
+                                'title' => 'Grup Backup Inspektorat',
+                                'type' => 'supergroup'
+                            ],
+                            'text' => 'halo bot'
+                        ]
+                    ]
+                ]
+            ], 200),
+        ]);
+
+        $response = $this->actingAs($this->adminUser)->post(route('admin.setting.detect-telegram-chat-id'), [
+            'telegram_bot_token' => 'mock_token',
+        ]);
+
+        $response->assertRedirect(route('admin.setting.index'));
+        $response->assertSessionHas('success');
+        $this->assertEquals('-1001987654321', SettingService::get('telegram_chat_id'));
+    }
 }

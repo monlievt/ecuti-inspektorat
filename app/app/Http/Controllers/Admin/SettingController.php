@@ -100,12 +100,74 @@ class SettingController extends Controller
             }
 
             $detail = $response->json('description') ?? $response->body();
+            $hint = "";
+            if (str_contains(strtolower($detail), 'chat not found')) {
+                $hint = " Solusi: 1) Jika mengirim ke Grup/Channel, pastikan bot SUDAH dimasukkan ke dalam grup/channel tersebut dan dijadikan Admin. 2) Jika mengirim ke chat pribadi, buka bot Anda di Telegram dan klik tombol START (/start). 3) Anda juga dapat mengklik tombol 'Deteksi Chat ID Otomatis' di bawah.";
+            }
+
             return redirect()->route('admin.setting.index')
-                ->with('error', "Gagal terhubung ke Telegram API: {$detail}");
+                ->with('error', "Gagal terhubung ke Telegram API: {$detail}.{$hint}");
 
         } catch (Throwable $e) {
             return redirect()->route('admin.setting.index')
                 ->with('error', 'Terjadi kesalahan saat menghubungi Telegram: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Deteksi Chat ID Telegram otomatis dari pesan/aktivitas terbaru bot.
+     */
+    public function detectTelegramChatId(Request $request)
+    {
+        $inputToken = trim($request->input('telegram_bot_token', ''));
+        if (!empty($inputToken)) {
+            SettingService::set('telegram_bot_token', $inputToken, 'telegram', 'Telegram Bot Token', 'password');
+        }
+
+        $botToken = $inputToken ?: SettingService::get('telegram_bot_token');
+        if (empty($botToken)) {
+            return redirect()->route('admin.setting.index')
+                ->with('error', 'Masukkan Bot Token terlebih dahulu sebelum mendeteksi Chat ID.');
+        }
+
+        try {
+            $response = Http::timeout(10)->get("https://api.telegram.org/bot{$botToken}/getUpdates");
+            if (!$response->successful()) {
+                $detail = $response->json('description') ?? $response->body();
+                return redirect()->route('admin.setting.index')
+                    ->with('error', "Gagal menghubungi Telegram API: {$detail}");
+            }
+
+            $updates = $response->json('result') ?? [];
+            if (empty($updates)) {
+                return redirect()->route('admin.setting.index')
+                    ->with('error', 'Belum ada aktivitas di bot Anda. Langkah: Buka bot di Telegram lalu klik START, ATAU tambahkan bot ke Grup/Channel lalu kirim 1 pesan sembarang (misal: "halo"), kemudian klik tombol Deteksi Chat ID kembali.');
+            }
+
+            // Ambil update terbaru
+            $latest = end($updates);
+            $chat = $latest['message']['chat'] 
+                ?? ($latest['my_chat_member']['chat'] 
+                ?? ($latest['channel_post']['chat'] 
+                ?? null));
+
+            if (!$chat || empty($chat['id'])) {
+                return redirect()->route('admin.setting.index')
+                    ->with('error', 'Data chat tidak ditemukan dalam aktivitas terbaru. Silakan kirim pesan teks baru di grup atau chat bot Anda lalu coba lagi.');
+            }
+
+            $detectedChatId = (string)$chat['id'];
+            $chatTitle = $chat['title'] ?? ($chat['username'] ?? ($chat['first_name'] ?? 'Pribadi'));
+            $chatType = $chat['type'] ?? 'chat';
+
+            SettingService::set('telegram_chat_id', $detectedChatId, 'telegram', 'Telegram Chat ID / Channel ID', 'string');
+
+            return redirect()->route('admin.setting.index')
+                ->with('success', "✅ Berhasil mendeteksi Chat ID: {$detectedChatId} ({$chatType}: '{$chatTitle}'). Nilai Chat ID telah otomatis tersimpan!");
+
+        } catch (Throwable $e) {
+            return redirect()->route('admin.setting.index')
+                ->with('error', 'Terjadi kesalahan saat mendeteksi Chat ID: ' . $e->getMessage());
         }
     }
 

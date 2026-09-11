@@ -106,6 +106,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/setting', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.setting.index');
         Route::match(['post', 'put'], '/setting', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('admin.setting.update');
         Route::match(['get', 'post', 'put'], '/setting/test-telegram', [\App\Http\Controllers\Admin\SettingController::class, 'testTelegram'])->name('admin.setting.test-telegram');
+        Route::match(['get', 'post', 'put'], '/setting/detect-telegram-chat-id', [\App\Http\Controllers\Admin\SettingController::class, 'detectTelegramChatId'])->name('admin.setting.detect-telegram-chat-id');
         Route::match(['get', 'post', 'put'], '/setting/test-whatsapp', [\App\Http\Controllers\Admin\SettingController::class, 'testWhatsApp'])->name('admin.setting.test-whatsapp');
     });
 });

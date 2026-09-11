@@ -75,14 +75,15 @@
                     <p class="text-xs text-slate-500 mt-1">Digunakan untuk menerima berkas dump database otomatis harian (.sql.gz) dan unduhan manual.</p>
                 </div>
 
-                <div class="bg-sky-50 border border-sky-200 rounded-xl p-4 text-xs text-sky-900 space-y-1">
+                <div class="bg-sky-50 border border-sky-200 rounded-xl p-4 text-xs text-sky-900 space-y-1.5">
                     <p class="font-bold flex items-center gap-1.5">
                         <svg class="w-4 h-4 text-sky-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-                        Panduan Cepat Telegram:
+                        Panduan Cepat Menghubungkan Telegram:
                     </p>
                     <p>1. Buat bot baru di Telegram via <strong>@BotFather</strong> untuk mendapatkan <strong>Bot Token</strong>.</p>
-                    <p>2. Buat grup/channel privat, tambahkan bot tersebut ke grup, lalu jadikan <strong>Admin</strong>.</p>
-                    <p>3. Masukkan ID Grup (misal: <code>-1001234567890</code>) pada kolom Chat ID di bawah.</p>
+                    <p>2. Jika ingin menerima notifikasi di <strong>Grup/Channel</strong>: Tambahkan bot ke grup/channel tersebut, lalu jadikan sebagai <strong>Administrator</strong>.</p>
+                    <p>3. Jika ingin menerima di <strong>Chat Pribadi</strong>: Buka bot Anda di Telegram dan klik tombol <strong>START (/start)</strong>.</p>
+                    <p class="pt-1 text-sky-800">💡 <strong>Cara Termudah Dapatkan Chat ID:</strong> Setelah bot dimasukkan ke grup (atau di-start di chat pribadi), kirim 1 pesan teks sembarang (misal: "tes"), lalu klik tombol <strong>"Deteksi Chat ID Otomatis"</strong> di bawah.</p>
                 </div>
 
                 @if(isset($settings['telegram']))
@@ -108,18 +109,26 @@
                 @endif
 
                 <!-- Uji Coba Telegram Action Card -->
-                <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between bg-slate-50 p-4 rounded-xl">
+                <div class="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between bg-slate-50 p-4 rounded-xl">
                     <div>
-                        <p class="text-xs font-bold text-slate-800">Uji Coba Koneksi Telegram</p>
-                        <p class="text-[11px] text-slate-500">Kirim pesan tes sekarang untuk memastikan bot dan chat ID sudah terhubung.</p>
+                        <p class="text-xs font-bold text-slate-800">Aksi &amp; Uji Coba Telegram</p>
+                        <p class="text-[11px] text-slate-500">Gunakan deteksi otomatis jika belum mengetahui angka Chat ID grup Anda.</p>
                     </div>
-                    <button type="submit" formaction="{{ route('admin.setting.test-telegram') }}"
-                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-sky-700 bg-sky-100 hover:bg-sky-200 border border-sky-300 transition">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                        </svg>
-                        Kirim Pesan Tes Telegram
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button type="submit" formaction="{{ route('admin.setting.detect-telegram-chat-id') }}"
+                                title="Mendeteksi Chat ID secara otomatis dari pesan terakhir yang masuk ke bot"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            Deteksi Chat ID Otomatis
+                        </button>
+                        <button type="submit" formaction="{{ route('admin.setting.test-telegram') }}"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-sky-700 bg-sky-100 hover:bg-sky-200 border border-sky-300 transition">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                            </svg>
+                            Kirim Pesan Tes
+                        </button>
+                    </div>
                 </div>
             </div>
 
