@@ -64,7 +64,7 @@ class SettingController extends Controller
         $chatId = $request->input('telegram_chat_id') ?: SettingService::get('telegram_chat_id');
 
         if (empty($botToken) || empty($chatId)) {
-            return redirect()->back()
+            return redirect()->route('admin.setting.index')
                 ->with('error', 'Gagal uji Telegram: Bot Token dan Chat ID wajib diisi terlebih dahulu.');
         }
 
@@ -84,16 +84,16 @@ class SettingController extends Controller
             ]);
 
             if ($response->successful()) {
-                return redirect()->back()
+                return redirect()->route('admin.setting.index')
                     ->with('success', '✅ Pesan uji coba berhasil terkirim ke Telegram! Periksa grup/channel Telegram Anda.');
             }
 
             $detail = $response->json('description') ?? $response->body();
-            return redirect()->back()
+            return redirect()->route('admin.setting.index')
                 ->with('error', "Gagal terhubung ke Telegram API: {$detail}");
 
         } catch (Throwable $e) {
-            return redirect()->back()
+            return redirect()->route('admin.setting.index')
                 ->with('error', 'Terjadi kesalahan saat menghubungi Telegram: ' . $e->getMessage());
         }
     }
@@ -103,27 +103,26 @@ class SettingController extends Controller
      */
     public function testWhatsApp(Request $request, WhatsAppNotificationService $waService)
     {
-        $request->validate([
-            'test_nomor_wa' => ['required', 'string'],
-        ], [
-            'test_nomor_wa.required' => 'Nomor WhatsApp penerima uji coba wajib diisi.',
-        ]);
+        $nomor = $request->input('test_nomor_wa') ?: auth()->user()->pegawai?->nomor_hp;
+        if (empty($nomor)) {
+            return redirect()->route('admin.setting.index')
+                ->with('error', 'Nomor WhatsApp penerima uji coba wajib diisi.');
+        }
 
-        $nomor = $request->input('test_nomor_wa');
         $pesan = "Halo! Ini adalah *PESAN UJI COBA* dari Pengaturan Gateway WhatsApp e-Cuti Inspektorat Trenggalek.\n\nGateway terhubung pada " . now()->format('d/m/Y H:i:s') . ".";
 
         try {
             $hasil = $waService->kirim($nomor, $pesan);
             if ($hasil) {
-                return redirect()->back()
+                return redirect()->route('admin.setting.index')
                     ->with('success', "✅ Pesan uji coba WhatsApp berhasil dikirimkan ke nomor {$nomor}.");
             }
 
-            return redirect()->back()
+            return redirect()->route('admin.setting.index')
                 ->with('error', "Gagal mengirim WhatsApp ke {$nomor}. Pastikan server WAHA lokal aktif dan sesi terhubung.");
 
         } catch (Throwable $e) {
-            return redirect()->back()
+            return redirect()->route('admin.setting.index')
                 ->with('error', 'Terjadi kesalahan koneksi WhatsApp: ' . $e->getMessage());
         }
     }

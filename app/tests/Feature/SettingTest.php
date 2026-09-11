@@ -82,8 +82,31 @@ class SettingTest extends TestCase
             'telegram_chat_id' => '-100999888',
         ]);
 
-        $response->assertRedirect();
+        $response->assertRedirect(route('admin.setting.index'));
         $response->assertSessionHas('success');
+    }
+
+    public function test_admin_can_test_telegram_via_put_and_get(): void
+    {
+        Http::fake([
+            'https://api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 101]], 200),
+        ]);
+
+        // Test PUT (when button inside form with @method('PUT') is clicked)
+        $responsePut = $this->actingAs($this->adminUser)->put(route('admin.setting.test-telegram'), [
+            'telegram_bot_token' => 'mock_token',
+            'telegram_chat_id' => '-100999888',
+        ]);
+        $responsePut->assertStatus(302);
+        $responsePut->assertSessionHas('success');
+
+        // Test GET (when accessed directly via browser URL)
+        SettingService::set('telegram_bot_token', 'mock_token');
+        SettingService::set('telegram_chat_id', '-100999888');
+
+        $responseGet = $this->actingAs($this->adminUser)->get(route('admin.setting.test-telegram'));
+        $responseGet->assertStatus(302);
+        $responseGet->assertSessionHas('success');
     }
 
     public function test_admin_can_test_whatsapp_connection(): void
@@ -96,7 +119,21 @@ class SettingTest extends TestCase
             'test_nomor_wa' => '081234567890',
         ]);
 
-        $response->assertRedirect();
+        $response->assertRedirect(route('admin.setting.index'));
+        $response->assertSessionHas('success');
+    }
+
+    public function test_admin_can_test_whatsapp_via_put(): void
+    {
+        Http::fake([
+            'http://localhost:3000/api/sendText' => Http::response(['status' => 'success'], 200),
+        ]);
+
+        $response = $this->actingAs($this->adminUser)->put(route('admin.setting.test-whatsapp'), [
+            'test_nomor_wa' => '081234567890',
+        ]);
+
+        $response->assertRedirect(route('admin.setting.index'));
         $response->assertSessionHas('success');
     }
 }
