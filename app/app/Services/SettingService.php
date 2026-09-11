@@ -9,27 +9,35 @@ use Illuminate\Support\Facades\Schema;
 class SettingService
 {
     protected const CACHE_PREFIX = 'ecuti_setting_';
-    protected const CACHE_TTL = 86400; // 24 jam
+
+    protected static array $memo = [];
 
     /**
      * Ambil nilai pengaturan berdasarkan key.
      */
     public static function get(string $key, $default = null)
     {
+        if (!app()->runningUnitTests() && array_key_exists($key, self::$memo)) {
+            return self::$memo[$key];
+        }
+
         if (!Schema::hasTable('pengaturan_sistem')) {
             return $default;
         }
 
-        return Cache::remember(self::CACHE_PREFIX . $key, self::CACHE_TTL, function () use ($key, $default) {
-            $setting = PengaturanSistem::where('key', $key)->first();
-            if ($setting) {
-                if ($setting->tipe === 'boolean') {
-                    return filter_var($setting->value, FILTER_VALIDATE_BOOLEAN);
-                }
-                return $setting->value ?? $default;
+        $setting = PengaturanSistem::where('key', $key)->first();
+        if ($setting) {
+            if ($setting->tipe === 'boolean' || $key === 'recaptcha_enabled') {
+                $val = filter_var($setting->value, FILTER_VALIDATE_BOOLEAN);
+            } else {
+                $val = ($setting->value !== null && $setting->value !== '') ? $setting->value : $default;
             }
-            return $default;
-        });
+        } else {
+            $val = $default;
+        }
+
+        self::$memo[$key] = $val;
+        return $val;
     }
 
     /**
@@ -37,6 +45,11 @@ class SettingService
      */
     public static function set(string $key, $value, ?string $kategori = 'umum', ?string $label = null, ?string $tipe = 'string', ?string $deskripsi = null): PengaturanSistem
     {
+        // Khusus recaptcha_enabled, pastikan tipenya selalu boolean
+        if ($key === 'recaptcha_enabled') {
+            $tipe = 'boolean';
+        }
+
         $setting = PengaturanSistem::updateOrCreate(
             ['key' => $key],
             [
@@ -48,6 +61,7 @@ class SettingService
             ]
         );
 
+        unset(self::$memo[$key]);
         Cache::forget(self::CACHE_PREFIX . $key);
 
         return $setting;
@@ -58,6 +72,7 @@ class SettingService
      */
     public static function clearCache(): void
     {
+        self::$memo = [];
         $keys = PengaturanSistem::pluck('key');
         foreach ($keys as $k) {
             Cache::forget(self::CACHE_PREFIX . $k);

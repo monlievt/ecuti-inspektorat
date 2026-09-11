@@ -25,7 +25,11 @@ class LoginController extends Controller
 
         $captchaQuestion = "Berapakah hasil dari {$num1} + {$num2}?";
 
-        return view('auth.login', compact('captchaQuestion'));
+        $rawEnabled = \App\Services\SettingService::get('recaptcha_enabled', env('RECAPTCHA_ENABLED', false));
+        $isRecaptchaActive = filter_var($rawEnabled, FILTER_VALIDATE_BOOLEAN);
+        $recaptchaSiteKey = trim((string)\App\Services\SettingService::get('recaptcha_site_key', env('RECAPTCHA_SITE_KEY', '')));
+
+        return view('auth.login', compact('captchaQuestion', 'isRecaptchaActive', 'recaptchaSiteKey'));
     }
 
     /**
@@ -43,8 +47,8 @@ class LoginController extends Controller
         ]);
 
         // 2. Verifikasi Captcha (Google reCAPTCHA atau Math Captcha Offline)
-        $recaptchaEnabled = \App\Services\SettingService::get('recaptcha_enabled', env('RECAPTCHA_ENABLED', false));
-        $recaptchaSecret = \App\Services\SettingService::get('recaptcha_secret_key', env('RECAPTCHA_SECRET_KEY'));
+        $recaptchaEnabled = filter_var(\App\Services\SettingService::get('recaptcha_enabled', env('RECAPTCHA_ENABLED', false)), FILTER_VALIDATE_BOOLEAN);
+        $recaptchaSecret = trim((string)\App\Services\SettingService::get('recaptcha_secret_key', env('RECAPTCHA_SECRET_KEY', '')));
 
         if ($recaptchaEnabled && !empty($recaptchaSecret)) {
             // Google reCAPTCHA Verification

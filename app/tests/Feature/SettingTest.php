@@ -187,4 +187,30 @@ class SettingTest extends TestCase
         $response->assertSessionHas('success');
         $this->assertEquals('-1001987654321', SettingService::get('telegram_chat_id'));
     }
+
+    public function test_login_page_renders_recaptcha_when_enabled(): void
+    {
+        SettingService::set('recaptcha_enabled', '1', 'keamanan', 'Aktifkan Google reCAPTCHA', 'boolean');
+        SettingService::set('recaptcha_site_key', '6LeIx0cD_TEST_SITE_KEY_123', 'keamanan', 'Google reCAPTCHA Site Key', 'string');
+
+        $response = $this->get(route('login'));
+        $response->assertStatus(200);
+        $response->assertSee('https://www.google.com/recaptcha/api.js', false);
+        $response->assertSee('class="g-recaptcha"', false);
+        $response->assertSee('data-sitekey="6LeIx0cD_TEST_SITE_KEY_123"', false);
+        $response->assertDontSee('Tulis hasil angka saja');
+    }
+
+    public function test_login_page_renders_math_captcha_when_recaptcha_disabled(): void
+    {
+        SettingService::set('recaptcha_enabled', '0', 'keamanan', 'Aktifkan Google reCAPTCHA', 'boolean');
+        SettingService::set('recaptcha_site_key', '', 'keamanan', 'Google reCAPTCHA Site Key', 'string');
+
+        $response = $this->get(route('login'));
+        $response->assertStatus(200);
+        $response->assertDontSee('https://www.google.com/recaptcha/api.js', false);
+        $response->assertDontSee('class="g-recaptcha"', false);
+        $response->assertSee('Verifikasi Keamanan:');
+        $response->assertSee('Tulis hasil angka saja');
+    }
 }

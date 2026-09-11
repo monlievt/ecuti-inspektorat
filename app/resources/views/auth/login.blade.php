@@ -20,8 +20,12 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @php
-        $isRecaptchaActive = \App\Services\SettingService::get('recaptcha_enabled', env('RECAPTCHA_ENABLED', false));
-        $recaptchaSiteKey = \App\Services\SettingService::get('recaptcha_site_key', env('RECAPTCHA_SITE_KEY'));
+        $isRecaptchaActive = isset($isRecaptchaActive) 
+            ? (bool)$isRecaptchaActive 
+            : filter_var(\App\Services\SettingService::get('recaptcha_enabled', env('RECAPTCHA_ENABLED', false)), FILTER_VALIDATE_BOOLEAN);
+        $recaptchaSiteKey = isset($recaptchaSiteKey) 
+            ? trim((string)$recaptchaSiteKey) 
+            : trim((string)\App\Services\SettingService::get('recaptcha_site_key', env('RECAPTCHA_SITE_KEY', '')));
     @endphp
 
     @if($isRecaptchaActive && !empty($recaptchaSiteKey))
@@ -103,9 +107,11 @@
                 <!-- Captcha Security Widget -->
                 <div class="mt-4 rounded-xl bg-white/5 border border-white/10 p-3.5">
                     @if($isRecaptchaActive && !empty($recaptchaSiteKey))
-                        <div class="g-recaptcha" data-sitekey="{{ $recaptchaSiteKey }}"></div>
+                        <div class="flex flex-col items-center justify-center py-1">
+                            <div class="g-recaptcha" data-sitekey="{{ $recaptchaSiteKey }}"></div>
+                        </div>
                         @error('g-recaptcha-response')
-                            <p class="mt-2 text-xs text-rose-300">{{ $message }}</p>
+                            <p class="mt-2 text-xs text-rose-300 text-center">{{ $message }}</p>
                         @enderror
                     @else
                         <label for="captcha" class="block text-xs font-semibold text-slate-200">
