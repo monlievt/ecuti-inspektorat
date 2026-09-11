@@ -99,16 +99,30 @@
                 @if(isset($settings['telegram']))
                     <div class="space-y-4">
                         @foreach($settings['telegram'] as $s)
-                            <div>
+                            <div x-data="{ showSecret: false }">
                                 <label for="{{ $s->key }}" class="block text-sm font-semibold text-slate-700">
                                     {{ $s->label }}
                                 </label>
-                                <div class="mt-1.5">
-                                    <input type="{{ $s->tipe === 'password' ? 'text' : 'text' }}" 
+                                <div class="mt-1.5 relative">
+                                    <input :type="{{ $s->tipe === 'password' ? 'showSecret ? \'text\' : \'password\'' : '\'text\'' }}" 
                                            name="{{ $s->key }}" id="{{ $s->key }}" 
                                            value="{{ old($s->key, $s->value) }}"
                                            placeholder="Masukkan {{ $s->label }}"
-                                           class="block w-full rounded-xl border-slate-300 py-2.5 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono">
+                                           autocomplete="{{ $s->tipe === 'password' ? 'new-password' : 'off' }}"
+                                           class="block w-full rounded-xl border-slate-300 py-2.5 px-4 {{ $s->tipe === 'password' ? 'pr-11' : '' }} shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono bg-white">
+                                    @if($s->tipe === 'password')
+                                        <button type="button" @click="showSecret = !showSecret"
+                                                class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                                                title="Tampilkan / Sembunyikan Kredensial">
+                                            <svg x-show="!showSecret" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            <svg x-show="showSecret" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display:none;">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                            </svg>
+                                        </button>
+                                    @endif
                                 </div>
                                 @if($s->deskripsi)
                                     <p class="mt-1 text-xs text-slate-400">{{ $s->deskripsi }}</p>
@@ -152,16 +166,30 @@
                 @if(isset($settings['whatsapp']))
                     <div class="space-y-4">
                         @foreach($settings['whatsapp'] as $s)
-                            <div>
+                            <div x-data="{ showSecret: false }">
                                 <label for="{{ $s->key }}" class="block text-sm font-semibold text-slate-700">
                                     {{ $s->label }}
                                 </label>
-                                <div class="mt-1.5">
-                                    <input type="text" 
+                                <div class="mt-1.5 relative">
+                                    <input :type="{{ $s->tipe === 'password' ? 'showSecret ? \'text\' : \'password\'' : '\'text\'' }}" 
                                            name="{{ $s->key }}" id="{{ $s->key }}" 
                                            value="{{ old($s->key, $s->value) }}"
                                            placeholder="Masukkan {{ $s->label }}"
-                                           class="block w-full rounded-xl border-slate-300 py-2.5 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono">
+                                           autocomplete="{{ $s->tipe === 'password' ? 'new-password' : 'off' }}"
+                                           class="block w-full rounded-xl border-slate-300 py-2.5 px-4 {{ $s->tipe === 'password' ? 'pr-11' : '' }} shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono bg-white">
+                                    @if($s->tipe === 'password')
+                                        <button type="button" @click="showSecret = !showSecret"
+                                                class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                                                title="Tampilkan / Sembunyikan Kredensial">
+                                            <svg x-show="!showSecret" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            <svg x-show="showSecret" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display:none;">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                            </svg>
+                                        </button>
+                                    @endif
                                 </div>
                                 @if($s->deskripsi)
                                     <p class="mt-1 text-xs text-slate-400">{{ $s->deskripsi }}</p>
@@ -262,15 +290,28 @@
                     </div>
 
                     <!-- Secret Key -->
-                    <div>
+                    <div x-data="{ showSecretKey: false }">
                         <label for="recaptcha_secret_key" class="block text-sm font-semibold text-slate-700">
                             Google reCAPTCHA Secret Key
                         </label>
-                        <div class="mt-1.5">
-                            <input type="text" name="recaptcha_secret_key" id="recaptcha_secret_key"
+                        <div class="mt-1.5 relative">
+                            <input :type="showSecretKey ? 'text' : 'password'" 
+                                   name="recaptcha_secret_key" id="recaptcha_secret_key"
                                    value="{{ $secretKeySetting }}"
                                    placeholder="Contoh: 6LeIx0cD..."
-                                   class="block w-full rounded-xl border-slate-300 py-2.5 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono bg-white">
+                                   autocomplete="new-password"
+                                   class="block w-full rounded-xl border-slate-300 py-2.5 px-4 pr-11 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono bg-white">
+                            <button type="button" @click="showSecretKey = !showSecretKey"
+                                    class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                                    title="Tampilkan / Sembunyikan Kredensial">
+                                <svg x-show="!showSecretKey" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                <svg x-show="showSecretKey" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display:none;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                </svg>
+                            </button>
                         </div>
                         <p class="mt-1 text-xs text-slate-400">Kunci rahasia untuk verifikasi backend ke server Google API.</p>
                     </div>

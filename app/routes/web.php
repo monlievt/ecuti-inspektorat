@@ -29,7 +29,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Profil & Ubah Password
     Route::get('/profil/ubah-password', [LoginController::class, 'showChangePassword'])->name('profil.ubah-password');
-    Route::post('/profil/ubah-password', [LoginController::class, 'changePassword'])->name('profil.ubah-password.post');
+    Route::post('/profil/ubah-password', [LoginController::class, 'changePassword'])->name('profil.ubah-password.post')->middleware('throttle:6,1');
 
     // Pengajuan Cuti (Pegawai)
     Route::get('/pengajuan/create', [PengajuanCutiController::class, 'create'])->name('pengajuan.create');
@@ -99,14 +99,14 @@ Route::middleware(['auth'])->group(function () {
 
         // Backup Database & Telegram
         Route::get('/backup', [\App\Http\Controllers\Admin\BackupController::class, 'index'])->name('admin.backup.index');
-        Route::post('/backup/proses', [\App\Http\Controllers\Admin\BackupController::class, 'prosesBackup'])->name('admin.backup.proses');
+        Route::post('/backup/proses', [\App\Http\Controllers\Admin\BackupController::class, 'prosesBackup'])->middleware('throttle:5,1')->name('admin.backup.proses');
         Route::get('/backup/unduh/{filename}', [\App\Http\Controllers\Admin\BackupController::class, 'unduh'])->name('admin.backup.unduh');
 
         // Pengaturan Sistem & Integrasi (Telegram, WAHA, reCAPTCHA, Profil)
         Route::get('/setting', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.setting.index');
         Route::match(['post', 'put'], '/setting', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('admin.setting.update');
-        Route::match(['get', 'post', 'put'], '/setting/test-telegram', [\App\Http\Controllers\Admin\SettingController::class, 'testTelegram'])->name('admin.setting.test-telegram');
-        Route::match(['get', 'post', 'put'], '/setting/detect-telegram-chat-id', [\App\Http\Controllers\Admin\SettingController::class, 'detectTelegramChatId'])->name('admin.setting.detect-telegram-chat-id');
-        Route::match(['get', 'post', 'put'], '/setting/test-whatsapp', [\App\Http\Controllers\Admin\SettingController::class, 'testWhatsApp'])->name('admin.setting.test-whatsapp');
+        Route::match(['get', 'post', 'put'], '/setting/test-telegram', [\App\Http\Controllers\Admin\SettingController::class, 'testTelegram'])->middleware('throttle:10,1')->name('admin.setting.test-telegram');
+        Route::match(['get', 'post', 'put'], '/setting/detect-telegram-chat-id', [\App\Http\Controllers\Admin\SettingController::class, 'detectTelegramChatId'])->middleware('throttle:10,1')->name('admin.setting.detect-telegram-chat-id');
+        Route::match(['get', 'post', 'put'], '/setting/test-whatsapp', [\App\Http\Controllers\Admin\SettingController::class, 'testWhatsApp'])->middleware('throttle:10,1')->name('admin.setting.test-whatsapp');
     });
 });

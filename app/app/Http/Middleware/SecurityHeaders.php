@@ -18,8 +18,8 @@ class SecurityHeaders
 
         // ── Header yang selalu aktif (local & production) ──────────────────────
 
-        // Cegah halaman dimuat dalam iframe (Clickjacking)
-        $response->headers->set('X-Frame-Options', 'DENY');
+        // Cegah halaman dimuat dalam iframe situs lain (Clickjacking & Defacement Iframe)
+        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
 
         // Cegah browser menebak-nebak tipe konten (MIME Sniffing)
         $response->headers->set('X-Content-Type-Options', 'nosniff');
@@ -29,6 +29,14 @@ class SecurityHeaders
 
         // Batasi informasi referrer yang dikirim ke situs lain
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+        // Anti-Cache pada rute autentikasi & halaman terautentikasi
+        // (mencegah kebocoran data pribadi, saldo cuti, dan formulir di komputer kantor bersama)
+        if ($request->user() || $request->is('login*', 'admin*', 'pengajuan*', 'approval*', 'profil*', 'dokumen*')) {
+            $response->headers->set('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate');
+            $response->headers->set('Pragma', 'no-cache');
+            $response->headers->set('Expires', 'Sun, 02 Jan 1990 00:00:00 GMT');
+        }
 
         // Nonaktifkan akses browser ke sensor/perangkat keras yang tidak perlu
         // (kamera, mikrofon, geolokasi, USB, payment, dsb.)

@@ -1,0 +1,21 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block access to hidden files and sensitive directories
+    RewriteRule (^\.|/\.) - [F,L]
+
+    # Block access to sensitive system, config, backup, and log files
+    <FilesMatch "(^\.env|\.git|\.yml|\.yaml|composer\.(json|lock)|package\.(json|lock)|vite\.config\.js|phpunit\.xml|\.sh|\.sql|\.bak|\.swp|\.log)$">
+        <IfModule mod_authz_core.c>
+            Require all denied
+        </IfModule>
+        <IfModule !mod_authz_core.c>
+            Order allow,deny
+            Deny from all
+        </IfModule>
+    </FilesMatch>
+
+    # Route all normal requests to public/
+    RewriteRule ^$ public/ [L]
+    RewriteRule (.*) public/$1 [L]
+</IfModule>
