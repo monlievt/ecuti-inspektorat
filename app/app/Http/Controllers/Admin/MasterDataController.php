@@ -34,12 +34,17 @@ class MasterDataController extends Controller
         $pemetaanAktif = CutiPemetaanAtasan::with(['pegawai', 'atasan'])
             ->aktif()
             ->orderByDesc('berlaku_mulai')
-            ->get();
+            ->orderByDesc('id')
+            ->get()
+            ->unique('pegawai_id')
+            ->values();
+
+        $pemetaanAktifIds = $pemetaanAktif->pluck('id')->toArray();
 
         $pemetaanRiwayat = CutiPemetaanAtasan::with(['pegawai', 'atasan'])
-            ->whereNotNull('berlaku_sampai')
-            ->where('berlaku_sampai', '<', now()->toDateString())
+            ->whereNotIn('id', $pemetaanAktifIds)
             ->orderByDesc('berlaku_sampai')
+            ->orderByDesc('id')
             ->get();
 
         $pemetaan = CutiPemetaanAtasan::with(['pegawai', 'atasan'])->orderByDesc('id')->get();
@@ -56,10 +61,16 @@ class MasterDataController extends Controller
             'berlaku_mulai' => 'required|date',
         ]);
 
-        // Nonaktifkan pemetaan aktif lama untuk pegawai ini
+        $mulai = Carbon::parse($request->berlaku_mulai);
+        $kemarin = $mulai->copy()->subDay()->toDateString();
+
+        // Nonaktifkan semua pemetaan lama yang masih aktif atau tumpang tindih untuk pegawai ini
         CutiPemetaanAtasan::where('pegawai_id', $request->pegawai_id)
-            ->whereNull('berlaku_sampai')
-            ->update(['berlaku_sampai' => Carbon::parse($request->berlaku_mulai)->subDay()->toDateString()]);
+            ->where(function ($q) use ($mulai) {
+                $q->whereNull('berlaku_sampai')
+                  ->orWhere('berlaku_sampai', '>=', $mulai->toDateString());
+            })
+            ->update(['berlaku_sampai' => $kemarin]);
 
         CutiPemetaanAtasan::create([
             'pegawai_id' => $request->pegawai_id,
@@ -84,12 +95,17 @@ class MasterDataController extends Controller
         $pemetaanAktif = CutiPemetaanPejabatBerwenang::with(['unitKerja', 'pejabat', 'jenisCuti'])
             ->aktif()
             ->orderByDesc('berlaku_mulai')
-            ->get();
+            ->orderByDesc('id')
+            ->get()
+            ->unique(fn($item) => ($item->unit_kerja_id ?? 'all') . '_' . $item->jenis_cuti_id)
+            ->values();
+
+        $pemetaanAktifIds = $pemetaanAktif->pluck('id')->toArray();
 
         $pemetaanRiwayat = CutiPemetaanPejabatBerwenang::with(['unitKerja', 'pejabat', 'jenisCuti'])
-            ->whereNotNull('berlaku_sampai')
-            ->where('berlaku_sampai', '<', now()->toDateString())
+            ->whereNotIn('id', $pemetaanAktifIds)
             ->orderByDesc('berlaku_sampai')
+            ->orderByDesc('id')
             ->get();
 
         $pemetaan = CutiPemetaanPejabatBerwenang::with(['unitKerja', 'pejabat', 'jenisCuti'])->orderByDesc('id')->get();
@@ -116,11 +132,17 @@ class MasterDataController extends Controller
             return redirect()->back()->with('error', 'Wewenang Cuti di Luar Tanggungan Negara (CLTN) tidak dapat didelegasikan.');
         }
 
-        // Nonaktifkan pemetaan lama yang konflik
+        $mulai = Carbon::parse($request->berlaku_mulai);
+        $kemarin = $mulai->copy()->subDay()->toDateString();
+
+        // Nonaktifkan pemetaan lama yang konflik atau masih aktif
         CutiPemetaanPejabatBerwenang::where('unit_kerja_id', $request->unit_kerja_id)
             ->where('jenis_cuti_id', $request->jenis_cuti_id)
-            ->whereNull('berlaku_sampai')
-            ->update(['berlaku_sampai' => Carbon::parse($request->berlaku_mulai)->subDay()->toDateString()]);
+            ->where(function ($q) use ($mulai) {
+                $q->whereNull('berlaku_sampai')
+                  ->orWhere('berlaku_sampai', '>=', $mulai->toDateString());
+            })
+            ->update(['berlaku_sampai' => $kemarin]);
 
         CutiPemetaanPejabatBerwenang::create([
             'unit_kerja_id' => $request->unit_kerja_id,

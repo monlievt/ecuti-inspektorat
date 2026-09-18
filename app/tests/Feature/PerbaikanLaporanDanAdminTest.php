@@ -173,6 +173,8 @@ class PerbaikanLaporanDanAdminTest extends TestCase
 
     public function test_pemetaan_atasan_separates_active_and_history_and_can_be_deleted(): void
     {
+        CutiPemetaanAtasan::truncate();
+
         // 1. Pemetaan lama (kedaluwarsa)
         $riwayat = CutiPemetaanAtasan::create([
             'pegawai_id' => $this->regularPegawai->id,
