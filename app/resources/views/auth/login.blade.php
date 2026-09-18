@@ -49,6 +49,19 @@
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white/10 backdrop-blur-md py-8 px-4 shadow-2xl rounded-2xl border border-white/10 sm:px-10">
             
+            <!-- Success Banner -->
+            @if(session('success') || session('status'))
+                <div class="mb-6 rounded-xl bg-emerald-500/20 border border-emerald-500/40 p-4 text-sm text-emerald-200">
+                    <div class="flex items-center gap-2 font-semibold text-emerald-300">
+                        <svg class="h-5 w-5 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        Pemberitahuan:
+                    </div>
+                    <p class="mt-1.5 text-xs text-emerald-100 leading-relaxed">
+                        {{ session('success') ?? session('status') }}
+                    </p>
+                </div>
+            @endif
+
             <!-- Global Error Banner -->
             @if($errors->any() || session('error'))
                 <div class="mb-6 rounded-xl bg-rose-500/20 border border-rose-500/40 p-4 text-sm text-rose-200">

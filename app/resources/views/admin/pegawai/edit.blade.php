@@ -50,10 +50,11 @@
                 </div>
                 <div>
                     <label for="password" class="block text-sm font-semibold text-slate-700">Ganti Password (Opsional)</label>
-                    <input type="password" name="password" id="password" placeholder="Kosongkan jika tak diubah"
-                           class="mt-1.5 block w-full rounded-xl border-slate-300 py-3 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <input type="password" name="password" id="password" placeholder="Kosongkan jika tidak diubah"
+                           class="mt-1.5 block w-full rounded-xl border-slate-300 py-3 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm @error('password') border-red-500 @enderror">
+                    <p class="mt-1.5 text-xs text-slate-500">Kosongkan jika tidak diubah. Jika diubah: minimal 8 karakter, kombinasi huruf besar, huruf kecil, angka, dan simbol khusus (@$!%*#?&). Seluruh sesi akun pegawai akan otomatis dihanguskan.</p>
                     @error('password')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-500 font-medium">{{ $message }}</p>
                     @enderror
                 </div>
             </div>

@@ -7,8 +7,12 @@ use App\Models\Pegawai;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
@@ -160,25 +164,54 @@ class LoginController extends Controller
      */
     public function changePassword(Request $request)
     {
-        $request->validate([
-            'password_lama'     => ['required'],
-            'password_baru'     => ['required', 'min:8', 'confirmed'],
-        ], [
-            'password_lama.required'     => 'Password lama wajib diisi.',
-            'password_baru.required'     => 'Password baru wajib diisi.',
-            'password_baru.min'          => 'Password baru minimal 8 karakter.',
-            'password_baru.confirmed'    => 'Konfirmasi password baru tidak cocok.',
-        ]);
+        $user = Auth::user() ?? $request->user();
 
-        $user = $request->user();
-
-        if (!\Illuminate\Support\Facades\Hash::check($request->password_lama, $user->password)) {
-            return back()->withErrors(['password_lama' => 'Password lama yang Anda masukkan tidak benar.']);
+        if (!$user) {
+            return redirect()->route('login');
         }
 
-        $user->update(['password' => $request->password_baru]);
+        $request->validate([
+            'password_lama' => ['required'],
+            'password_baru' => [
+                'required',
+                'string',
+                'different:password_lama',
+                'confirmed',
+                Password::min(8)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+            ],
+        ], [
+            'password_lama.required'  => 'Kata sandi saat ini wajib diisi.',
+            'password_baru.required'  => 'Kata sandi baru wajib diisi.',
+            'password_baru.different' => 'Kata sandi baru tidak boleh sama dengan kata sandi saat ini.',
+            'password_baru.confirmed' => 'Konfirmasi kata sandi baru tidak cocok.',
+        ]);
 
-        return redirect()->route('profil.ubah-password')->with('success', 'Password berhasil diperbarui. Silakan login kembali jika diperlukan.');
+        if (!Hash::check($request->password_lama, $user->password)) {
+            return back()->withErrors(['password_lama' => 'Kata sandi saat ini yang Anda masukkan salah.']);
+        }
+
+        // 1. Simpan password baru dengan hashing eksplisit & rotasi remember_token
+        $user->password = Hash::make($request->password_baru);
+        $user->setRememberToken(Str::random(60));
+        $user->save();
+
+        // 2. Hanguskan seluruh sesi database untuk user ini (semua perangkat/browser)
+        if (Schema::hasTable('sessions')) {
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+        }
+
+        // 3. Logout dan invalidate sesi saat ini secara menyeluruh
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        \Illuminate\Support\Facades\Log::info("Kata sandi berhasil diubah dan seluruh sesi dihanguskan untuk user: {$user->email}");
+
+        return redirect()->route('login')->with('success', 'Kata sandi akun Anda berhasil diperbarui. Demi standar keamanan, seluruh sesi telah diakhiri. Silakan masuk kembali dengan kata sandi baru Anda.');
     }
 
     /**

@@ -8,6 +8,11 @@ use App\Models\User;
 use App\Models\UnitKerja;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 use Exception;
 use Carbon\Carbon;
 
@@ -116,12 +121,22 @@ class PegawaiController extends Controller
             'tambahan_cuti_bersama' => 'required|integer|min:0',
             'terpakai' => 'required|integer|min:0',
             
-            // Password baru opsional
-            'password' => 'nullable|string|min:6',
+            // Password baru opsional dengan standard keamanan ketat
+            'password' => [
+                'nullable',
+                'string',
+                Password::min(8)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+            ],
         ]);
 
+        $isPasswordChanged = false;
+
         try {
-            DB::transaction(function () use ($request, $pegawai) {
+            DB::transaction(function () use ($request, $pegawai, &$isPasswordChanged) {
                 // 1. Update User Account
                 $userData = [
                     'name' => $request->nama_lengkap,
@@ -131,10 +146,24 @@ class PegawaiController extends Controller
                 ];
 
                 if ($request->filled('password')) {
-                    $userData['password'] = bcrypt($request->password);
+                    $userData['password'] = Hash::make($request->password);
+                    $isPasswordChanged = true;
                 }
 
                 $pegawai->user->update($userData);
+
+                if ($isPasswordChanged) {
+                    $targetUser = $pegawai->user;
+                    $targetUser->setRememberToken(Str::random(60));
+                    $targetUser->save();
+
+                    // Hapus sesi lama di tabel sessions agar seluruh cookie/sesi perangkat lain expired
+                    if (Schema::hasTable('sessions')) {
+                        DB::table('sessions')->where('user_id', $targetUser->id)->delete();
+                    }
+
+                    \Illuminate\Support\Facades\Log::info("Admin mereset kata sandi pegawai {$pegawai->nama_lengkap} (User: {$targetUser->email}). Seluruh sesi aktif dihanguskan.");
+                }
 
                 // 2. Update Profil Pegawai
                 $pegawai->update([
@@ -166,7 +195,15 @@ class PegawaiController extends Controller
                 );
             });
 
-            return redirect()->route('admin.pegawai.index')->with('success', 'Pegawai, akun, dan saldo cuti berhasil diperbarui.');
+            // Jika admin mengganti password akunnya sendiri, logout dan minta login ulang
+            if ($isPasswordChanged && Auth::id() === $pegawai->user_id) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                return redirect()->route('login')->with('success', 'Kata sandi akun Anda berhasil diperbarui. Demi keamanan, silakan masuk kembali.');
+            }
+
+            return redirect()->route('admin.pegawai.index')->with('success', 'Pegawai, akun, dan saldo cuti berhasil diperbarui.' . ($isPasswordChanged ? ' Kata sandi telah diubah dan semua sesi perangkat pegawai tersebut telah dihanguskan.' : ''));
         } catch (Exception $e) {
             return redirect()->back()->withInput()->with('error', 'Gagal memperbarui data: ' . $e->getMessage());
         }
