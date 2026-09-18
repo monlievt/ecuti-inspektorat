@@ -69,6 +69,98 @@ class SaldoCutiService
     }
 
     /**
+     * Hitung rincian sisa cuti per tahun (N-2, N-1, N) secara konsisten dan matematis
+     * berdasarkan aturan FIFO BKN, baik sebelum dan sesudah permohonan cuti diproses.
+     */
+    public function hitungRincianSisaPerTahun(int $pegawaiId, int $tahun, int $hariCutiPengajuan = 0, bool $sudahDipotong = false): array
+    {
+        $saldo = $this->dapatkanAtauBuatSaldo($pegawaiId, $tahun);
+
+        $n2Jatah = $saldo->carry_over_n2;
+        $n1Jatah = $saldo->carry_over_n1;
+        $nJatah = $saldo->jatah_tahun_berjalan + $saldo->tambahan_cuti_bersama;
+
+        // Tentukan total pemakaian sebelum dan setelah pengajuan ini
+        // Pastikan terpakai benar-benar merefleksikan pengurangan cuti
+        if ($sudahDipotong && $saldo->terpakai >= $hariCutiPengajuan) {
+            $terpakaiSebelum = $saldo->terpakai - $hariCutiPengajuan;
+            $terpakaiSetelah = $saldo->terpakai;
+        } else {
+            $terpakaiSebelum = $saldo->terpakai;
+            $terpakaiSetelah = $saldo->terpakai + $hariCutiPengajuan;
+        }
+
+        // Helper fungsi pemecahan FIFO
+        $pecahFifo = function (int $used) use ($n2Jatah, $n1Jatah, $nJatah) {
+            $uN2 = min($n2Jatah, $used);
+            $rem1 = max(0, $used - $n2Jatah);
+
+            $uN1 = min($n1Jatah, $rem1);
+            $rem2 = max(0, $rem1 - $n1Jatah);
+
+            $uN = min($nJatah, $rem2);
+
+            return [
+                'n2' => [
+                    'jatah' => $n2Jatah,
+                    'terpakai' => $uN2,
+                    'sisa' => max(0, $n2Jatah - $uN2),
+                ],
+                'n1' => [
+                    'jatah' => $n1Jatah,
+                    'terpakai' => $uN1,
+                    'sisa' => max(0, $n1Jatah - $uN1),
+                ],
+                'n' => [
+                    'jatah' => $nJatah,
+                    'terpakai' => $uN,
+                    'sisa' => max(0, $nJatah - $uN),
+                ],
+                'total_sisa' => max(0, $n2Jatah - $uN2) + max(0, $n1Jatah - $uN1) + max(0, $nJatah - $uN),
+            ];
+        };
+
+        $sebelum = $pecahFifo($terpakaiSebelum);
+        $setelah = $pecahFifo($terpakaiSetelah);
+
+        // Berapa hari terpotong per tahun spesifik untuk pengajuan ini
+        $potongN2 = $sebelum['n2']['sisa'] - $setelah['n2']['sisa'];
+        $potongN1 = $sebelum['n1']['sisa'] - $setelah['n1']['sisa'];
+        $potongN  = $sebelum['n']['sisa'] - $setelah['n']['sisa'];
+
+        return [
+            'tahun_n' => $tahun,
+            'tahun_n1' => $tahun - 1,
+            'tahun_n2' => $tahun - 2,
+            'n2' => [
+                'tahun' => $tahun - 2,
+                'jatah' => $n2Jatah,
+                'sisa_sebelum' => $sebelum['n2']['sisa'],
+                'potong' => $potongN2,
+                'sisa_akhir' => $setelah['n2']['sisa'],
+            ],
+            'n1' => [
+                'tahun' => $tahun - 1,
+                'jatah' => $n1Jatah,
+                'sisa_sebelum' => $sebelum['n1']['sisa'],
+                'potong' => $potongN1,
+                'sisa_akhir' => $setelah['n1']['sisa'],
+            ],
+            'n' => [
+                'tahun' => $tahun,
+                'jatah' => $nJatah,
+                'sisa_sebelum' => $sebelum['n']['sisa'],
+                'potong' => $potongN,
+                'sisa_akhir' => $setelah['n']['sisa'],
+            ],
+            'total_sisa_sebelum' => $sebelum['total_sisa'],
+            'hari_cuti_diajukan' => $hariCutiPengajuan,
+            'total_sisa_akhir' => $setelah['total_sisa'],
+            'sudah_dipotong' => $sudahDipotong,
+        ];
+    }
+
+    /**
      * Simulasikan pengurangan cuti dari komponen saldo (terlama dulu) tanpa mengubah database.
      * Alur deduction:
      * 1. carry_over_n2

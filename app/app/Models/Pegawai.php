@@ -72,7 +72,7 @@ class Pegawai extends Model
      */
     public function getMasaKerjaBulanAttribute(): int
     {
-        return $this->tmt_cpns->diffInMonths(now());
+        return (int) $this->tmt_cpns->diffInMonths(now());
     }
 
     /**

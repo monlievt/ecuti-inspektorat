@@ -27,6 +27,24 @@ class SuratCutiPdfService
         // Ambil data saldo breakdown
         $saldoBreakdown = $this->saldoCutiService->breakdown($pegawai->id, $tahun);
 
+        // Hitung apakah permohonan ini sudah memotong saldo di DB
+        $sudahDipotong = in_array($pengajuan->status, [
+            CutiPengajuan::STATUS_DITERBITKAN,
+            CutiPengajuan::STATUS_DIPANGGIL_KEMBALI,
+        ]);
+
+        $hariCutiPengajuan = ($pengajuan->jenisCuti?->kode === \App\Models\CutiJenis::TAHUNAN)
+            ? (int) $pengajuan->jumlah_hari_kerja
+            : 0;
+
+        // Ambil rincian sisa per tahun (N-2, N-1, N) secara konsisten dan akurat
+        $detailSaldo = $this->saldoCutiService->hitungRincianSisaPerTahun(
+            $pegawai->id,
+            $tahun,
+            $hariCutiPengajuan,
+            $sudahDipotong
+        );
+
         // Ambil log approval atasan
         $approvalAtasan = $pengajuan->approvalLogs()
             ->where('peran_aktor', 'atasan_langsung')
@@ -41,16 +59,56 @@ class SuratCutiPdfService
             ->latest()
             ->first();
 
+        // Evaluasi tanda centang pertimbangan atasan langsung
+        $isAtasanSetuju = ($approvalAtasan !== null) || in_array($pengajuan->status, [
+            CutiPengajuan::STATUS_DISETUJUI_ATASAN,
+            CutiPengajuan::STATUS_MENUNGGU_PYBMC,
+            CutiPengajuan::STATUS_DISETUJUI_PYBMC,
+            CutiPengajuan::STATUS_DITANGGUHKAN_PYBMC,
+            CutiPengajuan::STATUS_DITOLAK_PYBMC,
+            CutiPengajuan::STATUS_IZIN_SEMENTARA_AKTIF,
+            CutiPengajuan::STATUS_MENUNGGU_RATIFIKASI,
+            CutiPengajuan::STATUS_DIRATIFIKASI,
+            CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
+            CutiPengajuan::STATUS_DITERBITKAN,
+            CutiPengajuan::STATUS_DIPANGGIL_KEMBALI,
+        ]);
+        $isAtasanRevisi = ($pengajuan->status === CutiPengajuan::STATUS_DIREVISI);
+        $isAtasanTolak = ($pengajuan->status === CutiPengajuan::STATUS_DITOLAK_ATASAN);
+
+        // Evaluasi tanda centang keputusan PyBMC
+        $isPybmcSetuju = ($approvalPybmc !== null) || in_array($pengajuan->status, [
+            CutiPengajuan::STATUS_DISETUJUI_PYBMC,
+            CutiPengajuan::STATUS_DIRATIFIKASI,
+            CutiPengajuan::STATUS_DITERBITKAN,
+            CutiPengajuan::STATUS_DIPANGGIL_KEMBALI,
+            CutiPengajuan::STATUS_IZIN_SEMENTARA_AKTIF,
+        ]);
+        $isPybmcTangguh = ($pengajuan->status === CutiPengajuan::STATUS_DITANGGUHKAN_PYBMC);
+        $isPybmcTolak = in_array($pengajuan->status, [
+            CutiPengajuan::STATUS_DITOLAK_PYBMC,
+            CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
+        ]);
+
         $satuanLabel = str_replace('_', ' ', $pengajuan->satuan_hari);
+        $durasiTerbilang = $this->terbilang((int) $pengajuan->jumlah_hari_kerja);
 
         $data = [
             'pengajuan' => $pengajuan,
             'pegawai' => $pegawai,
             'jenisCuti' => $pengajuan->jenisCuti,
             'saldoBreakdown' => $saldoBreakdown,
+            'detailSaldo' => $detailSaldo,
             'approvalAtasan' => $approvalAtasan,
             'approvalPybmc' => $approvalPybmc,
+            'isAtasanSetuju' => $isAtasanSetuju,
+            'isAtasanRevisi' => $isAtasanRevisi,
+            'isAtasanTolak' => $isAtasanTolak,
+            'isPybmcSetuju' => $isPybmcSetuju,
+            'isPybmcTangguh' => $isPybmcTangguh,
+            'isPybmcTolak' => $isPybmcTolak,
             'satuanLabel' => $satuanLabel,
+            'durasiTerbilang' => $durasiTerbilang,
             'nomorSurat' => $pengajuan->suratTerbit?->nomor_surat ?? '-',
             'tanggalSurat' => $pengajuan->created_at->translatedFormat('d F Y'),
             'tanggalMulai' => $pengajuan->tanggal_mulai->translatedFormat('d F Y'),

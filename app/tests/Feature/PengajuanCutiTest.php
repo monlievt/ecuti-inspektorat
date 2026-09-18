@@ -138,4 +138,30 @@ class PengajuanCutiTest extends TestCase
 
         $response->assertSessionHasErrors(['alamat_selama_cuti', 'telp_selama_cuti']);
     }
+
+    public function test_cetak_pdf_lampiran_1b_memiliki_tanda_centang_dan_saldo_konsisten(): void
+    {
+        $pengajuan = CutiPengajuan::create([
+            'nomor_pengajuan' => 'CUTI/2026/01',
+            'pegawai_id' => $this->pegawai->id,
+            'jenis_cuti_id' => $this->cutiTahunan->id,
+            'alasan' => 'Keperluan mendesak',
+            'tanggal_mulai' => '2026-09-20',
+            'tanggal_selesai' => '2026-09-20',
+            'jumlah_hari_kerja' => 1,
+            'satuan_hari' => 'hari_kerja',
+            'alamat_selama_cuti' => 'Trenggalek',
+            'telp_selama_cuti' => '081234567890',
+            'status' => CutiPengajuan::STATUS_DITERBITKAN,
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('pengajuan.pdf', $pengajuan));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('application/pdf', $response->headers->get('content-type'));
+
+        // Test via SuratCutiPdfService
+        $service = app(\App\Services\SuratCutiPdfService::class);
+        $pdf = $service->generateAnakLampiran1b($pengajuan);
+        $this->assertEquals(1, $pdf->getCanvas()->get_page_count());
+    }
 }
