@@ -10,23 +10,23 @@
             <h2 class="text-2xl font-bold tracking-tight text-slate-900">Rekapitulasi Pengajuan Cuti</h2>
             <p class="mt-1 text-sm text-slate-500">Laporan pemanfaatan dan riwayat pengajuan cuti seluruh pegawai di Inspektorat Kabupaten Trenggalek.</p>
         </div>
-        <div class="mt-4 sm:ml-4 sm:mt-0 flex flex-wrap gap-2.5">
+        <div class="mt-4 sm:ml-4 sm:mt-0" style="display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 12px !important;">
             <a href="{{ route('admin.laporan.ekspor-excel', request()->query()) }}" 
-               style="background-color: #059669; color: #ffffff;"
-               class="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm hover:opacity-90 transition shadow-emerald-500/20">
-                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+               style="background-color: #059669 !important; color: #ffffff !important; display: inline-flex !important; align-items: center !important; gap: 8px !important; margin: 2px !important; padding: 10px 18px !important; border-radius: 12px !important;"
+               class="text-sm font-semibold shadow-sm hover:opacity-90 transition">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Ekspor Excel / CSV
             </a>
             <a href="{{ route('admin.laporan.ekspor-pdf', array_merge(request()->query(), ['download' => 1])) }}"
-               style="background-color: #e11d48; color: #ffffff;"
-               class="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm hover:opacity-90 transition shadow-rose-500/20">
-                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+               style="background-color: #e11d48 !important; color: #ffffff !important; display: inline-flex !important; align-items: center !important; gap: 8px !important; margin: 2px !important; padding: 10px 18px !important; border-radius: 12px !important;"
+               class="text-sm font-semibold shadow-sm hover:opacity-90 transition">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 Unduh PDF
             </a>
             <a href="{{ route('admin.laporan.ekspor-pdf', request()->query()) }}" target="_blank"
-               style="background-color: #475569; color: #ffffff;"
-               class="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm hover:opacity-90 transition shadow-slate-500/20">
-                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+               style="background-color: #475569 !important; color: #ffffff !important; display: inline-flex !important; align-items: center !important; gap: 8px !important; margin: 2px !important; padding: 10px 18px !important; border-radius: 12px !important;"
+               class="text-sm font-semibold shadow-sm hover:opacity-90 transition">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                 Cetak / Pratinjau
             </a>
         </div>

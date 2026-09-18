@@ -96,14 +96,14 @@
 
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" x-data="{ showLama: false, showBaru: false, showKonf: false }">
         <!-- User Info Header -->
-        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/70" style="padding: 16px 24px !important;">
-            <div class="flex items-center gap-3.5">
-                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
+        <div style="padding: 18px 24px !important; border-bottom: 1px solid #f1f5f9 !important; background-color: #f8fafc !important;">
+            <div style="display: flex !important; align-items: center !important; gap: 16px !important;">
+                <div style="width: 44px !important; height: 44px !important; min-width: 44px !important; border-radius: 12px !important; background: linear-gradient(135deg, #4f46e5, #7c3aed) !important; color: #ffffff !important; font-weight: 700 !important; font-size: 18px !important; display: flex !important; align-items: center !important; justify-content: center !important; flex-shrink: 0 !important; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2) !important;">
                     {{ substr(auth()->user()->name, 0, 1) }}
                 </div>
-                <div>
-                    <p class="text-sm font-bold text-slate-900">{{ auth()->user()->name }}</p>
-                    <p class="text-xs text-slate-500 font-medium">{{ auth()->user()->email }}</p>
+                <div style="display: flex !important; flex-direction: column !important; justify-content: center !important; margin-left: 6px !important;">
+                    <p style="font-size: 15px !important; font-weight: 700 !important; color: #0f172a !important; margin: 0 !important; line-height: 1.3 !important;">{{ auth()->user()->name }}</p>
+                    <p style="font-size: 12px !important; color: #64748b !important; margin: 3px 0 0 0 !important; line-height: 1.2 !important;">{{ auth()->user()->email }}</p>
                 </div>
             </div>
         </div>
