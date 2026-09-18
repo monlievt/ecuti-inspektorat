@@ -164,4 +164,70 @@ class PengajuanCutiTest extends TestCase
         $pdf = $service->generateAnakLampiran1b($pengajuan);
         $this->assertEquals(1, $pdf->getCanvas()->get_page_count());
     }
+
+    public function test_pengajuan_cuti_oleh_inspektur_langsung_terbit_dan_berkas_pengantar_siap(): void
+    {
+        $unitKerja = UnitKerja::first();
+
+        $inspekturUser = User::create([
+            'name' => 'Ir. WIJIONO, S.T., M.MKes.',
+            'email' => 'wijiono@trenggalek.test',
+            'password' => bcrypt('password'),
+            'role' => 'pegawai',
+        ]);
+
+        $inspekturPegawai = Pegawai::create([
+            'user_id' => $inspekturUser->id,
+            'nip' => '197308051997031007',
+            'nama_lengkap' => 'Ir. WIJIONO, S.T., M.MKes.',
+            'jenis_kelamin' => 'L',
+            'tmt_cpns' => Carbon::parse('1997-03-01'),
+            'pangkat_golongan' => 'IV/a - Pembina',
+            'jabatan' => 'Plt. INSPEKTUR KABUPATEN TRENGGALEK',
+            'unit_kerja_id' => $unitKerja->id,
+            'jenis_pegawai' => 'PNS',
+            'nomor_hp' => '085649862921',
+            'aktif' => true,
+        ]);
+
+        CutiSaldoTahunan::create([
+            'pegawai_id' => $inspekturPegawai->id,
+            'tahun' => now()->year,
+            'jatah_tahun_berjalan' => 12,
+            'carry_over_n1' => 6,
+            'carry_over_n2' => 0,
+            'terpakai' => 0,
+        ]);
+
+        $tgl = Carbon::parse('next tuesday')->toDateString();
+
+        $response = $this->actingAs($inspekturUser)->post(route('pengajuan.store'), [
+            'jenis_cuti_id' => $this->cutiTahunan->id,
+            'alasan' => 'Keperluan keluarga penting',
+            'tanggal_mulai' => $tgl,
+            'tanggal_selesai' => $tgl,
+            'alamat_selama_cuti' => 'Trenggalek',
+            'telp_selama_cuti' => '085649862921',
+        ]);
+
+        $pengajuan = CutiPengajuan::where('pegawai_id', $inspekturPegawai->id)->latest()->first();
+        $this->assertNotNull($pengajuan);
+        $response->assertRedirect(route('pengajuan.show', $pengajuan));
+
+        // Status langsung diterbitkan
+        $this->assertEquals(CutiPengajuan::STATUS_DITERBITKAN, $pengajuan->status);
+
+        // Saldo otomatis terpotong 1 hari
+        $saldo = CutiSaldoTahunan::where('pegawai_id', $inspekturPegawai->id)->where('tahun', now()->year)->first();
+        $this->assertEquals(1, $saldo->terpakai);
+
+        // Dokumen Lampiran 1b bisa diakses
+        $resPdf1b = $this->actingAs($inspekturUser)->get(route('pengajuan.pdf', $pengajuan));
+        $resPdf1b->assertStatus(200);
+
+        // Dokumen Surat Pengantar Bupati bisa diakses
+        $resPengantar = $this->actingAs($inspekturUser)->get(route('pengajuan.surat-izin-pdf', $pengajuan));
+        $resPengantar->assertStatus(200);
+        $this->assertStringContainsString('application/pdf', $resPengantar->headers->get('content-type'));
+    }
 }

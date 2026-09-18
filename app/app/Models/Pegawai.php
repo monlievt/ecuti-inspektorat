@@ -82,4 +82,14 @@ class Pegawai extends Model
     {
         return $this->masa_kerja_bulan >= 12;
     }
+
+    /**
+     * Cek apakah pegawai ini adalah pimpinan tertinggi instansi (Inspektur atau Plt. Inspektur).
+     */
+    public function isInspektur(): bool
+    {
+        $jabatanUpper = strtoupper($this->jabatan ?? '');
+        return \Illuminate\Support\Str::contains($jabatanUpper, 'INSPEKTUR') 
+            && !\Illuminate\Support\Str::contains($jabatanUpper, 'PEMBANTU');
+    }
 }

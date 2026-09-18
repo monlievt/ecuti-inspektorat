@@ -94,7 +94,7 @@
             <td style="width: 42%; font-size: 8.5pt;">
                 Trenggalek, {{ $tanggalSurat }}<br>
                 Kepada Yth.<br>
-                {{ $approvalPybmc ? $approvalPybmc->aktor->name : 'Inspektur Kabupaten Trenggalek' }}<br>
+                {{ $tujuanSurat ?? ($approvalPybmc ? $approvalPybmc->aktor->name : 'Inspektur Kabupaten Trenggalek') }}<br>
                 di -<br>
                 <span style="font-weight: bold;">TRENGGALEK</span>
             </td>
@@ -293,12 +293,15 @@
             <td style="width: 50%; padding: 4px 6px;">
                 Catatan: {{ $approvalAtasan?->catatan ?: '-' }}
                 <div class="signature-box" style="margin-top: 6px;">
-                    Atasan Langsung,<br>
-                    @if($approvalAtasan)
+                    @if(!empty($isInspektur))
+                        Sekretaris Daerah Kabupaten Trenggalek,<br><br><br>
+                        (.......................................................)
+                    @elseif($approvalAtasan)
+                        Atasan Langsung,<br>
                         <span style="font-size: 7.5pt; color: #555;">[Disetujui Elektronik: {{ $approvalAtasan->created_at->format('d/m/Y') }}]</span><br>
                         <span style="font-weight: bold; text-decoration: underline;">{{ $approvalAtasan->aktor->name }}</span>
                     @else
-                        <br>
+                        Atasan Langsung,<br><br>
                         (.......................................................)
                     @endif
                 </div>
@@ -319,12 +322,15 @@
                 <td style="width: 50%; padding: 4px 6px;">
                     Catatan: {{ $approvalPybmc?->catatan ?: '-' }}
                     <div class="signature-box" style="margin-top: 6px;">
-                        Pejabat Yang Berwenang Memberikan Cuti,<br>
-                        @if($approvalPybmc)
+                        @if(!empty($isInspektur))
+                            Bupati Trenggalek,<br><br><br>
+                            (.......................................................)
+                        @elseif($approvalPybmc)
+                            Pejabat Yang Berwenang Memberikan Cuti,<br>
                             <span style="font-size: 7.5pt; color: #555;">[Disetujui Elektronik: {{ $approvalPybmc->created_at->format('d/m/Y') }}]</span><br>
                             <span style="font-weight: bold; text-decoration: underline;">{{ $approvalPybmc->aktor->name }}</span>
                         @else
-                            <br>
+                            Pejabat Yang Berwenang Memberikan Cuti,<br><br>
                             (.......................................................)
                         @endif
                     </div>

@@ -143,7 +143,31 @@ class PengajuanCutiController extends Controller
                 ]);
             }
 
-            // Jalankan transisi awal ke 'menunggu_atasan'
+            // Jika pemohon adalah Inspektur / Plt. Inspektur: Auto-ACC di internal Inspektorat
+            if ($pegawai->isInspektur()) {
+                $tahun = now()->year;
+                $counter = \App\Models\CutiSuratTerbit::whereYear('tanggal_terbit', $tahun)->count() + 1;
+                $nomorSurat = sprintf("800.1.11.4/%04d/406.008/%d", $counter, $tahun);
+
+                \App\Models\CutiSuratTerbit::create([
+                    'pengajuan_id' => $pengajuan->id,
+                    'nomor_surat' => $nomorSurat,
+                    'ditandatangani_oleh' => $pegawai->id,
+                    'tanggal_terbit' => now()->toDateString(),
+                    'path_pdf' => "cuti_surat/{$pengajuan->nomor_pengajuan}.pdf",
+                ]);
+
+                // Transisi bertahap sesuai state machine hingga status final 'diterbitkan'
+                $this->workflowService->transisi($pengajuan, CutiPengajuan::STATUS_MENUNGGU_ATASAN, $request->user(), 'sistem');
+                $this->workflowService->transisi($pengajuan, CutiPengajuan::STATUS_DISETUJUI_ATASAN, $request->user(), 'sistem', 'Pengajuan cuti pimpinan tertinggi OPD');
+                $this->workflowService->transisi($pengajuan, CutiPengajuan::STATUS_MENUNGGU_PYBMC, $request->user(), 'sistem');
+                $this->workflowService->transisi($pengajuan, CutiPengajuan::STATUS_DISETUJUI_PYBMC, $request->user(), 'sistem', 'Pengajuan cuti pimpinan tertinggi OPD');
+                $this->workflowService->transisi($pengajuan, CutiPengajuan::STATUS_DITERBITKAN, $request->user(), 'sistem');
+
+                return redirect()->route('pengajuan.show', $pengajuan)->with('success', 'Permohonan cuti Inspektur berhasil diproses otomatis. Berkas Formulir Usulan (Lampiran 1.b) dan Surat Pengantar ke Bupati telah siap diunduh/dicetak.');
+            }
+
+            // Untuk pegawai lainnya: Jalankan alur normal ke 'menunggu_atasan'
             $this->workflowService->transisi(
                 $pengajuan,
                 CutiPengajuan::STATUS_MENUNGGU_ATASAN,
@@ -256,10 +280,15 @@ class PengajuanCutiController extends Controller
             }
         }
 
-        // Generate PDF Surat Izin Cuti Resmi Inspektorat
-        $pdf = $pdfService->generateSuratIzinInspektorat($pengajuan);
+        // Generate PDF Surat Izin Cuti Resmi Inspektorat (atau Surat Pengantar ke Bupati jika pemohon Inspektur)
+        if ($pengajuan->pegawai->isInspektur()) {
+            $pdf = $pdfService->generateSuratPengantarBupati($pengajuan);
+            $filename = "surat_pengantar_cuti_bupati_" . str_replace('/', '_', $pengajuan->nomor_pengajuan) . ".pdf";
+        } else {
+            $pdf = $pdfService->generateSuratIzinInspektorat($pengajuan);
+            $filename = "surat_izin_cuti_inspektorat_" . str_replace('/', '_', $pengajuan->nomor_pengajuan) . ".pdf";
+        }
         
-        $filename = "surat_izin_cuti_inspektorat_" . str_replace('/', '_', $pengajuan->nomor_pengajuan) . ".pdf";
         return $pdf->stream($filename);
     }
 
