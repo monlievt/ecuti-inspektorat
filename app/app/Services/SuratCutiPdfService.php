@@ -75,7 +75,9 @@ class SuratCutiPdfService
 
             $tujuanSurat = 'Bupati Trenggalek';
             $atasanNama = 'Sekretaris Daerah Kabupaten Trenggalek';
+            $atasanNip = null;
             $pybmcNama = 'Bupati Trenggalek';
+            $pybmcNip = null;
         } else {
             $isAtasanSetuju = ($approvalAtasan !== null) || in_array($pengajuan->status, [
                 CutiPengajuan::STATUS_DISETUJUI_ATASAN,
@@ -106,9 +108,46 @@ class SuratCutiPdfService
                 CutiPengajuan::STATUS_DITOLAK_PYBMC,
                 CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
             ]);
-            $tujuanSurat = $approvalPybmc ? $approvalPybmc->aktor->name : 'Inspektur Kabupaten Trenggalek';
-            $atasanNama = $approvalAtasan ? $approvalAtasan->aktor->name : null;
-            $pybmcNama = $approvalPybmc ? $approvalPybmc->aktor->name : null;
+
+            // Ambil data Pegawai Atasan Langsung (Nama & NIP)
+            $atasanPegawai = $approvalAtasan?->aktor?->pegawai 
+                ?? ($approvalAtasan ? \App\Models\Pegawai::where('user_id', $approvalAtasan->aktor_id)->first() : null)
+                ?? \App\Models\CutiPemetaanAtasan::where('pegawai_id', $pegawai->id)->aktif()->first()?->atasan;
+
+            $atasanNama = $atasanPegawai?->nama_lengkap ?? $approvalAtasan?->aktor?->name ?? null;
+            $atasanNip = $atasanPegawai?->nip ?? null;
+
+            // Ambil data Pegawai PyBMC (Nama & NIP)
+            $pybmcPegawai = $approvalPybmc?->aktor?->pegawai 
+                ?? ($approvalPybmc ? \App\Models\Pegawai::where('user_id', $approvalPybmc->aktor_id)->first() : null);
+
+            if (!$pybmcPegawai) {
+                // Cek dari pendelegasian wewenang PyBMC aktif
+                $delegasiPybmc = \App\Models\CutiPemetaanPejabatBerwenang::where(function($q) use ($pegawai) {
+                        $q->where('unit_kerja_id', $pegawai->unit_kerja_id)->orWhereNull('unit_kerja_id');
+                    })
+                    ->where(function($q) use ($pengajuan) {
+                        $q->where('jenis_cuti_id', $pengajuan->jenis_cuti_id)->orWhereNull('jenis_cuti_id');
+                    })
+                    ->aktif()
+                    ->latest('id')
+                    ->first();
+
+                $pybmcPegawai = $delegasiPybmc?->pejabat;
+            }
+
+            if (!$pybmcPegawai) {
+                // Default Inspektur (pimpinan tertinggi instansi)
+                $pybmcPegawai = \App\Models\Pegawai::where('jabatan', 'LIKE', '%INSPEKTUR%')
+                    ->where('jabatan', 'NOT LIKE', '%PEMBANTU%')
+                    ->where('aktif', true)
+                    ->first();
+            }
+
+            $pybmcNama = $pybmcPegawai?->nama_lengkap ?? $approvalPybmc?->aktor?->name ?? null;
+            $pybmcNip = $pybmcPegawai?->nip ?? null;
+
+            $tujuanSurat = $pybmcNama ?: 'Inspektur Kabupaten Trenggalek';
         }
 
         $satuanLabel = str_replace('_', ' ', $pengajuan->satuan_hari);
@@ -125,7 +164,9 @@ class SuratCutiPdfService
             'isInspektur' => $isInspektur,
             'tujuanSurat' => $tujuanSurat,
             'atasanNama' => $atasanNama,
+            'atasanNip' => $atasanNip,
             'pybmcNama' => $pybmcNama,
+            'pybmcNip' => $pybmcNip,
             'isAtasanSetuju' => $isAtasanSetuju,
             'isAtasanRevisi' => $isAtasanRevisi,
             'isAtasanTolak' => $isAtasanTolak,
