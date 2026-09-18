@@ -34,7 +34,7 @@ class PejabatBerwenangController extends Controller
         if ($isInspektur) {
             // Pimpinan Tertinggi (Inspektur) memiliki wewenang PyBMC penuh untuk seluruh pegawai OPD
             $pengajuanMenunggu = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti'])
-                ->where('status', CutiPengajuan::STATUS_MENUNGGU_PYBMC)
+                ->whereIn('status', [CutiPengajuan::STATUS_MENUNGGU_PYBMC, 'menunggu_pybmc'])
                 ->orderBy('created_at', 'asc')
                 ->get();
 
