@@ -170,4 +170,66 @@ class PerbaikanLaporanDanAdminTest extends TestCase
             'nomor_sk_delegasi' => null,
         ]);
     }
+
+    public function test_pemetaan_atasan_separates_active_and_history_and_can_be_deleted(): void
+    {
+        // 1. Pemetaan lama (kedaluwarsa)
+        $riwayat = CutiPemetaanAtasan::create([
+            'pegawai_id' => $this->regularPegawai->id,
+            'atasan_id' => $this->wijionoPegawai->id,
+            'berlaku_mulai' => '2025-01-01',
+            'berlaku_sampai' => '2025-12-31',
+        ]);
+
+        // 2. Pemetaan baru (aktif)
+        $aktif = CutiPemetaanAtasan::create([
+            'pegawai_id' => $this->regularPegawai->id,
+            'atasan_id' => $this->wijionoPegawai->id,
+            'berlaku_mulai' => '2026-01-01',
+            'berlaku_sampai' => null,
+        ]);
+
+        $response = $this->actingAs($this->adminUser)->get(route('admin.master.atasan'));
+        $response->assertStatus(200);
+        $response->assertViewHas('pemetaanAktif', function ($collection) use ($aktif) {
+            return $collection->contains('id', $aktif->id);
+        });
+        $response->assertViewHas('pemetaanRiwayat', function ($collection) use ($riwayat) {
+            return $collection->contains('id', $riwayat->id);
+        });
+
+        // Test delete pemetaan
+        $responseDelete = $this->actingAs($this->adminUser)->delete(route('admin.master.atasan.destroy', $riwayat->id));
+        $responseDelete->assertRedirect(route('admin.master.atasan'));
+        $this->assertDatabaseMissing('cuti_pemetaan_atasan', ['id' => $riwayat->id]);
+        $this->assertDatabaseHas('cuti_pemetaan_atasan', ['id' => $aktif->id]);
+    }
+
+    public function test_pemetaan_pejabat_can_be_deleted(): void
+    {
+        $jenisCuti = CutiJenis::firstOrCreate(
+            ['kode' => CutiJenis::TAHUNAN],
+            [
+                'nama' => 'Cuti Tahunan',
+                'kuota_tahunan' => 12,
+                'maksimal_hari_berurutan' => 12,
+                'butuh_lampiran' => false,
+                'pengurangan_saldo' => true,
+                'aktif' => true,
+            ]
+        );
+
+        $delegasi = CutiPemetaanPejabatBerwenang::create([
+            'unit_kerja_id' => $this->unitKerja->id,
+            'pejabat_id' => $this->wijionoPegawai->id,
+            'jenis_cuti_id' => $jenisCuti->id,
+            'nomor_sk_delegasi' => 'SK/01/TEST',
+            'berlaku_mulai' => '2026-01-01',
+            'berlaku_sampai' => null,
+        ]);
+
+        $responseDelete = $this->actingAs($this->adminUser)->delete(route('admin.master.pejabat.destroy', $delegasi->id));
+        $responseDelete->assertRedirect(route('admin.master.pejabat'));
+        $this->assertDatabaseMissing('cuti_pemetaan_pejabat_berwenang', ['id' => $delegasi->id]);
+    }
 }

@@ -31,9 +31,21 @@ class MasterDataController extends Controller
 
     public function pemetaanAtasan()
     {
-        $pemetaan = CutiPemetaanAtasan::with(['pegawai', 'atasan'])->get();
+        $pemetaanAktif = CutiPemetaanAtasan::with(['pegawai', 'atasan'])
+            ->aktif()
+            ->orderByDesc('berlaku_mulai')
+            ->get();
+
+        $pemetaanRiwayat = CutiPemetaanAtasan::with(['pegawai', 'atasan'])
+            ->whereNotNull('berlaku_sampai')
+            ->where('berlaku_sampai', '<', now()->toDateString())
+            ->orderByDesc('berlaku_sampai')
+            ->get();
+
+        $pemetaan = CutiPemetaanAtasan::with(['pegawai', 'atasan'])->orderByDesc('id')->get();
         $pegawai = Pegawai::where('aktif', true)->orderBy('nama_lengkap')->get();
-        return view('admin.master.atasan', compact('pemetaan', 'pegawai'));
+
+        return view('admin.master.atasan', compact('pemetaan', 'pemetaanAktif', 'pemetaanRiwayat', 'pegawai'));
     }
 
     public function storePemetaanAtasan(Request $request)
@@ -59,16 +71,33 @@ class MasterDataController extends Controller
         return redirect()->route('admin.master.atasan')->with('success', 'Pemetaan Atasan Langsung berhasil disimpan.');
     }
 
+    public function destroyPemetaanAtasan(CutiPemetaanAtasan $pemetaan)
+    {
+        $pemetaan->delete();
+        return redirect()->route('admin.master.atasan')->with('success', 'Data pemetaan atasan berhasil dihapus.');
+    }
+
     // ── 2. Pemetaan Pejabat Berwenang (PyBMC) ───────────────────────────────
 
     public function pemetaanPejabat()
     {
-        $pemetaan = CutiPemetaanPejabatBerwenang::with(['unitKerja', 'pejabat', 'jenisCuti'])->get();
+        $pemetaanAktif = CutiPemetaanPejabatBerwenang::with(['unitKerja', 'pejabat', 'jenisCuti'])
+            ->aktif()
+            ->orderByDesc('berlaku_mulai')
+            ->get();
+
+        $pemetaanRiwayat = CutiPemetaanPejabatBerwenang::with(['unitKerja', 'pejabat', 'jenisCuti'])
+            ->whereNotNull('berlaku_sampai')
+            ->where('berlaku_sampai', '<', now()->toDateString())
+            ->orderByDesc('berlaku_sampai')
+            ->get();
+
+        $pemetaan = CutiPemetaanPejabatBerwenang::with(['unitKerja', 'pejabat', 'jenisCuti'])->orderByDesc('id')->get();
         $unitKerja = UnitKerja::where('aktif', true)->orderBy('nama')->get();
         $pejabat = Pegawai::where('aktif', true)->orderBy('nama_lengkap')->get();
         $jenisCuti = CutiJenis::where('aktif', true)->get();
 
-        return view('admin.master.pejabat', compact('pemetaan', 'unitKerja', 'pejabat', 'jenisCuti'));
+        return view('admin.master.pejabat', compact('pemetaan', 'pemetaanAktif', 'pemetaanRiwayat', 'unitKerja', 'pejabat', 'jenisCuti'));
     }
 
     public function storePemetaanPejabat(Request $request)
@@ -103,6 +132,12 @@ class MasterDataController extends Controller
         ]);
 
         return redirect()->route('admin.master.pejabat')->with('success', 'Delegasi PyBMC berhasil disimpan.');
+    }
+
+    public function destroyPemetaanPejabat(CutiPemetaanPejabatBerwenang $pemetaan)
+    {
+        $pemetaan->delete();
+        return redirect()->route('admin.master.pejabat')->with('success', 'Data delegasi PyBMC berhasil dihapus.');
     }
 
     // ── 3. Hari Libur Nasional ──────────────────────────────────────────────

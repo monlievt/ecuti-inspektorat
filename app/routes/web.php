@@ -77,9 +77,11 @@ Route::middleware(['auth'])->group(function () {
         // Master Data Pemetaan
         Route::get('/master/atasan', [\App\Http\Controllers\Admin\MasterDataController::class, 'pemetaanAtasan'])->name('admin.master.atasan');
         Route::post('/master/atasan', [\App\Http\Controllers\Admin\MasterDataController::class, 'storePemetaanAtasan']);
+        Route::delete('/master/atasan/{pemetaan}', [\App\Http\Controllers\Admin\MasterDataController::class, 'destroyPemetaanAtasan'])->name('admin.master.atasan.destroy');
         
         Route::get('/master/pejabat', [\App\Http\Controllers\Admin\MasterDataController::class, 'pemetaanPejabat'])->name('admin.master.pejabat');
         Route::post('/master/pejabat', [\App\Http\Controllers\Admin\MasterDataController::class, 'storePemetaanPejabat']);
+        Route::delete('/master/pejabat/{pemetaan}', [\App\Http\Controllers\Admin\MasterDataController::class, 'destroyPemetaanPejabat'])->name('admin.master.pejabat.destroy');
 
         Route::get('/master/libur', [\App\Http\Controllers\Admin\MasterDataController::class, 'hariLibur'])->name('admin.master.libur');
         Route::post('/master/libur', [\App\Http\Controllers\Admin\MasterDataController::class, 'storeHariLibur']);

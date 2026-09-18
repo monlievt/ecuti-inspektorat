@@ -15,7 +15,7 @@ class PegawaiController extends Controller
 {
     public function index()
     {
-        $pegawai = Pegawai::with('unitKerja', 'user')->get();
+        $pegawai = Pegawai::with('unitKerja', 'user')->orderBy('nama_lengkap')->get();
         return view('admin.pegawai.index', compact('pegawai'));
     }
 
