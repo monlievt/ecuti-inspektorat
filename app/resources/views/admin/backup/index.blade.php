@@ -26,8 +26,8 @@
     <!-- Status Integrasi Telegram -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm" style="padding: 20px 24px !important; display: flex !important; align-items: flex-start !important; gap: 16px !important;">
-            <div class="bg-sky-50 text-sky-600" style="padding: 12px !important; border-radius: 12px !important; flex-shrink: 0 !important;">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+            <div style="padding: 12px !important; border-radius: 12px !important; flex-shrink: 0 !important; background-color: #f0f9ff !important; color: #0284c7 !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 48px !important; height: 48px !important;">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: #0284c7 !important;">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.12.03-1.99 1.27-5.61 3.72-.53.36-1.01.54-1.44.53-.47-.01-1.38-.27-2.06-.49-.83-.27-1.49-.42-1.43-.88.03-.24.38-.49 1.03-.75 4.04-1.76 6.74-2.92 8.09-3.5 3.86-1.61 4.66-1.89 5.19-1.9.11 0 .37.03.54.17.14.12.18.28.2.45-.02.07-.02.21-.04.35z"/>
                 </svg>
             </div>
@@ -50,8 +50,8 @@
         </div>
 
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm" style="padding: 20px 24px !important; display: flex !important; align-items: flex-start !important; gap: 16px !important;">
-            <div class="bg-indigo-50 text-indigo-600" style="padding: 12px !important; border-radius: 12px !important; flex-shrink: 0 !important;">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+            <div style="padding: 12px !important; border-radius: 12px !important; flex-shrink: 0 !important; background-color: #eef2ff !important; color: #4f46e5 !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 48px !important; height: 48px !important;">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px; color: #4f46e5 !important;">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
@@ -63,8 +63,8 @@
         </div>
 
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm" style="padding: 20px 24px !important; display: flex !important; align-items: flex-start !important; gap: 16px !important;">
-            <div class="bg-purple-50 text-purple-600" style="padding: 12px !important; border-radius: 12px !important; flex-shrink: 0 !important;">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+            <div style="padding: 12px !important; border-radius: 12px !important; flex-shrink: 0 !important; background-color: #faf5ff !important; color: #9333ea !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 48px !important; height: 48px !important;">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px; color: #9333ea !important;">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
             </div>
