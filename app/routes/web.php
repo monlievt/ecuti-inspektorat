@@ -35,6 +35,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pengajuan/create', [PengajuanCutiController::class, 'create'])->name('pengajuan.create');
     Route::post('/pengajuan', [PengajuanCutiController::class, 'store'])->name('pengajuan.store');
     Route::get('/pengajuan/{pengajuan}', [PengajuanCutiController::class, 'show'])->name('pengajuan.show');
+    Route::get('/pengajuan/{pengajuan}/edit', [PengajuanCutiController::class, 'edit'])->name('pengajuan.edit');
+    Route::match(['put', 'patch', 'post'], '/pengajuan/{pengajuan}/update', [PengajuanCutiController::class, 'update'])->name('pengajuan.update');
     Route::get('/pengajuan/{pengajuan}/pdf', [PengajuanCutiController::class, 'pdf'])->name('pengajuan.pdf');
     Route::get('/pengajuan/{pengajuan}/surat-izin-pdf', [PengajuanCutiController::class, 'suratIzinDinasPdf'])->name('pengajuan.surat-izin-pdf');
     

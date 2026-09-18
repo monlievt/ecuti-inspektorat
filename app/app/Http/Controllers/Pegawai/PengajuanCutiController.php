@@ -209,6 +209,130 @@ class PengajuanCutiController extends Controller
     }
 
     /**
+     * Tampilkan formulir edit / revisi permohonan cuti.
+     */
+    public function edit(CutiPengajuan $pengajuan, Request $request)
+    {
+        $pegawai = $request->user()->pegawai;
+
+        if ($pengajuan->pegawai_id !== $pegawai->id && !$request->user()->isAdminCuti()) {
+            abort(403, 'Anda tidak diizinkan mengubah pengajuan cuti ini.');
+        }
+
+        if ($pengajuan->status !== CutiPengajuan::STATUS_DIREVISI) {
+            return redirect()->route('pengajuan.show', $pengajuan)
+                ->with('error', 'Permohonan cuti ini tidak dalam status revisi.');
+        }
+
+        $pengajuan->load(['jenisCuti', 'dokumen', 'approvalLogs.aktor']);
+        $jenisCuti = CutiJenis::where('aktif', true)->get();
+        $saldoTahunan = $this->saldoCutiService->breakdown($pegawai->id, now()->year);
+
+        $logRevisi = $pengajuan->approvalLogs()
+            ->where('status_sesudah', CutiPengajuan::STATUS_DIREVISI)
+            ->latest()
+            ->first();
+
+        return view('pegawai.pengajuan.edit', compact('pengajuan', 'jenisCuti', 'saldoTahunan', 'logRevisi'));
+    }
+
+    /**
+     * Simpan perbaikan permohonan cuti dan ajukan kembali ke atasan.
+     */
+    public function update(CutiPengajuan $pengajuan, Request $request)
+    {
+        $pegawai = $request->user()->pegawai;
+
+        if ($pengajuan->pegawai_id !== $pegawai->id && !$request->user()->isAdminCuti()) {
+            abort(403, 'Anda tidak diizinkan mengubah pengajuan cuti ini.');
+        }
+
+        if ($pengajuan->status !== CutiPengajuan::STATUS_DIREVISI) {
+            return redirect()->route('pengajuan.show', $pengajuan)
+                ->with('error', 'Permohonan cuti ini tidak dalam status revisi.');
+        }
+
+        $request->validate([
+            'jenis_cuti_id' => 'required|exists:cuti_jenis,id',
+            'alasan' => 'required|string|min:3|max:500',
+            'tanggal_mulai' => 'required|date',
+            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'alamat_selama_cuti' => 'required|string|max:255',
+            'telp_selama_cuti' => 'required|string|max:20',
+            'lampiran' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        try {
+            $jenisCuti = CutiJenis::findOrFail($request->jenis_cuti_id);
+
+            // Simpan file lampiran baru jika diunggah
+            $uploadedDocs = [];
+            if ($request->hasFile('lampiran')) {
+                $jenisDok = $jenisCuti->kode === CutiJenis::SAKIT ? 'surat_keterangan_dokter' : 'surat_pendukung';
+                if ($jenisCuti->kode === CutiJenis::ALASAN_PENTING && in_array($request->alasan_kategori, ['keluarga_sakit_keras', 'istri_melahirkan_caesar'])) {
+                    $jenisDok = 'surat_rawat_inap';
+                } elseif ($jenisCuti->kode === CutiJenis::ALASAN_PENTING && $request->alasan_kategori === 'musibah_bencana') {
+                    $jenisDok = 'surat_keterangan_rt';
+                }
+
+                $uploadedDocs[] = $jenisDok;
+            } else {
+                // Gunakan jenis dokumen eksisting jika ada
+                foreach ($pengajuan->dokumen as $dok) {
+                    $uploadedDocs[] = $dok->jenis_dokumen;
+                }
+            }
+
+            // Jalankan validasi pengajuan cuti
+            $hasilValidasi = $this->validasiService->validasi($pegawai, $jenisCuti, $request->all(), $uploadedDocs);
+            
+            if (!$hasilValidasi['status']) {
+                return redirect()->back()->withInput()->with('error', $hasilValidasi['pesan']);
+            }
+
+            // Update data permohonan
+            $pengajuan->update([
+                'jenis_cuti_id' => $jenisCuti->id,
+                'alasan' => $request->alasan,
+                'alasan_kategori' => $request->alasan_kategori,
+                'tanggal_mulai' => $request->tanggal_mulai,
+                'tanggal_selesai' => $request->tanggal_selesai,
+                'jumlah_hari_kerja' => $hasilValidasi['jumlah_hari'],
+                'satuan_hari' => $hasilValidasi['satuan_hari'],
+                'alamat_selama_cuti' => $request->alamat_selama_cuti,
+                'telp_selama_cuti' => $request->telp_selama_cuti,
+            ]);
+
+            // Jika ada file baru diunggah, simpan dan lampirkan
+            if ($request->hasFile('lampiran')) {
+                $path = $request->file('lampiran')->store('cuti_dokumen', 'local');
+                CutiDokumen::create([
+                    'pengajuan_id' => $pengajuan->id,
+                    'jenis_dokumen' => $uploadedDocs[0] ?? 'surat_pendukung',
+                    'kategori_dokter' => $request->kategori_dokter,
+                    'path_file' => $path,
+                ]);
+            }
+
+            // Jalankan transisi dari 'direvisi' ke 'menunggu_atasan'
+            $catatanPerbaikan = $request->catatan_revisi ?: 'Perbaikan dokumen/data telah diajukan ulang oleh pemohon.';
+            $this->workflowService->transisi(
+                $pengajuan,
+                CutiPengajuan::STATUS_MENUNGGU_ATASAN,
+                $request->user(),
+                'pemohon',
+                $catatanPerbaikan
+            );
+
+            return redirect()->route('pengajuan.show', $pengajuan)
+                ->with('success', 'Permohonan cuti berhasil diperbaiki dan telah diajukan kembali ke atasan langsung.');
+
+        } catch (Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Unduh dokumen lampiran secara aman.
      */
     public function unduhDokumen(CutiDokumen $dokumen, Request $request)

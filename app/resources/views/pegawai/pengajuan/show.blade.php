@@ -147,6 +147,27 @@
             </div>
         </div>
 
+        @if($pengajuan->status === 'direvisi' && (auth()->user()->pegawai?->id === $pengajuan->pegawai_id || auth()->user()->isAdminCuti()))
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center shadow-sm space-y-3">
+                <div class="flex items-center justify-center h-10 w-10 rounded-full bg-amber-100 text-amber-600 mx-auto">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                </div>
+                <h4 class="text-sm font-bold text-amber-900">Permohonan Perlu Direvisi</h4>
+                <p class="text-xs text-amber-700">Silakan perbaiki data permohonan Anda sesuai catatan dari atasan, lalu ajukan kembali.</p>
+                <div class="pt-1">
+                    <a href="{{ route('pengajuan.edit', $pengajuan) }}"
+                       class="inline-flex w-full items-center justify-center rounded-xl bg-amber-500 py-2.5 px-4 text-xs font-semibold text-white shadow-sm hover:bg-amber-400 transition">
+                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Edit & Ajukan Ulang Permohonan
+                    </a>
+                </div>
+            </div>
+        @endif
+
         @if(in_array($pengajuan->status, ['diterbitkan', 'disetujui_pybmc', 'disetujui_pyBMC']))
             <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 text-center shadow-sm space-y-3">
                 <div class="flex items-center justify-center h-10 w-10 rounded-full bg-emerald-100 text-emerald-600 mx-auto">
