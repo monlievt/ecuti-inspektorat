@@ -33,9 +33,20 @@ class SecurityHeaders
         // Anti-Cache pada rute autentikasi & halaman terautentikasi
         // (mencegah kebocoran data pribadi, saldo cuti, dan formulir di komputer kantor bersama)
         if ($request->user() || $request->is('login*', 'admin*', 'pengajuan*', 'approval*', 'profil*', 'dokumen*')) {
-            $response->headers->set('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate');
-            $response->headers->set('Pragma', 'no-cache');
-            $response->headers->set('Expires', 'Sun, 02 Jan 1990 00:00:00 GMT');
+            $isDownload = $response instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse
+                || $response instanceof \Symfony\Component\HttpFoundation\StreamedResponse
+                || $request->is('*ekspor*', '*unduh*', '*pdf*')
+                || str_contains($response->headers->get('Content-Disposition') ?? '', 'attachment');
+
+            if (!$isDownload) {
+                $response->headers->set('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate');
+                $response->headers->set('Pragma', 'no-cache');
+                $response->headers->set('Expires', 'Sun, 02 Jan 1990 00:00:00 GMT');
+            } else {
+                // Untuk file download/export, gunakan header cache yang ramah peramban agar file tidak diblokir
+                $response->headers->set('Cache-Control', 'private, max-age=0, must-revalidate');
+                $response->headers->remove('Pragma');
+            }
         }
 
         // Nonaktifkan akses browser ke sensor/perangkat keras yang tidak perlu

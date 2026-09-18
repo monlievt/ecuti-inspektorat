@@ -106,6 +106,21 @@ class PerbaikanLaporanDanAdminTest extends TestCase
         $response->assertSee('Early Warning: Saldo Cuti Akan Hangus');
     }
 
+    public function test_ekspor_excel_and_pdf_downloadable(): void
+    {
+        $responseExcel = $this->actingAs($this->adminUser)->get(route('admin.laporan.ekspor-excel'));
+        $responseExcel->assertStatus(200);
+        $responseExcel->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        $responsePdf = $this->actingAs($this->adminUser)->get(route('admin.laporan.ekspor-pdf'));
+        $responsePdf->assertStatus(200);
+        $this->assertStringContainsString('application/pdf', $responsePdf->headers->get('content-type'));
+
+        $responsePdfDownload = $this->actingAs($this->adminUser)->get(route('admin.laporan.ekspor-pdf', ['download' => 1]));
+        $responsePdfDownload->assertStatus(200);
+        $this->assertStringContainsString('attachment', $responsePdfDownload->headers->get('content-disposition'));
+    }
+
     public function test_monitoring_returns_403_for_regular_pegawai(): void
     {
         $response = $this->actingAs($this->regularUser)->get(route('admin.laporan.rekapitulasi'));

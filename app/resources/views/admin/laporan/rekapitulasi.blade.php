@@ -10,16 +10,24 @@
             <h2 class="text-2xl font-bold tracking-tight text-slate-900">Rekapitulasi Pengajuan Cuti</h2>
             <p class="mt-1 text-sm text-slate-500">Laporan pemanfaatan dan riwayat pengajuan cuti seluruh pegawai di Inspektorat Kabupaten Trenggalek.</p>
         </div>
-        <div class="mt-4 sm:ml-4 sm:mt-0 flex gap-3">
-            <a href="{{ route('admin.laporan.ekspor-excel', request()->all()) }}" 
-               class="inline-flex items-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 transition-colors">
+        <div class="mt-4 sm:ml-4 sm:mt-0 flex flex-wrap gap-2.5">
+            <a href="{{ route('admin.laporan.ekspor-excel', request()->query()) }}" 
+               style="background-color: #059669; color: #ffffff;"
+               class="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm hover:opacity-90 transition shadow-emerald-500/20">
                 <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Ekspor Excel / CSV
             </a>
-            <a href="{{ route('admin.laporan.ekspor-pdf', request()->all()) }}" target="_blank"
-               class="inline-flex items-center rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-rose-500 transition-colors">
+            <a href="{{ route('admin.laporan.ekspor-pdf', array_merge(request()->query(), ['download' => 1])) }}"
+               style="background-color: #e11d48; color: #ffffff;"
+               class="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm hover:opacity-90 transition shadow-rose-500/20">
+                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Unduh PDF
+            </a>
+            <a href="{{ route('admin.laporan.ekspor-pdf', request()->query()) }}" target="_blank"
+               style="background-color: #475569; color: #ffffff;"
+               class="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm hover:opacity-90 transition shadow-slate-500/20">
                 <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                Cetak PDF Resmi
+                Cetak / Pratinjau
             </a>
         </div>
     </div>

@@ -87,22 +87,22 @@
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td>
-                        <strong>{{ $p->pegawai->nama_lengkap }}</strong><br>
-                        NIP. {{ $p->pegawai->nip }} ({{ $p->pegawai->jenis_pegawai }})
+                        <strong>{{ $p->pegawai?->nama_lengkap ?? 'Pegawai' }}</strong><br>
+                        NIP. {{ $p->pegawai?->nip ?? '-' }} ({{ $p->pegawai?->jenis_pegawai ?? '-' }})
                     </td>
-                    <td>{{ $p->pegawai->unitKerja?->nama ?? '-' }}</td>
-                    <td>{{ $p->jenisCuti->nama }}</td>
+                    <td>{{ $p->pegawai?->unitKerja?->nama ?? '-' }}</td>
+                    <td>{{ $p->jenisCuti?->nama ?? 'Cuti' }}</td>
                     <td>
-                        {{ $p->tanggal_mulai->format('d/m/Y') }} s/d {{ $p->tanggal_selesai->format('d/m/Y') }}
+                        {{ $p->tanggal_mulai ? $p->tanggal_mulai->format('d/m/Y') : '-' }} s/d {{ $p->tanggal_selesai ? $p->tanggal_selesai->format('d/m/Y') : '-' }}
                     </td>
                     <td class="text-center">
-                        {{ $p->jumlah_hari }} {{ str_replace('_', ' ', $p->satuan_hari) }}
+                        {{ $p->jumlah_hari_kerja ?? $p->jumlah_hari ?? 1 }} {{ str_replace('_', ' ', $p->satuan_hari ?? 'hari') }}
                     </td>
                     <td>
                         @if($p->suratTerbit)
                             <strong style="color: #059669;">{{ $p->suratTerbit->nomor_surat }}</strong><br>
                         @endif
-                        <span style="font-size: 9px; color: #475569;">{{ ucwords(str_replace('_', ' ', $p->status)) }}</span>
+                        <span style="font-size: 9px; color: #475569;">{{ ucwords(str_replace('_', ' ', $p->status ?? 'menunggu')) }}</span>
                     </td>
                 </tr>
             @empty

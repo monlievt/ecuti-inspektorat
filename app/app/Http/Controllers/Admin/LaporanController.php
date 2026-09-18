@@ -149,28 +149,29 @@ class LaporanController extends Controller
                 'Alasan',
                 'Tgl Mulai',
                 'Tgl Selesai',
-                'Jumlah Hari',
+                'Jumlah Hari Kerja',
                 'Status',
                 'Tanggal Pengajuan'
-            ]);
+            ], ',', '"', '\\');
 
             $no = 1;
             foreach ($pengajuanList as $p) {
+                $durasi = ($p->jumlah_hari_kerja ?? $p->jumlah_hari ?? 1) . ' ' . str_replace('_', ' ', $p->satuan_hari ?? 'hari');
                 fputcsv($handle, [
                     $no++,
                     $p->suratTerbit?->nomor_surat ?? ('CUTI-' . $p->id),
-                    "'" . $p->pegawai->nip,
-                    $p->pegawai->nama_lengkap,
-                    $p->pegawai->jenis_pegawai,
-                    $p->pegawai->unitKerja?->nama ?? '-',
-                    $p->jenisCuti->nama,
-                    $p->alasan,
-                    $p->tanggal_mulai->format('d/m/Y'),
-                    $p->tanggal_selesai->format('d/m/Y'),
-                    $p->jumlah_hari . ' ' . str_replace('_', ' ', $p->satuan_hari),
-                    ucwords(str_replace('_', ' ', $p->status)),
-                    $p->created_at->format('d/m/Y H:i')
-                ]);
+                    "'" . ($p->pegawai?->nip ?? '-'),
+                    $p->pegawai?->nama_lengkap ?? 'Pegawai Tidak Ditemukan',
+                    $p->pegawai?->jenis_pegawai ?? '-',
+                    $p->pegawai?->unitKerja?->nama ?? '-',
+                    $p->jenisCuti?->nama ?? 'Cuti',
+                    $p->alasan ?? '-',
+                    $p->tanggal_mulai ? $p->tanggal_mulai->format('d/m/Y') : '-',
+                    $p->tanggal_selesai ? $p->tanggal_selesai->format('d/m/Y') : '-',
+                    $durasi,
+                    ucwords(str_replace('_', ' ', $p->status ?? 'Menunggu')),
+                    $p->created_at ? $p->created_at->format('d/m/Y H:i') : '-'
+                ], ',', '"', '\\');
             }
 
             fclose($handle);
@@ -228,7 +229,13 @@ class LaporanController extends Controller
         $pdf = Pdf::loadView('admin.laporan.rekap-pdf', $data);
         $pdf->setPaper('legal', 'landscape');
 
-        return $pdf->download('laporan-rekapitulasi-cuti-' . date('Ymd') . '.pdf');
+        $filename = 'laporan-rekapitulasi-cuti-' . date('Ymd-His') . '.pdf';
+
+        if ($request->boolean('download')) {
+            return $pdf->download($filename);
+        }
+
+        return $pdf->stream($filename);
     }
 
     /**
