@@ -29,29 +29,77 @@ class PejabatBerwenangController extends Controller
             abort(403, 'Profil pegawai Anda tidak ditemukan.');
         }
 
-        // Cari tahu unit kerja & jenis cuti mana saja pejabat login didelegasikan wewenang PyBMC
-        $pemetaanDelegasi = CutiPemetaanPejabatBerwenang::where('pejabat_id', $pegawai->id)
-            ->aktif()
-            ->get();
+        $isInspektur = $pegawai->isInspektur();
 
-        if ($pemetaanDelegasi->isEmpty()) {
-            $pengajuanMenunggu = collect();
-        } else {
-            $unitKerjaIds = $pemetaanDelegasi->pluck('unit_kerja_id')->filter()->unique()->toArray();
-            $jenisCutiIds = $pemetaanDelegasi->pluck('jenis_cuti_id')->unique()->toArray();
-
-            // Dapatkan pengajuan berstatus 'menunggu_pyBMC' yang sesuai kriteria delegasi
+        if ($isInspektur) {
+            // Pimpinan Tertinggi (Inspektur) memiliki wewenang PyBMC penuh untuk seluruh pegawai OPD
             $pengajuanMenunggu = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti'])
                 ->where('status', CutiPengajuan::STATUS_MENUNGGU_PYBMC)
-                ->whereIn('jenis_cuti_id', $jenisCutiIds)
-                ->whereHas('pegawai', function ($q) use ($unitKerjaIds) {
-                    $q->whereIn('unit_kerja_id', $unitKerjaIds);
-                })
                 ->orderBy('created_at', 'asc')
                 ->get();
+
+            $riwayatKeputusan = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti', 'suratTerbit'])
+                ->whereIn('status', [
+                    CutiPengajuan::STATUS_DISETUJUI_PYBMC,
+                    CutiPengajuan::STATUS_DITERBITKAN,
+                    CutiPengajuan::STATUS_DITANGGUHKAN_PYBMC,
+                    CutiPengajuan::STATUS_DITOLAK_PYBMC,
+                ])
+                ->orderBy('updated_at', 'desc')
+                ->take(30)
+                ->get();
+        } else {
+            // Cari tahu unit kerja & jenis cuti mana saja pejabat login didelegasikan wewenang PyBMC
+            $pemetaanDelegasi = CutiPemetaanPejabatBerwenang::where('pejabat_id', $pegawai->id)
+                ->aktif()
+                ->get();
+
+            if ($pemetaanDelegasi->isEmpty()) {
+                $pengajuanMenunggu = collect();
+                $riwayatKeputusan = collect();
+            } else {
+                $hasAllUnitKerja = $pemetaanDelegasi->contains(fn($d) => is_null($d->unit_kerja_id));
+                $unitKerjaIds = $pemetaanDelegasi->pluck('unit_kerja_id')->filter()->unique()->toArray();
+                $jenisCutiIds = $pemetaanDelegasi->pluck('jenis_cuti_id')->filter()->unique()->toArray();
+
+                $queryMenunggu = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti'])
+                    ->where('status', CutiPengajuan::STATUS_MENUNGGU_PYBMC);
+
+                if (!empty($jenisCutiIds)) {
+                    $queryMenunggu->whereIn('jenis_cuti_id', $jenisCutiIds);
+                }
+
+                if (!$hasAllUnitKerja && !empty($unitKerjaIds)) {
+                    $queryMenunggu->whereHas('pegawai', function ($q) use ($unitKerjaIds) {
+                        $q->whereIn('unit_kerja_id', $unitKerjaIds);
+                    });
+                }
+
+                $pengajuanMenunggu = $queryMenunggu->orderBy('created_at', 'asc')->get();
+
+                $queryRiwayat = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti', 'suratTerbit'])
+                    ->whereIn('status', [
+                        CutiPengajuan::STATUS_DISETUJUI_PYBMC,
+                        CutiPengajuan::STATUS_DITERBITKAN,
+                        CutiPengajuan::STATUS_DITANGGUHKAN_PYBMC,
+                        CutiPengajuan::STATUS_DITOLAK_PYBMC,
+                    ]);
+
+                if (!empty($jenisCutiIds)) {
+                    $queryRiwayat->whereIn('jenis_cuti_id', $jenisCutiIds);
+                }
+
+                if (!$hasAllUnitKerja && !empty($unitKerjaIds)) {
+                    $queryRiwayat->whereHas('pegawai', function ($q) use ($unitKerjaIds) {
+                        $q->whereIn('unit_kerja_id', $unitKerjaIds);
+                    });
+                }
+
+                $riwayatKeputusan = $queryRiwayat->orderBy('updated_at', 'desc')->take(30)->get();
+            }
         }
 
-        return view('approval.pejabat.index', compact('pengajuanMenunggu'));
+        return view('approval.pejabat.index', compact('pengajuanMenunggu', 'riwayatKeputusan'));
     }
 
     /**
@@ -154,9 +202,22 @@ class PejabatBerwenangController extends Controller
     protected function validateAkses(Request $request, CutiPengajuan $pengajuan)
     {
         $pegawai = $request->user()->pegawai;
+        if (!$pegawai) {
+            abort(403, 'Profil pegawai Anda tidak ditemukan.');
+        }
+
+        // Pimpinan tertinggi instansi (Inspektur) memiliki wewenang penuh PyBMC di OPD
+        if ($pegawai->isInspektur()) {
+            return;
+        }
+
         $hasWewenang = CutiPemetaanPejabatBerwenang::where('pejabat_id', $pegawai->id)
-            ->where('jenis_cuti_id', $pengajuan->jenis_cuti_id)
-            ->where('unit_kerja_id', $pengajuan->pegawai->unit_kerja_id)
+            ->where(function($q) use ($pengajuan) {
+                $q->where('jenis_cuti_id', $pengajuan->jenis_cuti_id)->orWhereNull('jenis_cuti_id');
+            })
+            ->where(function($q) use ($pengajuan) {
+                $q->where('unit_kerja_id', $pengajuan->pegawai->unit_kerja_id)->orWhereNull('unit_kerja_id');
+            })
             ->aktif()
             ->exists();
 
