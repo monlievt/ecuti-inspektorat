@@ -62,15 +62,17 @@ class SuratCutiPdfService
         // Deteksi apakah pemohon adalah Pimpinan Tertinggi (Inspektur / Plt. Inspektur)
         $isInspektur = $pegawai->isInspektur();
 
-        // Evaluasi tanda centang pertimbangan atasan langsung
+        // Evaluasi tanda centang pertimbangan atasan langsung & pejabat berwenang
         if ($isInspektur) {
-            // Untuk Inspektur: Formulir usulan diajukan manual ke Sekda & Bupati
-            $isAtasanSetuju = false;
-            $isAtasanRevisi = false;
-            $isAtasanTolak = false;
-            $isPybmcSetuju = false;
-            $isPybmcTangguh = false;
-            $isPybmcTolak = false;
+            // Untuk Inspektur: Cuti disetujui / auto-ACC dalam alur pimpinan tertinggi OPD
+            $isAtasanSetuju = !in_array($pengajuan->status, [CutiPengajuan::STATUS_DIREVISI, CutiPengajuan::STATUS_DITOLAK_ATASAN]);
+            $isAtasanRevisi = ($pengajuan->status === CutiPengajuan::STATUS_DIREVISI);
+            $isAtasanTolak = ($pengajuan->status === CutiPengajuan::STATUS_DITOLAK_ATASAN);
+
+            $isPybmcSetuju = !in_array($pengajuan->status, [CutiPengajuan::STATUS_DITANGGUHKAN_PYBMC, CutiPengajuan::STATUS_DITOLAK_PYBMC]);
+            $isPybmcTangguh = ($pengajuan->status === CutiPengajuan::STATUS_DITANGGUHKAN_PYBMC);
+            $isPybmcTolak = ($pengajuan->status === CutiPengajuan::STATUS_DITOLAK_PYBMC);
+
             $tujuanSurat = 'Bupati Trenggalek';
             $atasanNama = 'Sekretaris Daerah Kabupaten Trenggalek';
             $pybmcNama = 'Bupati Trenggalek';
