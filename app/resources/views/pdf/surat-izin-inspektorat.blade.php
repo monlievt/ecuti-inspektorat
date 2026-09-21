@@ -204,8 +204,8 @@
             </td>
             <td style="width: 50%; text-align: center;">
                 Trenggalek, {{ $tanggalSurat }}<br>
-                <strong>{{ $pybmcJabatan }}</strong><br>
-                <br><br><br>
+                <strong>{{ $pybmcJabatan }}</strong>
+                <div style="height: 40px;"></div>
                 <strong style="text-decoration: underline;">{{ $pybmcNama }}</strong><br>
                 {{ $pybmcPangkat }}<br>
                 NIP. {{ $pybmcNip }}
