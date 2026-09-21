@@ -184,8 +184,8 @@ class SuratCutiPdfService
         // Buat PDF dari view resources/views/pdf/lampiran-1b.blade.php
         $pdf = Pdf::loadView('pdf.lampiran-1b', $data);
         
-        // Atur ukuran kertas ke F4 / Legal dengan margin standar dokumen resmi
-        $pdf->setPaper('legal', 'portrait');
+        // Atur ukuran kertas ke A4 portrait
+        $pdf->setPaper('a4', 'portrait');
 
         return $pdf;
     }
