@@ -61,11 +61,13 @@ class PengajuanCutiController extends Controller
             abort(403, 'Profil pegawai tidak ditemukan.');
         }
 
+        $batasMin = now()->subMonth()->format('Y-m-d');
+
         $request->validate([
             'jenis_cuti_id' => 'required|exists:cuti_jenis,id',
             'alasan' => 'required|string',
             'alasan_kategori' => 'nullable|string',
-            'tanggal_mulai' => 'required|date',
+            'tanggal_mulai' => 'required|date|after_or_equal:' . $batasMin,
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'alamat_selama_cuti' => 'required|string|max:255',
             'telp_selama_cuti' => 'required|string|max:30',
@@ -76,6 +78,7 @@ class PengajuanCutiController extends Controller
             'alasan.required' => 'Alasan mengambil cuti wajib diisi.',
             'tanggal_mulai.required' => 'Tanggal mulai cuti wajib diisi.',
             'tanggal_mulai.date' => 'Format tanggal mulai tidak valid.',
+            'tanggal_mulai.after_or_equal' => 'Tanggal mulai cuti tidak boleh lebih dari 1 bulan ke belakang.',
             'tanggal_selesai.required' => 'Tanggal selesai cuti wajib diisi.',
             'tanggal_selesai.date' => 'Format tanggal selesai tidak valid.',
             'tanggal_selesai.after_or_equal' => 'Tanggal selesai tidak boleh lebih awal dari tanggal mulai.',
@@ -252,14 +255,19 @@ class PengajuanCutiController extends Controller
                 ->with('error', 'Permohonan cuti ini tidak dalam status revisi.');
         }
 
+        $batasMin = now()->subMonth()->format('Y-m-d');
+
         $request->validate([
             'jenis_cuti_id' => 'required|exists:cuti_jenis,id',
             'alasan' => 'required|string|min:3|max:500',
-            'tanggal_mulai' => 'required|date',
+            'tanggal_mulai' => 'required|date|after_or_equal:' . $batasMin,
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'alamat_selama_cuti' => 'required|string|max:255',
             'telp_selama_cuti' => 'required|string|max:20',
             'lampiran' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ], [
+            'tanggal_mulai.after_or_equal' => 'Tanggal mulai cuti tidak boleh lebih dari 1 bulan ke belakang.',
+            'tanggal_selesai.after_or_equal' => 'Tanggal selesai tidak boleh lebih awal dari tanggal mulai.',
         ]);
 
         try {
@@ -283,8 +291,8 @@ class PengajuanCutiController extends Controller
                 }
             }
 
-            // Jalankan validasi pengajuan cuti
-            $hasilValidasi = $this->validasiService->validasi($pegawai, $jenisCuti, $request->all(), $uploadedDocs);
+            // Jalankan validasi pengajuan cuti (abaikan pengajuan sendiri dari cek overlap)
+            $hasilValidasi = $this->validasiService->validasi($pegawai, $jenisCuti, $request->all(), $uploadedDocs, $pengajuan->id);
             
             if (!$hasilValidasi['status']) {
                 return redirect()->back()->withInput()->with('error', $hasilValidasi['pesan']);

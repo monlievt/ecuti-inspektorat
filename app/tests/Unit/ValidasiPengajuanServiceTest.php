@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\UnitKerja;
 use App\Models\CutiJenis;
 use App\Models\CutiSaldoTahunan;
+use App\Models\CutiPengajuan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Carbon\Carbon;
 
@@ -208,6 +209,165 @@ class ValidasiPengajuanServiceTest extends TestCase
         ];
         $hasilTahunan = $this->validasiService->validasi($this->pegawai, $this->cutiTahunan, $dataTahunan);
         $this->assertTrue($hasilTahunan['status']);
+    }
+
+    public function test_validasi_gagal_jika_tanggal_mulai_lebih_dari_1_bulan_ke_belakang(): void
+    {
+        // Saldo cuti cukup
+        CutiSaldoTahunan::create([
+            'pegawai_id' => $this->pegawai->id,
+            'tahun' => now()->year,
+            'jatah_tahun_berjalan' => 12,
+            'terpakai' => 0,
+        ]);
+
+        // Tanggal mulai 40 hari lalu (> 1 bulan)
+        $tglMulaiLampau = now()->subDays(40);
+        $tglSelesaiLampau = $tglMulaiLampau->copy()->addDays(2);
+
+        $data = [
+            'tanggal_mulai' => $tglMulaiLampau->toDateString(),
+            'tanggal_selesai' => $tglSelesaiLampau->toDateString(),
+        ];
+
+        $hasil = $this->validasiService->validasi($this->pegawai, $this->cutiTahunan, $data);
+        $this->assertFalse($hasil['status']);
+        $this->assertStringContainsString('tidak boleh lebih dari 1 bulan ke belakang', $hasil['pesan']);
+    }
+
+    public function test_validasi_berhasil_jika_backdate_dalam_batas_1_bulan(): void
+    {
+        CutiSaldoTahunan::create([
+            'pegawai_id' => $this->pegawai->id,
+            'tahun' => now()->year,
+            'jatah_tahun_berjalan' => 12,
+            'terpakai' => 0,
+        ]);
+
+        // Tanggal mulai 10 hari lalu (masih dalam 1 bulan)
+        $tglMulai = now()->subDays(10)->startOfWeek();
+        $tglSelesai = $tglMulai->copy()->addDays(1);
+
+        $data = [
+            'tanggal_mulai' => $tglMulai->toDateString(),
+            'tanggal_selesai' => $tglSelesai->toDateString(),
+        ];
+
+        $hasil = $this->validasiService->validasi($this->pegawai, $this->cutiTahunan, $data);
+        $this->assertTrue($hasil['status']);
+    }
+
+    public function test_validasi_gagal_jika_tanggal_beririsan_dengan_pengajuan_aktif_lain(): void
+    {
+        CutiSaldoTahunan::create([
+            'pegawai_id' => $this->pegawai->id,
+            'tahun' => now()->year,
+            'jatah_tahun_berjalan' => 12,
+            'terpakai' => 0,
+        ]);
+
+        $mulai = Carbon::parse('next monday');
+        $selesai = $mulai->copy()->addDays(4);
+
+        // Buat pengajuan eksisting yang masih aktif (misal STATUS_DIAJUKAN)
+        CutiPengajuan::create([
+            'nomor_pengajuan' => 'CUTI/2026/EXIST',
+            'pegawai_id' => $this->pegawai->id,
+            'jenis_cuti_id' => $this->cutiTahunan->id,
+            'alasan' => 'Liburan keluarga',
+            'tanggal_mulai' => $mulai->toDateString(),
+            'tanggal_selesai' => $selesai->toDateString(),
+            'jumlah_hari_kerja' => 5,
+            'satuan_hari' => 'hari_kerja',
+            'alamat_selama_cuti' => 'Alamat Pegawai',
+            'telp_selama_cuti' => '08123456789',
+            'status' => CutiPengajuan::STATUS_DIAJUKAN,
+        ]);
+
+        // Ajukan cuti kedua yang bertabrakan (beririsan di tengah rentang)
+        $dataBentrok = [
+            'tanggal_mulai' => $mulai->copy()->addDays(2)->toDateString(),
+            'tanggal_selesai' => $selesai->copy()->addDays(2)->toDateString(),
+        ];
+
+        $hasil = $this->validasiService->validasi($this->pegawai, $this->cutiTahunan, $dataBentrok);
+        $this->assertFalse($hasil['status']);
+        $this->assertStringContainsString('beririsan dengan permohonan aktif Anda yang lain', $hasil['pesan']);
+        $this->assertStringContainsString('CUTI/2026/EXIST', $hasil['pesan']);
+    }
+
+    public function test_validasi_lolos_jika_tanggal_beririsan_dengan_pengajuan_yang_sudah_ditolak(): void
+    {
+        CutiSaldoTahunan::create([
+            'pegawai_id' => $this->pegawai->id,
+            'tahun' => now()->year,
+            'jatah_tahun_berjalan' => 12,
+            'terpakai' => 0,
+        ]);
+
+        $mulai = Carbon::parse('next monday');
+        $selesai = $mulai->copy()->addDays(4);
+
+        // Buat pengajuan lama yang statusnya DITOLAK
+        CutiPengajuan::create([
+            'nomor_pengajuan' => 'CUTI/2026/TOLAK',
+            'pegawai_id' => $this->pegawai->id,
+            'jenis_cuti_id' => $this->cutiTahunan->id,
+            'alasan' => 'Alasan ditolak',
+            'tanggal_mulai' => $mulai->toDateString(),
+            'tanggal_selesai' => $selesai->toDateString(),
+            'jumlah_hari_kerja' => 5,
+            'satuan_hari' => 'hari_kerja',
+            'alamat_selama_cuti' => 'Alamat Pegawai',
+            'telp_selama_cuti' => '08123456789',
+            'status' => CutiPengajuan::STATUS_DITOLAK_ATASAN,
+        ]);
+
+        // Ajukan cuti baru di tanggal yang sama persis
+        $dataBaru = [
+            'tanggal_mulai' => $mulai->toDateString(),
+            'tanggal_selesai' => $selesai->toDateString(),
+        ];
+
+        $hasil = $this->validasiService->validasi($this->pegawai, $this->cutiTahunan, $dataBaru);
+        $this->assertTrue($hasil['status']);
+    }
+
+    public function test_validasi_ignore_pengajuan_id_pada_saat_update_revisi(): void
+    {
+        CutiSaldoTahunan::create([
+            'pegawai_id' => $this->pegawai->id,
+            'tahun' => now()->year,
+            'jatah_tahun_berjalan' => 12,
+            'terpakai' => 0,
+        ]);
+
+        $mulai = Carbon::parse('next monday');
+        $selesai = $mulai->copy()->addDays(4);
+
+        // Pengajuan dalam status DIREVISI
+        $pengajuan = CutiPengajuan::create([
+            'nomor_pengajuan' => 'CUTI/2026/REVISI',
+            'pegawai_id' => $this->pegawai->id,
+            'jenis_cuti_id' => $this->cutiTahunan->id,
+            'alasan' => 'Revisi alasan',
+            'tanggal_mulai' => $mulai->toDateString(),
+            'tanggal_selesai' => $selesai->toDateString(),
+            'jumlah_hari_kerja' => 5,
+            'satuan_hari' => 'hari_kerja',
+            'alamat_selama_cuti' => 'Alamat Pegawai',
+            'telp_selama_cuti' => '08123456789',
+            'status' => CutiPengajuan::STATUS_DIREVISI,
+        ]);
+
+        // Update dengan tanggal yang sama tapi menyertakan ignorePengajuanId
+        $dataUpdate = [
+            'tanggal_mulai' => $mulai->toDateString(),
+            'tanggal_selesai' => $selesai->toDateString(),
+        ];
+
+        $hasil = $this->validasiService->validasi($this->pegawai, $this->cutiTahunan, $dataUpdate, [], $pengajuan->id);
+        $this->assertTrue($hasil['status']);
     }
 }
 

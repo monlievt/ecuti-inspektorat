@@ -23,7 +23,7 @@ class ValidasiPengajuanService
      * Memvalidasi pengajuan cuti secara keseluruhan.
      * Mengembalikan array [status => true/false, pesan => ...] atau melempar Exception.
      */
-    public function validasi(Pegawai $pegawai, CutiJenis $jenisCuti, array $data, array $dokumenUploaded = []): array
+    public function validasi(Pegawai $pegawai, CutiJenis $jenisCuti, array $data, array $dokumenUploaded = [], ?int $ignorePengajuanId = null): array
     {
         $key = $jenisCuti->kode === 'cltn' ? 'cltn' : "cuti_{$jenisCuti->kode}";
         $rules = config("cuti-rules.{$key}");
@@ -34,7 +34,53 @@ class ValidasiPengajuanService
         $tanggalMulai = \Carbon\Carbon::parse($data['tanggal_mulai']);
         $tanggalSelesai = \Carbon\Carbon::parse($data['tanggal_selesai']);
 
-        // 0. Validasi Hak Cuti Berdasarkan Jenis Pegawai (PNS vs PPPK)
+        // 0a. Validasi Batas Tanggal Mundur (Backdate Maksimal 1 Bulan Sebelum Hari Ini)
+        $batasMundur = now()->subMonth()->startOfDay();
+        if ($tanggalMulai->copy()->startOfDay()->lt($batasMundur)) {
+            return [
+                'status' => false,
+                'pesan' => "Tanggal mulai cuti tidak boleh lebih dari 1 bulan ke belakang (maksimal tanggal {$batasMundur->translatedFormat('d F Y')})."
+            ];
+        }
+
+        if ($tanggalSelesai->copy()->startOfDay()->lt($tanggalMulai->copy()->startOfDay())) {
+            return [
+                'status' => false,
+                'pesan' => 'Tanggal selesai cuti tidak boleh lebih awal dari tanggal mulai cuti.'
+            ];
+        }
+
+        // 0b. Validasi Anti-Overlap (Pencegahan Tanggal Ganda / Beririsan)
+        $queryOverlap = CutiPengajuan::where('pegawai_id', $pegawai->id)
+            ->whereNotIn('status', [
+                CutiPengajuan::STATUS_DITOLAK_ATASAN,
+                CutiPengajuan::STATUS_DITOLAK_PYBMC,
+                CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
+            ])
+            ->where(function ($q) use ($tanggalMulai, $tanggalSelesai) {
+                $q->where('tanggal_mulai', '<=', $tanggalSelesai->toDateString())
+                  ->where('tanggal_selesai', '>=', $tanggalMulai->toDateString());
+            });
+
+        if ($ignorePengajuanId) {
+            $queryOverlap->where('id', '!=', $ignorePengajuanId);
+        }
+
+        $bentrok = $queryOverlap->with('jenisCuti')->first();
+
+        if ($bentrok) {
+            $statusLabel = str_replace('_', ' ', ucfirst($bentrok->status));
+            $tglMulaiBentrok = $bentrok->tanggal_mulai->translatedFormat('d F Y');
+            $tglSelesaiBentrok = $bentrok->tanggal_selesai->translatedFormat('d F Y');
+            $jenisBentrok = $bentrok->jenisCuti ? $bentrok->jenisCuti->nama : 'Cuti';
+
+            return [
+                'status' => false,
+                'pesan' => "Tanggal cuti yang Anda pilih beririsan dengan permohonan aktif Anda yang lain (No: {$bentrok->nomor_pengajuan} - {$jenisBentrok}, {$tglMulaiBentrok} s.d {$tglSelesaiBentrok}, Status: {$statusLabel}). Silakan batalkan permohonan sebelumnya atau pilih rentang tanggal lain."
+            ];
+        }
+
+        // 0c. Validasi Hak Cuti Berdasarkan Jenis Pegawai (PNS vs PPPK)
         if ($pegawai->jenis_pegawai === 'PPPK') {
             $cutiDilarangPppk = [CutiJenis::BESAR, CutiJenis::CLTN];
             if (in_array($jenisCuti->kode, $cutiDilarangPppk)) {

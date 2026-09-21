@@ -118,6 +118,7 @@
                             Tanggal Mulai <span class="text-rose-500">*</span>
                         </label>
                         <input type="date" name="tanggal_mulai" id="tanggal_mulai" required 
+                               min="{{ now()->subMonth()->format('Y-m-d') }}"
                                x-model="tanggalMulai" @change="onTanggalMulaiChange()"
                                class="mt-1.5 block w-full rounded-xl border-slate-300 py-3 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                         @error('tanggal_mulai')
@@ -129,7 +130,7 @@
                             Tanggal Selesai <span class="text-rose-500">*</span>
                         </label>
                         <input type="date" name="tanggal_selesai" id="tanggal_selesai" required 
-                               x-model="tanggalSelesai" :min="tanggalMulai"
+                               x-model="tanggalSelesai" :min="tanggalMulai || '{{ now()->subMonth()->format('Y-m-d') }}'"
                                class="mt-1.5 block w-full rounded-xl border-slate-300 py-3 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                         @error('tanggal_selesai')
                             <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
@@ -140,7 +141,7 @@
                     <svg class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span><strong>Petunjuk Pengisian Tanggal:</strong> Untuk mengajukan cuti <strong>1 hari kerja</strong>, pilih tanggal yang <strong>sama</strong> pada Tanggal Mulai dan Tanggal Selesai (contoh: Mulai <code>10/09/2026</code> & Selesai <code>10/09/2026</code>).</span>
+                    <span><strong>Petunjuk Pengisian Tanggal:</strong> Untuk mengajukan cuti <strong>1 hari kerja</strong>, pilih tanggal yang <strong>sama</strong> pada Tanggal Mulai dan Tanggal Selesai. Pengajuan cuti mundur (backdate) diperbolehkan maksimal <strong>1 bulan ke belakang</strong>. Permohonan tidak dapat diajukan jika tanggal beririsan/bertabrakan dengan permohonan cuti aktif Anda lainnya.</span>
                 </div>
             </div>
 
