@@ -211,11 +211,22 @@ class SuratCutiPdfService
         $pybmcUser = $approvalPybmc?->aktor;
         $pybmcPegawai = $pybmcUser?->pegawai;
 
-        // Nomor Surat Resmi (Default format sesuai template: 800.1.11.4/[Nomor]/406.008/[Tahun])
-        $nomorSurat = $pengajuan->suratTerbit?->nomor_surat ?? ("800.1.11.4 / " . str_pad($pengajuan->id, 3, '0', STR_PAD_LEFT) . " / 406.008 / " . $tahun);
+        // Format Nomor Surat: bagian nomor/counter dikosongkan (5 spasi) untuk diisi manual bagian persuratan
+        $nomorSurat = "800/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/406.012/{$tahun}";
 
         $durasiAngka = $pengajuan->jumlah_hari_kerja;
         $durasiTerbilang = $this->terbilang($durasiAngka);
+
+        // Ambil hanya pangkat (hapus golongan ruang, misal: "IV/a - PEMBINA" -> "PEMBINA")
+        $rawPangkat = $pybmcPegawai ? $pybmcPegawai->pangkat_golongan : 'PEMBINA';
+        $pybmcPangkat = $rawPangkat;
+        if (str_contains($rawPangkat, '-')) {
+            $parts = explode('-', $rawPangkat);
+            $pybmcPangkat = trim(end($parts));
+        } elseif (str_contains($rawPangkat, '/')) {
+            $parts = explode('/', $rawPangkat);
+            $pybmcPangkat = trim($parts[0]);
+        }
 
         $data = [
             'pengajuan' => $pengajuan,
@@ -229,8 +240,8 @@ class SuratCutiPdfService
             'tanggalSurat' => $pengajuan->updated_at ? $pengajuan->updated_at->translatedFormat('d F Y') : now()->translatedFormat('d F Y'),
             'tanggalMulai' => $pengajuan->tanggal_mulai->translatedFormat('d F Y'),
             'tanggalSelesai' => $pengajuan->tanggal_selesai->translatedFormat('d F Y'),
-            'pybmcNama' => $pybmcPegawai ? $pybmcPegawai->nama_lengkap : ($pybmcUser ? $pybmcUser->name : 'Ir. WIJIONO, ST, M.Mkes'),
-            'pybmcPangkat' => $pybmcPegawai ? $pybmcPegawai->pangkat_golongan : 'Pembina / IV a',
+            'pybmcNama' => $pybmcPegawai ? $pybmcPegawai->nama_lengkap : ($pybmcUser ? $pybmcUser->name : 'Ir. WIJIONO, S.T., M.MKes.'),
+            'pybmcPangkat' => $pybmcPangkat,
             'pybmcNip' => $pybmcPegawai ? $pybmcPegawai->nip : '197308051997031007',
             'pybmcJabatan' => 'Plt. INSPEKTUR KABUPATEN TRENGGALEK',
         ];

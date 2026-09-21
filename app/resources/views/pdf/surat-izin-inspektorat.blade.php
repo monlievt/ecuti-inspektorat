@@ -127,8 +127,14 @@
 
     <!-- JUDUL SURAT -->
     <div class="title-container">
-        <div class="title-text">SURAT IJIN CUTI {{ strtoupper($jenisCuti->nama) }}</div>
-        <div class="nomor-surat">Nomor : {{ $nomorSurat }}</div>
+        @php
+            $cleanJenisNama = strtoupper($jenisCuti->nama);
+            if (str_starts_with($cleanJenisNama, 'CUTI ')) {
+                $cleanJenisNama = substr($cleanJenisNama, 5);
+            }
+        @endphp
+        <div class="title-text">SURAT IJIN CUTI {{ $cleanJenisNama }}</div>
+        <div class="nomor-surat">Nomor : {!! $nomorSurat !!}</div>
     </div>
 
     <!-- ISI SURAT -->
@@ -176,8 +182,8 @@
         </p>
 
         <ol type="a" class="terms-list">
-            <li>Sebelum menjalankan cuti tahunan wajib menyerahkan pekerjaannya kepada atasan langsungnya;</li>
-            <li>Setelah selesai menjalankan cuti tahunan wajib melaporkan diri kepada atasan langsungnya dan bekerja kembali sebagaimana mestinya.</li>
+            <li>Sebelum menjalankan {{ strtolower($jenisCuti->nama) }} wajib menyerahkan pekerjaannya kepada atasan langsungnya;</li>
+            <li>Setelah selesai menjalankan {{ strtolower($jenisCuti->nama) }} wajib melaporkan diri kepada atasan langsungnya dan bekerja kembali sebagaimana mestinya.</li>
         </ol>
 
         <p style="margin-top: 15px;">
@@ -186,10 +192,10 @@
     </div>
 
     <!-- TANDA TANGAN & TEMBUSAN -->
-    <table class="signature-table">
+    <table class="signature-table" style="margin-top: 15px;">
         <tr>
             <td style="width: 50%;">
-                <div class="tembusan">
+                <div class="tembusan" style="margin-top: 20px;">
                     <strong><u>Tembusan kepada :</u></strong><br>
                     Yth. Sdr. Kepala Badan Kepegawaian Dan<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pengembangan Sumber Daya Manusia<br>
@@ -197,9 +203,9 @@
                 </div>
             </td>
             <td style="width: 50%; text-align: center;">
-                Trenggalek, {{ $tanggalSurat }}<br><br>
+                Trenggalek, {{ $tanggalSurat }}<br>
                 <strong>{{ $pybmcJabatan }}</strong><br>
-                <br><br><br><br>
+                <br><br><br>
                 <strong style="text-decoration: underline;">{{ $pybmcNama }}</strong><br>
                 {{ $pybmcPangkat }}<br>
                 NIP. {{ $pybmcNip }}
