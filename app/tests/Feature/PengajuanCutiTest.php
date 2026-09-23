@@ -165,6 +165,36 @@ class PengajuanCutiTest extends TestCase
         $this->assertEquals(1, $pdf->getCanvas()->get_page_count());
     }
 
+    public function test_cetak_pdf_cuti_alasan_penting_menggunakan_pejabat_bkpsdm_dan_pas_1_halaman(): void
+    {
+        $cutiCap = CutiJenis::create([
+            'kode' => CutiJenis::ALASAN_PENTING,
+            'nama' => 'Cuti Karena Alasan Penting',
+            'aktif' => true,
+        ]);
+
+        $pengajuanCap = CutiPengajuan::create([
+            'nomor_pengajuan' => 'CUTI/2026/CAP-PDF',
+            'pegawai_id' => $this->pegawai->id,
+            'jenis_cuti_id' => $cutiCap->id,
+            'alasan' => 'Mendampingi keluarga sakit',
+            'tanggal_mulai' => '2026-09-21',
+            'tanggal_selesai' => '2026-09-23',
+            'jumlah_hari_kerja' => 3,
+            'satuan_hari' => 'hari_kalender',
+            'alamat_selama_cuti' => 'Trenggalek',
+            'telp_selama_cuti' => '081234567890',
+            'status' => CutiPengajuan::STATUS_DITERBITKAN,
+        ]);
+
+        $service = app(\App\Services\SuratCutiPdfService::class);
+        $pdf = $service->generateAnakLampiran1b($pengajuanCap);
+        $this->assertEquals(1, $pdf->getCanvas()->get_page_count());
+
+        $response = $this->actingAs($this->user)->get(route('pengajuan.pdf', $pengajuanCap));
+        $response->assertStatus(200);
+    }
+
     public function test_pengajuan_cuti_oleh_inspektur_langsung_terbit_dan_berkas_pengantar_siap(): void
     {
         $unitKerja = UnitKerja::first();
@@ -229,5 +259,43 @@ class PengajuanCutiTest extends TestCase
         $resPengantar = $this->actingAs($inspekturUser)->get(route('pengajuan.surat-izin-pdf', $pengajuan));
         $resPengantar->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $resPengantar->headers->get('content-type'));
+    }
+
+    public function test_pengajuan_cuti_sakit_wajib_unggah_surat_dokter(): void
+    {
+        $tgl = Carbon::parse('next wednesday')->toDateString();
+
+        // 1. Submit tanpa lampiran -> Harus gagal validasi
+        $responseFail = $this->actingAs($this->user)->post(route('pengajuan.store'), [
+            'jenis_cuti_id' => $this->cutiSakit->id,
+            'alasan' => 'Demam dan flu berat',
+            'tanggal_mulai' => $tgl,
+            'tanggal_selesai' => $tgl,
+            'alamat_selama_cuti' => 'Trenggalek',
+            'telp_selama_cuti' => '081234567890',
+        ]);
+
+        $responseFail->assertSessionHasErrors(['lampiran']);
+
+        // 2. Submit dengan lampiran dokter -> Harus sukses
+        \Illuminate\Support\Facades\Storage::fake('local');
+        $file = \Illuminate\Http\UploadedFile::fake()->create('surat_dokter.pdf', 100, 'application/pdf');
+
+        $responseSuccess = $this->actingAs($this->user)->post(route('pengajuan.store'), [
+            'jenis_cuti_id' => $this->cutiSakit->id,
+            'alasan' => 'Demam dan flu berat',
+            'tanggal_mulai' => $tgl,
+            'tanggal_selesai' => $tgl,
+            'alamat_selama_cuti' => 'Trenggalek',
+            'telp_selama_cuti' => '081234567890',
+            'kategori_dokter' => 'swasta',
+            'lampiran' => $file,
+        ]);
+
+        $responseSuccess->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('cuti_pengajuan', [
+            'pegawai_id' => $this->pegawai->id,
+            'jenis_cuti_id' => $this->cutiSakit->id,
+        ]);
     }
 }

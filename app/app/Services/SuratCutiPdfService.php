@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\CutiPengajuan;
+use App\Services\SettingService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class SuratCutiPdfService
@@ -144,10 +145,23 @@ class SuratCutiPdfService
                     ->first();
             }
 
-            $pybmcNama = $pybmcPegawai?->nama_lengkap ?? $approvalPybmc?->aktor?->name ?? null;
-            $pybmcNip = $pybmcPegawai?->nip ?? null;
+            $isCutiKhususBkpsdm = !in_array($pengajuan->jenisCuti?->kode, ['tahunan', 'sakit']);
 
-            $tujuanSurat = $pybmcNama ?: 'Inspektur Kabupaten Trenggalek';
+            if ($isCutiKhususBkpsdm) {
+                // Untuk Cuti Besar, Melahirkan, Alasan Penting, CLTN -> Pejabat Berwenang adalah Kepala BKPSDM
+                $pybmcNama = SettingService::get('kepala_bkpsdm_nama', 'HERI YULIANTO, S.Sos., M.Si.');
+                $pybmcNip = SettingService::get('kepala_bkpsdm_nip', '197107121991011001');
+                $pybmcPangkat = SettingService::get('kepala_bkpsdm_pangkat_golongan', 'Pembina Utama Muda (IV/c)');
+                $pybmcJabatan = SettingService::get('kepala_bkpsdm_jabatan', 'Kepala Badan Kepegawaian dan Pengembangan Sumber Daya Manusia Kabupaten Trenggalek');
+                $tujuanSurat = "Bupati Trenggalek<br>cq. Kepala Badan Kepegawaian dan Pengembangan SDM<br>di - <span style=\"font-weight: bold;\">TRENGGALEK</span>";
+            } else {
+                // Cuti Tahunan & Sakit -> Inspektur Daerah
+                $pybmcNama = $pybmcPegawai?->nama_lengkap ?? $approvalPybmc?->aktor?->name ?? 'Ir. WIJIONO, S.T., M.MKes.';
+                $pybmcNip = $pybmcPegawai?->nip ?? '197308051997031007';
+                $pybmcPangkat = $pybmcPegawai?->pangkat_golongan ?? 'Pembina (IV/a)';
+                $pybmcJabatan = 'Inspektur Kabupaten Trenggalek';
+                $tujuanSurat = "Inspektur Kabupaten Trenggalek<br>di - <span style=\"font-weight: bold;\">TRENGGALEK</span>";
+            }
         }
 
         $satuanLabel = str_replace('_', ' ', $pengajuan->satuan_hari);
@@ -162,11 +176,14 @@ class SuratCutiPdfService
             'approvalAtasan' => $approvalAtasan,
             'approvalPybmc' => $approvalPybmc,
             'isInspektur' => $isInspektur,
+            'isCutiKhususBkpsdm' => !empty($isCutiKhususBkpsdm),
             'tujuanSurat' => $tujuanSurat,
             'atasanNama' => $atasanNama,
             'atasanNip' => $atasanNip,
             'pybmcNama' => $pybmcNama,
             'pybmcNip' => $pybmcNip,
+            'pybmcPangkat' => $pybmcPangkat ?? 'Pembina (IV/a)',
+            'pybmcJabatan' => $pybmcJabatan ?? 'Inspektur Kabupaten Trenggalek',
             'isAtasanSetuju' => $isAtasanSetuju,
             'isAtasanRevisi' => $isAtasanRevisi,
             'isAtasanTolak' => $isAtasanTolak,

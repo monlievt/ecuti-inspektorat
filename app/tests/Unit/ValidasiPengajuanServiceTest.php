@@ -369,5 +369,93 @@ class ValidasiPengajuanServiceTest extends TestCase
         $hasil = $this->validasiService->validasi($this->pegawai, $this->cutiTahunan, $dataUpdate, [], $pengajuan->id);
         $this->assertTrue($hasil['status']);
     }
+
+    public function test_validasi_cuti_alasan_penting_maksimal_30_hari(): void
+    {
+        $mulai = Carbon::parse('next monday');
+        $selesai = $mulai->copy()->addDays(35); // 36 hari kalender (> 30 hari)
+
+        $data = [
+            'tanggal_mulai' => $mulai->toDateString(),
+            'tanggal_selesai' => $selesai->toDateString(),
+            'alasan_kategori' => 'menikah',
+        ];
+
+        $hasil = $this->validasiService->validasi($this->pegawai, $this->cutiAlasanPenting, $data);
+        $this->assertFalse($hasil['status']);
+        $this->assertStringContainsString('tidak boleh melebihi 1 bulan', $hasil['pesan']);
+    }
+
+    public function test_validasi_cuti_alasan_penting_akumulasi_tahunan_maksimal_30_hari(): void
+    {
+        // Pegawai sudah pernah ambil CAP 20 hari di tahun ini
+        CutiPengajuan::create([
+            'nomor_pengajuan' => 'CUTI/2026/CAP1',
+            'pegawai_id' => $this->pegawai->id,
+            'jenis_cuti_id' => $this->cutiAlasanPenting->id,
+            'alasan' => 'Menikah',
+            'tanggal_mulai' => now()->startOfYear()->addMonth()->toDateString(),
+            'tanggal_selesai' => now()->startOfYear()->addMonth()->addDays(19)->toDateString(),
+            'jumlah_hari_kerja' => 20,
+            'satuan_hari' => 'hari_kalender',
+            'alamat_selama_cuti' => 'Trenggalek',
+            'telp_selama_cuti' => '08123456789',
+            'status' => CutiPengajuan::STATUS_DISETUJUI_PYBMC,
+        ]);
+
+        // Coba ajukan 15 hari lagi (20 + 15 = 35 > 30)
+        $mulai = Carbon::parse('next monday');
+        $selesai = $mulai->copy()->addDays(14); // 15 hari
+
+        $data = [
+            'tanggal_mulai' => $mulai->toDateString(),
+            'tanggal_selesai' => $selesai->toDateString(),
+            'alasan_kategori' => 'menikah',
+        ];
+
+        $hasil = $this->validasiService->validasi($this->pegawai, $this->cutiAlasanPenting, $data);
+        $this->assertFalse($hasil['status']);
+        $this->assertStringContainsString('melebihi batas maksimal tahunan (30 hari kalender)', $hasil['pesan']);
+        $this->assertStringContainsString('sisa kuota yang dapat digunakan adalah 10 hari', $hasil['pesan']);
+    }
+
+    public function test_validasi_cuti_besar_jeda_siklus_5_tahun(): void
+    {
+        $this->pegawai->update(['tmt_cpns' => now()->subYears(10)]);
+
+        // Pegawai pernah ambil cuti besar 2 tahun lalu
+        CutiPengajuan::create([
+            'nomor_pengajuan' => 'CUTI/2024/CB1',
+            'pegawai_id' => $this->pegawai->id,
+            'jenis_cuti_id' => $this->cutiBesar->id,
+            'alasan' => 'Cuti Besar',
+            'tanggal_mulai' => now()->subYears(2)->toDateString(),
+            'tanggal_selesai' => now()->subYears(2)->addMonth()->toDateString(),
+            'jumlah_hari_kerja' => 30,
+            'satuan_hari' => 'hari_kalender',
+            'alamat_selama_cuti' => 'Trenggalek',
+            'telp_selama_cuti' => '08123456789',
+            'status' => CutiPengajuan::STATUS_DISETUJUI_PYBMC,
+        ]);
+
+        $mulai = Carbon::parse('next monday');
+        $selesai = $mulai->copy()->addMonth();
+
+        $data = [
+            'tanggal_mulai' => $mulai->toDateString(),
+            'tanggal_selesai' => $selesai->toDateString(),
+            'alasan_kategori' => 'alasan_lain',
+        ];
+
+        // Ditolak karena belum 5 tahun
+        $hasil = $this->validasiService->validasi($this->pegawai, $this->cutiBesar, $data);
+        $this->assertFalse($hasil['status']);
+        $this->assertStringContainsString('setelah jeda 5 tahun', $hasil['pesan']);
+
+        // Tetapi jika untuk ibadah haji pertama, diperbolehkan
+        $data['alasan_kategori'] = 'ibadah_haji_pertama';
+        $hasilHaji = $this->validasiService->validasi($this->pegawai, $this->cutiBesar, $data);
+        $this->assertTrue($hasilHaji['status']);
+    }
 }
 

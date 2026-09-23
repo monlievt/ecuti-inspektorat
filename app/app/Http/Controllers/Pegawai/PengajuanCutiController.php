@@ -48,7 +48,37 @@ class PengajuanCutiController extends Controller
         // Ambil sisa saldo tahun berjalan
         $saldoTahunan = $this->saldoCutiService->breakdown($pegawai->id, now()->year);
 
-        return view('pegawai.pengajuan.create', compact('pegawai', 'jenisCuti', 'saldoTahunan'));
+        // Rekam jejak Cuti Alasan Penting tahun berjalan
+        $cutiAlasanPentingId = CutiJenis::where('kode', CutiJenis::ALASAN_PENTING)->value('id');
+        $totalHariCapTahunIni = 0;
+        if ($cutiAlasanPentingId) {
+            $totalHariCapTahunIni = CutiPengajuan::where('pegawai_id', $pegawai->id)
+                ->where('jenis_cuti_id', $cutiAlasanPentingId)
+                ->whereYear('tanggal_mulai', now()->year)
+                ->whereNotIn('status', [
+                    CutiPengajuan::STATUS_DITOLAK_ATASAN,
+                    CutiPengajuan::STATUS_DITOLAK_PYBMC,
+                    CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
+                ])
+                ->sum('jumlah_hari_kerja');
+        }
+
+        // Rekam jejak Cuti Besar terakhir
+        $cutiBesarId = CutiJenis::where('kode', CutiJenis::BESAR)->value('id');
+        $riwayatCutiBesar = null;
+        if ($cutiBesarId) {
+            $riwayatCutiBesar = CutiPengajuan::where('pegawai_id', $pegawai->id)
+                ->where('jenis_cuti_id', $cutiBesarId)
+                ->whereNotIn('status', [
+                    CutiPengajuan::STATUS_DITOLAK_ATASAN,
+                    CutiPengajuan::STATUS_DITOLAK_PYBMC,
+                    CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
+                ])
+                ->latest('tanggal_selesai')
+                ->first();
+        }
+
+        return view('pegawai.pengajuan.create', compact('pegawai', 'jenisCuti', 'saldoTahunan', 'totalHariCapTahunIni', 'riwayatCutiBesar'));
     }
 
     /**
@@ -63,6 +93,9 @@ class PengajuanCutiController extends Controller
 
         $batasMin = now()->subMonth()->format('Y-m-d');
 
+        $jenisCutiAwal = CutiJenis::find($request->jenis_cuti_id);
+        $isWajibLampiranSakit = ($jenisCutiAwal && $jenisCutiAwal->kode === CutiJenis::SAKIT);
+
         $request->validate([
             'jenis_cuti_id' => 'required|exists:cuti_jenis,id',
             'alasan' => 'required|string',
@@ -72,7 +105,7 @@ class PengajuanCutiController extends Controller
             'alamat_selama_cuti' => 'required|string|max:255',
             'telp_selama_cuti' => 'required|string|max:30',
             'kategori_dokter' => 'nullable|string|in:pns,faskes_pemerintah,swasta',
-            'lampiran' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'lampiran' => $isWajibLampiranSakit ? 'required|file|mimes:pdf,jpg,jpeg,png|max:2048' : 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ], [
             'jenis_cuti_id.required' => 'Silakan pilih jenis cuti.',
             'alasan.required' => 'Alasan mengambil cuti wajib diisi.',
@@ -84,6 +117,7 @@ class PengajuanCutiController extends Controller
             'tanggal_selesai.after_or_equal' => 'Tanggal selesai tidak boleh lebih awal dari tanggal mulai.',
             'alamat_selama_cuti.required' => 'Alamat selama menjalankan cuti wajib diisi.',
             'telp_selama_cuti.required' => 'Nomor telepon aktif yang dapat dihubungi wajib diisi.',
+            'lampiran.required' => 'Pengajuan Cuti Sakit wajib melampirkan berkas Surat Keterangan Dokter.',
             'lampiran.max' => 'Ukuran berkas lampiran maksimal 2MB.',
             'lampiran.mimes' => 'Format berkas lampiran harus berupa PDF, JPG, JPEG, atau PNG.',
         ]);
@@ -231,12 +265,44 @@ class PengajuanCutiController extends Controller
         $jenisCuti = CutiJenis::where('aktif', true)->get();
         $saldoTahunan = $this->saldoCutiService->breakdown($pegawai->id, now()->year);
 
+        // Rekam jejak Cuti Alasan Penting tahun berjalan (abaikan pengajuan yang sedang diedit)
+        $cutiAlasanPentingId = CutiJenis::where('kode', CutiJenis::ALASAN_PENTING)->value('id');
+        $totalHariCapTahunIni = 0;
+        if ($cutiAlasanPentingId) {
+            $totalHariCapTahunIni = CutiPengajuan::where('pegawai_id', $pegawai->id)
+                ->where('jenis_cuti_id', $cutiAlasanPentingId)
+                ->where('id', '!=', $pengajuan->id)
+                ->whereYear('tanggal_mulai', now()->year)
+                ->whereNotIn('status', [
+                    CutiPengajuan::STATUS_DITOLAK_ATASAN,
+                    CutiPengajuan::STATUS_DITOLAK_PYBMC,
+                    CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
+                ])
+                ->sum('jumlah_hari_kerja');
+        }
+
+        // Rekam jejak Cuti Besar terakhir (abaikan pengajuan yang sedang diedit)
+        $cutiBesarId = CutiJenis::where('kode', CutiJenis::BESAR)->value('id');
+        $riwayatCutiBesar = null;
+        if ($cutiBesarId) {
+            $riwayatCutiBesar = CutiPengajuan::where('pegawai_id', $pegawai->id)
+                ->where('jenis_cuti_id', $cutiBesarId)
+                ->where('id', '!=', $pengajuan->id)
+                ->whereNotIn('status', [
+                    CutiPengajuan::STATUS_DITOLAK_ATASAN,
+                    CutiPengajuan::STATUS_DITOLAK_PYBMC,
+                    CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
+                ])
+                ->latest('tanggal_selesai')
+                ->first();
+        }
+
         $logRevisi = $pengajuan->approvalLogs()
             ->where('status_sesudah', CutiPengajuan::STATUS_DIREVISI)
             ->latest()
             ->first();
 
-        return view('pegawai.pengajuan.edit', compact('pengajuan', 'jenisCuti', 'saldoTahunan', 'logRevisi'));
+        return view('pegawai.pengajuan.edit', compact('pengajuan', 'jenisCuti', 'saldoTahunan', 'logRevisi', 'totalHariCapTahunIni', 'riwayatCutiBesar'));
     }
 
     /**
@@ -257,6 +323,10 @@ class PengajuanCutiController extends Controller
 
         $batasMin = now()->subMonth()->format('Y-m-d');
 
+        $jenisCutiAwal = CutiJenis::find($request->jenis_cuti_id);
+        $hasExistingLampiran = $pengajuan->dokumen()->exists();
+        $isWajibLampiranSakit = ($jenisCutiAwal && $jenisCutiAwal->kode === CutiJenis::SAKIT && !$hasExistingLampiran);
+
         $request->validate([
             'jenis_cuti_id' => 'required|exists:cuti_jenis,id',
             'alasan' => 'required|string|min:3|max:500',
@@ -264,8 +334,9 @@ class PengajuanCutiController extends Controller
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'alamat_selama_cuti' => 'required|string|max:255',
             'telp_selama_cuti' => 'required|string|max:20',
-            'lampiran' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'lampiran' => $isWajibLampiranSakit ? 'required|file|mimes:pdf,jpg,jpeg,png|max:5120' : 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ], [
+            'lampiran.required' => 'Pengajuan Cuti Sakit wajib melampirkan berkas Surat Keterangan Dokter.',
             'tanggal_mulai.after_or_equal' => 'Tanggal mulai cuti tidak boleh lebih dari 1 bulan ke belakang.',
             'tanggal_selesai.after_or_equal' => 'Tanggal selesai tidak boleh lebih awal dari tanggal mulai.',
         ]);

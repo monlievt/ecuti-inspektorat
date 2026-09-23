@@ -183,7 +183,7 @@ class ValidasiPengajuanService
             }
         }
 
-        // 7. Validasi Syarat Khusus Cuti Besar (Durasi Maksimum 3 Bulan)
+        // 7. Validasi Syarat Khusus Cuti Besar (Durasi Maksimum 3 Bulan & Siklus 5 Tahun)
         if ($jenisCuti->kode === CutiJenis::BESAR) {
             $lamaMaksBulan = $rules['lama_maks_bulan'];
             $maxSelesai = $tanggalMulai->copy()->addMonths($lamaMaksBulan);
@@ -191,6 +191,67 @@ class ValidasiPengajuanService
                 return [
                     'status' => false,
                     'pesan' => "Durasi Cuti Besar melebihi batas maksimal {$lamaMaksBulan} bulan."
+                ];
+            }
+
+            // Validasi Siklus Pengambilan Ulang Cuti Besar (5 Tahun)
+            $cutiBesarTerakhir = CutiPengajuan::where('pegawai_id', $pegawai->id)
+                ->where('jenis_cuti_id', $jenisCuti->id)
+                ->whereNotIn('status', [
+                    CutiPengajuan::STATUS_DITOLAK_ATASAN,
+                    CutiPengajuan::STATUS_DITOLAK_PYBMC,
+                    CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
+                ])
+                ->when($ignorePengajuanId, fn($q) => $q->where('id', '!=', $ignorePengajuanId))
+                ->latest('tanggal_selesai')
+                ->first();
+
+            if ($cutiBesarTerakhir) {
+                $selesaiTerakhir = \Carbon\Carbon::parse($cutiBesarTerakhir->tanggal_selesai);
+                $jedaTahun = $rules['siklus_ulang_tahun'] ?? 5;
+                $bisaCutiBesarLagi = $selesaiTerakhir->copy()->addYears($jedaTahun);
+
+                $alasanKategori = $data['alasan_kategori'] ?? null;
+                $isPengecualian = in_array($alasanKategori, $rules['pengecualian_syarat_masa_kerja'] ?? []);
+
+                if (!$isPengecualian && $tanggalMulai->lt($bisaCutiBesarLagi)) {
+                    return [
+                        'status' => false,
+                        'pesan' => "Anda telah menggunakan hak Cuti Besar pada {$selesaiTerakhir->translatedFormat('d F Y')}. Berdasarkan peraturan BKN, Cuti Besar berikutnya baru dapat diajukan kembali setelah jeda 5 tahun bekerja terus menerus (mulai tanggal {$bisaCutiBesarLagi->translatedFormat('d F Y')}), kecuali untuk ibadah haji pertama kali."
+                    ];
+                }
+            }
+        }
+
+        // 8. Validasi Syarat Khusus Cuti Alasan Penting (Maksimal 1 Bulan / 30 Hari & Akumulasi Tahunan)
+        if ($jenisCuti->kode === CutiJenis::ALASAN_PENTING) {
+            $maxHariCap = 30; // 1 bulan kalender sesuai ketentuan Perka BKN No. 24/2017
+            $maxSelesai = $tanggalMulai->copy()->addMonth();
+            if ($tanggalSelesai->gt($maxSelesai) || $jumlahHari > $maxHariCap) {
+                return [
+                    'status' => false,
+                    'pesan' => "Durasi Cuti Karena Alasan Penting tidak boleh melebihi 1 bulan (maksimal 30 hari kalender)."
+                ];
+            }
+
+            // Hitung akumulasi Cuti Alasan Penting di tahun berjalan
+            $tahunPengajuan = $tanggalMulai->year;
+            $capTahunIni = CutiPengajuan::where('pegawai_id', $pegawai->id)
+                ->where('jenis_cuti_id', $jenisCuti->id)
+                ->whereYear('tanggal_mulai', $tahunPengajuan)
+                ->whereNotIn('status', [
+                    CutiPengajuan::STATUS_DITOLAK_ATASAN,
+                    CutiPengajuan::STATUS_DITOLAK_PYBMC,
+                    CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
+                ])
+                ->when($ignorePengajuanId, fn($q) => $q->where('id', '!=', $ignorePengajuanId))
+                ->sum('jumlah_hari_kerja');
+
+            if (($capTahunIni + $jumlahHari) > $maxHariCap) {
+                $sisaKuota = max(0, $maxHariCap - $capTahunIni);
+                return [
+                    'status' => false,
+                    'pesan' => "Total durasi Cuti Alasan Penting yang diajukan ({$jumlahHari} hari) melebihi batas maksimal tahunan (30 hari kalender). Anda telah menggunakan {$capTahunIni} hari pada tahun {$tahunPengajuan}, sehingga sisa kuota yang dapat digunakan adalah {$sisaKuota} hari."
                 ];
             }
         }

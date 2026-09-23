@@ -49,6 +49,9 @@
          get isCutiAlasanPenting() {
              return this.jenisCutiKode === 'alasan_penting';
          },
+         get isCutiBesar() {
+             return this.jenisCutiKode === 'besar';
+         },
          get isLampiranWajib() {
              if (this.isCutiSakit) return true;
              if (this.isCutiAlasanPenting && ['keluarga_sakit_keras', 'istri_melahirkan_caesar', 'musibah_bencana'].includes(this.alasanKategori)) {
@@ -108,6 +111,94 @@
                 @error('jenis_cuti_id')
                     <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                 @enderror
+            </div>
+
+            <!-- Info Record & Batas Cuti Alasan Penting -->
+            <div x-show="isCutiAlasanPenting" x-transition class="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-2">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start gap-2.5">
+                        <div class="p-1.5 bg-amber-100 rounded-lg text-amber-700 mt-0.5">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-amber-900">Ketentuan & Rekam Jejak Cuti Alasan Penting</h4>
+                            <p class="text-xs text-amber-700 mt-0.5">Batas maksimal Cuti Karena Alasan Penting adalah <strong>1 bulan (30 hari kalender)</strong> dalam 1 tahun sesuai Perka BKN No. 24/2017.</p>
+                        </div>
+                    </div>
+                    <div class="text-right flex-shrink-0 ml-3">
+                        <div class="text-xs text-amber-600 font-medium">Sisa Kuota CAP {{ now()->year }}</div>
+                        <div class="text-2xl font-black text-amber-800">{{ max(0, 30 - $totalHariCapTahunIni) }} <span class="text-xs font-normal text-amber-600">hari</span></div>
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-amber-200/70 text-xs text-amber-800 flex flex-wrap gap-x-4 gap-y-1">
+                    <span>Sudah digunakan tahun {{ now()->year }}: <strong>{{ $totalHariCapTahunIni }} hari kalender</strong></span>
+                    <span>&bull;</span>
+                    <span>Batas maksimal per tahun: <strong>30 hari kalender</strong></span>
+                    @if($totalHariCapTahunIni >= 30)
+                        <span class="text-rose-600 font-bold block w-full mt-1">⚠️ Kuota Cuti Alasan Penting Anda pada tahun ini telah habis!</span>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Info Record & Ketentuan Cuti Besar -->
+            @php
+                $masaKerjaTahun = $pegawai->tmt_cpns ? $pegawai->tmt_cpns->diffInYears(now()) : 0;
+                $jedaTahun = config('cuti-rules.cuti_besar.siklus_ulang_tahun', 5);
+                $bisaCutiBesarLagi = null;
+                $sudahBisaLagi = true;
+                if ($riwayatCutiBesar) {
+                    $bisaCutiBesarLagi = \Carbon\Carbon::parse($riwayatCutiBesar->tanggal_selesai)->addYears($jedaTahun);
+                    $sudahBisaLagi = now()->gte($bisaCutiBesarLagi);
+                }
+            @endphp
+            <div x-show="isCutiBesar" x-transition class="rounded-xl bg-purple-50 border border-purple-200 p-4 space-y-2">
+                <div class="flex items-start gap-2.5">
+                    <div class="p-1.5 bg-purple-100 rounded-lg text-purple-700 mt-0.5">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-sm font-bold text-purple-900">Ketentuan & Rekam Jejak Cuti Besar</h4>
+                            <span class="text-xs px-2.5 py-0.5 rounded-full {{ $masaKerjaTahun >= 5 ? 'bg-purple-200 text-purple-800 font-semibold' : 'bg-rose-100 text-rose-700 font-semibold' }}">
+                                Masa Kerja: {{ $masaKerjaTahun }} Tahun
+                            </span>
+                        </div>
+                        <ul class="text-xs text-purple-800 mt-2 space-y-1">
+                            <li class="flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                                Syarat minimal masa kerja PNS adalah <strong>5 tahun terus menerus</strong> (kecuali untuk ibadah haji pertama kali).
+                            </li>
+                            <li class="flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                                Durasi maksimal Cuti Besar adalah <strong>3 bulan</strong>.
+                            </li>
+                            <li class="flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                                Pengambilan Cuti Besar akan <strong>menghapuskan sisa hak cuti tahunan</strong> pada tahun berjalan (Perka BKN No. 24/2017).
+                            </li>
+                        </ul>
+
+                        <div class="mt-3 pt-2 border-t border-purple-200/70 text-xs text-purple-900">
+                            <strong>Riwayat Cuti Besar Terakhir:</strong>
+                            @if($riwayatCutiBesar)
+                                <span>{{ $riwayatCutiBesar->tanggal_mulai->translatedFormat('d M Y') }} s.d {{ $riwayatCutiBesar->tanggal_selesai->translatedFormat('d M Y') }} ({{ $riwayatCutiBesar->jumlah_hari_kerja }} {{ $riwayatCutiBesar->satuan_hari == 'hari_kalender' ? 'hari kalender' : 'hari' }}).</span>
+                                <div class="mt-1">
+                                    @if($sudahBisaLagi)
+                                        <span class="inline-flex items-center text-emerald-700 font-medium">✓ Memenuhi syarat jeda 5 tahun (dapat mengajukan kembali sejak {{ $bisaCutiBesarLagi->translatedFormat('d F Y') }}).</span>
+                                    @else
+                                        <span class="inline-flex items-center text-rose-700 font-semibold">⚠️ Belum memenuhi jeda 5 tahun. Cuti besar berikutnya baru dapat diajukan mulai {{ $bisaCutiBesarLagi->translatedFormat('d F Y') }} (kecuali ibadah haji pertama).</span>
+                                    @endif
+                                </div>
+                            @else
+                                <span class="text-purple-700">Belum ada riwayat pengambilan Cuti Besar sebelumnya.</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Tanggal Cuti -->

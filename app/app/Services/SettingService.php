@@ -228,6 +228,40 @@ class SettingService
                 'label' => 'Website Resmi',
                 'deskripsi' => 'Alamat portal website resmi.'
             ],
+
+            // ── Pejabat Penandatangan Kepala BKPSDM ─────────────────────────
+            [
+                'key' => 'kepala_bkpsdm_nama',
+                'value' => 'HERI YULIANTO, S.Sos., M.Si.',
+                'kategori' => 'pejabat_bkpsdm',
+                'tipe' => 'string',
+                'label' => 'Nama Kepala BKPSDM',
+                'deskripsi' => 'Nama lengkap beserta gelar Kepala BKPSDM Kabupaten Trenggalek untuk penandatanganan cuti selain Cuti Tahunan dan Sakit.'
+            ],
+            [
+                'key' => 'kepala_bkpsdm_nip',
+                'value' => '197107121991011001',
+                'kategori' => 'pejabat_bkpsdm',
+                'tipe' => 'string',
+                'label' => 'NIP Kepala BKPSDM',
+                'deskripsi' => 'NIP resmi Kepala BKPSDM Kabupaten Trenggalek.'
+            ],
+            [
+                'key' => 'kepala_bkpsdm_pangkat_golongan',
+                'value' => 'Pembina Utama Muda (IV/c)',
+                'kategori' => 'pejabat_bkpsdm',
+                'tipe' => 'string',
+                'label' => 'Pangkat / Golongan Ruang Kepala BKPSDM',
+                'deskripsi' => 'Pangkat dan golongan ruang Kepala BKPSDM.'
+            ],
+            [
+                'key' => 'kepala_bkpsdm_jabatan',
+                'value' => 'Kepala Badan Kepegawaian dan Pengembangan Sumber Daya Manusia Kabupaten Trenggalek',
+                'kategori' => 'pejabat_bkpsdm',
+                'tipe' => 'string',
+                'label' => 'Jabatan Resmi Penandatangan',
+                'deskripsi' => 'Jabatan resmi (contoh: Kepala Badan Kepegawaian dan Pengembangan Sumber Daya Manusia Kabupaten Trenggalek).'
+            ],
         ];
 
         foreach ($defaults as $d) {
