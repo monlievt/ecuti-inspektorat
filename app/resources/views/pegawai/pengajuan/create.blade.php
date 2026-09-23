@@ -37,6 +37,22 @@
              }
          },
 
+         isWeekend(dateStr) {
+             if (!dateStr) return false;
+             const d = new Date(dateStr + 'T00:00:00');
+             const day = d.getDay();
+             return day === 0 || day === 6; // 0 = Minggu, 6 = Sabtu
+         },
+         get isTanggalMulaiWeekend() {
+             return this.isCutiTahunan && this.isWeekend(this.tanggalMulai);
+         },
+         get isTanggalSelesaiWeekend() {
+             return this.isCutiTahunan && this.isWeekend(this.tanggalSelesai);
+         },
+         get hasWeekendError() {
+             return this.isTanggalMulaiWeekend || this.isTanggalSelesaiWeekend;
+         },
+
          get isCutiTahunan() {
              return this.jenisCutiKode === 'tahunan';
          },
@@ -211,7 +227,14 @@
                         <input type="date" name="tanggal_mulai" id="tanggal_mulai" required 
                                min="{{ now()->subMonth()->format('Y-m-d') }}"
                                x-model="tanggalMulai" @change="onTanggalMulaiChange()"
-                               class="mt-1.5 block w-full rounded-xl border-slate-300 py-3 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                               :class="isTanggalMulaiWeekend ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500 bg-rose-50/40' : 'border-slate-300 focus:border-indigo-500 focus:ring-indigo-500'"
+                               class="mt-1.5 block w-full rounded-xl py-3 px-4 shadow-sm text-sm transition">
+                        <div x-show="isTanggalMulaiWeekend" x-transition class="mt-1.5 p-2 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-1.5">
+                            <svg class="w-4 h-4 flex-shrink-0 text-rose-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span>Tanggal mulai jatuh pada akhir pekan (Sabtu/Minggu). Cuti tahunan harus dimulai pada hari kerja (Senin - Jumat).</span>
+                        </div>
                         @error('tanggal_mulai')
                             <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                         @enderror
@@ -222,7 +245,14 @@
                         </label>
                         <input type="date" name="tanggal_selesai" id="tanggal_selesai" required 
                                x-model="tanggalSelesai" :min="tanggalMulai || '{{ now()->subMonth()->format('Y-m-d') }}'"
-                               class="mt-1.5 block w-full rounded-xl border-slate-300 py-3 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                               :class="isTanggalSelesaiWeekend ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500 bg-rose-50/40' : 'border-slate-300 focus:border-indigo-500 focus:ring-indigo-500'"
+                               class="mt-1.5 block w-full rounded-xl py-3 px-4 shadow-sm text-sm transition">
+                        <div x-show="isTanggalSelesaiWeekend" x-transition class="mt-1.5 p-2 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-1.5">
+                            <svg class="w-4 h-4 flex-shrink-0 text-rose-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span>Tanggal selesai jatuh pada akhir pekan (Sabtu/Minggu). Silakan pilih hari kerja terakhir sebelum akhir pekan (misalnya hari Jumat).</span>
+                        </div>
                         @error('tanggal_selesai')
                             <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                         @enderror
@@ -361,7 +391,12 @@
             <!-- Submit Button -->
             <div class="flex justify-end pt-4 border-t border-slate-200 space-x-3">
                 <a href="{{ route('dashboard') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">Batal</a>
-                <button type="submit" class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition">Ajukan Cuti</button>
+                <button type="submit" 
+                        :disabled="hasWeekendError"
+                        :class="hasWeekendError ? 'opacity-50 cursor-not-allowed bg-slate-400' : 'bg-indigo-600 hover:bg-indigo-500'"
+                        class="rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition">
+                    Ajukan Cuti
+                </button>
             </div>
         </form>
     </div>

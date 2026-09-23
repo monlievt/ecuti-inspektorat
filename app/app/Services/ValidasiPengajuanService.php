@@ -91,6 +91,42 @@ class ValidasiPengajuanService
             }
         }
 
+        // 0d. Validasi Hari Kerja untuk Cuti Tahunan
+        // Tanggal mulai dan selesai TIDAK BOLEH jatuh pada hari akhir pekan (Sabtu/Minggu) atau hari libur nasional
+        if ($jenisCuti->kode === CutiJenis::TAHUNAN) {
+            if ($tanggalMulai->isWeekend()) {
+                $namaHari = $tanggalMulai->translatedFormat('l');
+                return [
+                    'status' => false,
+                    'pesan' => "Tanggal mulai cuti ({$tanggalMulai->translatedFormat('d F Y')}) jatuh pada hari {$namaHari} (akhir pekan). Untuk {$jenisCuti->nama}, tanggal mulai harus merupakan hari kerja efektif (Senin s.d Jumat)."
+                ];
+            }
+
+            $liburMulai = \App\Models\CutiHariLibur::whereDate('tanggal', $tanggalMulai->toDateString())->first();
+            if ($liburMulai) {
+                return [
+                    'status' => false,
+                    'pesan' => "Tanggal mulai cuti ({$tanggalMulai->translatedFormat('d F Y')}) jatuh pada hari libur nasional ({$liburMulai->keterangan}). Tanggal mulai harus merupakan hari kerja efektif."
+                ];
+            }
+
+            if ($tanggalSelesai->isWeekend()) {
+                $namaHari = $tanggalSelesai->translatedFormat('l');
+                return [
+                    'status' => false,
+                    'pesan' => "Tanggal selesai cuti ({$tanggalSelesai->translatedFormat('d F Y')}) jatuh pada hari {$namaHari} (akhir pekan). Untuk {$jenisCuti->nama}, tanggal selesai harus merupakan hari kerja efektif (Senin s.d Jumat). Silakan pilih hari kerja terakhir sebelum akhir pekan (misalnya hari Jumat)."
+                ];
+            }
+
+            $liburSelesai = \App\Models\CutiHariLibur::whereDate('tanggal', $tanggalSelesai->toDateString())->first();
+            if ($liburSelesai) {
+                return [
+                    'status' => false,
+                    'pesan' => "Tanggal selesai cuti ({$tanggalSelesai->translatedFormat('d F Y')}) jatuh pada hari libur nasional ({$liburSelesai->keterangan}). Tanggal selesai harus merupakan hari kerja efektif."
+                ];
+            }
+        }
+
         // 1. Hitung durasi pengajuan
         $satuanHari = $rules['satuan'] ?? 'hari_kerja';
         if ($satuanHari === 'hari_kalender') {

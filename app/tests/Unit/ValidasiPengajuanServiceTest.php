@@ -68,14 +68,67 @@ class ValidasiPengajuanServiceTest extends TestCase
         // Pegawai baru CPNS kerja baru 2 bulan
         $this->pegawai->update(['tmt_cpns' => now()->subMonths(2)]);
 
+        $mulai = Carbon::parse('next monday');
+        $selesai = $mulai->copy()->addDays(4);
+
         $data = [
-            'tanggal_mulai' => now()->addDays(1)->toDateString(),
-            'tanggal_selesai' => now()->addDays(5)->toDateString(),
+            'tanggal_mulai' => $mulai->toDateString(),
+            'tanggal_selesai' => $selesai->toDateString(),
         ];
 
         $hasil = $this->validasiService->validasi($this->pegawai, $this->cutiTahunan, $data);
         $this->assertFalse($hasil['status']);
         $this->assertStringContainsString('Masa kerja belum mencukupi', $hasil['pesan']);
+    }
+
+    public function test_validasi_cuti_tahunan_gagal_jika_tanggal_mulai_akhir_pekan(): void
+    {
+        // Buat tanggal mulai jatuh pada hari Sabtu
+        $sabtu = Carbon::parse('next saturday');
+        $minggu = $sabtu->copy()->addDays(1);
+
+        $data = [
+            'tanggal_mulai' => $sabtu->toDateString(),
+            'tanggal_selesai' => $minggu->toDateString(),
+        ];
+
+        $hasil = $this->validasiService->validasi($this->pegawai, $this->cutiTahunan, $data);
+        $this->assertFalse($hasil['status']);
+        $this->assertStringContainsString('jatuh pada hari Sabtu (akhir pekan)', $hasil['pesan']);
+    }
+
+    public function test_validasi_cuti_tahunan_gagal_jika_tanggal_selesai_akhir_pekan(): void
+    {
+        // Buat tanggal mulai hari Rabu dan selesai hari Minggu
+        $rabu = Carbon::parse('next wednesday');
+        $minggu = $rabu->copy()->addDays(4); // Rabu + 4 = Minggu
+
+        $data = [
+            'tanggal_mulai' => $rabu->toDateString(),
+            'tanggal_selesai' => $minggu->toDateString(),
+        ];
+
+        $hasil = $this->validasiService->validasi($this->pegawai, $this->cutiTahunan, $data);
+        $this->assertFalse($hasil['status']);
+        $this->assertStringContainsString('jatuh pada hari Minggu (akhir pekan)', $hasil['pesan']);
+    }
+
+    public function test_validasi_cuti_tahunan_gagal_jika_tanggal_jatuh_pada_hari_libur_nasional(): void
+    {
+        $senin = Carbon::parse('next monday');
+        \App\Models\CutiHariLibur::create([
+            'tanggal' => $senin->toDateString(),
+            'keterangan' => 'Libur Nasional Uji Coba',
+        ]);
+
+        $data = [
+            'tanggal_mulai' => $senin->toDateString(),
+            'tanggal_selesai' => $senin->copy()->addDays(2)->toDateString(),
+        ];
+
+        $hasil = $this->validasiService->validasi($this->pegawai, $this->cutiTahunan, $data);
+        $this->assertFalse($hasil['status']);
+        $this->assertStringContainsString('jatuh pada hari libur nasional (Libur Nasional Uji Coba)', $hasil['pesan']);
     }
 
     public function test_validasi_cuti_tahunan_gagal_karena_saldo_tidak_cukup(): void
