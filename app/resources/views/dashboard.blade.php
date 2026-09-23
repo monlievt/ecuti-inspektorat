@@ -71,29 +71,60 @@
 
         <!-- Jatah Tahun Ini -->
         <div class="overflow-hidden rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
-            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Jatah Tahun Ini</p>
-            <p class="mt-2 text-3xl font-bold text-slate-900">{{ $saldoBreakdown['jatah_tahun_berjalan'] }}</p>
-            <p class="mt-1 text-xs text-slate-500">Mulai 1 Jan</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Jatah Tahun Ini (N)</p>
+            <p class="mt-2 text-3xl font-bold text-slate-900">{{ $saldoBreakdown['sisa_n'] }}</p>
+            <p class="mt-1 text-xs text-slate-500">
+                @if($saldoBreakdown['terpakai_n'] > 0)
+                    <span class="text-rose-600 font-medium">Terpakai {{ $saldoBreakdown['terpakai_n'] }} hr</span> (Awal {{ $saldoBreakdown['jatah_tahun_berjalan'] }})
+                @else
+                    Mulai 1 Jan (Kuota {{ $saldoBreakdown['jatah_tahun_berjalan'] }})
+                @endif
+            </p>
         </div>
 
         <!-- Carry Over N-1 -->
         <div class="overflow-hidden rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Carry Over N-1</p>
-            <p class="mt-2 text-3xl font-bold text-slate-900">{{ $saldoBreakdown['carry_over_n1'] }}</p>
-            <p class="mt-1 text-xs text-slate-500">Dari tahun lalu</p>
+            <p class="mt-2 text-3xl font-bold text-slate-900">{{ $saldoBreakdown['sisa_n1'] }}</p>
+            <p class="mt-1 text-xs text-slate-500">
+                @if($saldoBreakdown['terpakai_n1'] > 0)
+                    <span class="text-rose-600 font-medium">Terpakai {{ $saldoBreakdown['terpakai_n1'] }} hr</span> (Awal {{ $saldoBreakdown['carry_over_n1'] }})
+                @else
+                    Dari tahun lalu (Kuota {{ $saldoBreakdown['carry_over_n1'] }})
+                @endif
+            </p>
         </div>
 
         <!-- Carry Over N-2 -->
         <div class="overflow-hidden rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Carry Over N-2</p>
-            <p class="mt-2 text-3xl font-bold text-slate-900">{{ $saldoBreakdown['carry_over_n2'] }}</p>
-            <p class="mt-1 text-xs text-slate-500">Hangus akhir tahun</p>
+            <p class="mt-2 text-3xl font-bold text-slate-900">{{ $saldoBreakdown['sisa_n2'] }}</p>
+            <p class="mt-1 text-xs text-slate-500">
+                @if($saldoBreakdown['terpakai_n2'] > 0)
+                    <span class="text-rose-600 font-medium">Terpakai {{ $saldoBreakdown['terpakai_n2'] }} hr</span> (Awal {{ $saldoBreakdown['carry_over_n2'] }})
+                @else
+                    Hangus akhir tahun (Kuota {{ $saldoBreakdown['carry_over_n2'] }})
+                @endif
+            </p>
         </div>
 
         <!-- Terpakai -->
         <div class="overflow-hidden rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Cuti Terpakai</p>
             <p class="mt-2 text-3xl font-bold text-slate-900">{{ $saldoBreakdown['terpakai'] }}</p>
+            @if($saldoBreakdown['terpakai'] > 0)
+                @php
+                    $pecahan = [];
+                    if($saldoBreakdown['terpakai_n2'] > 0) $pecahan[] = $saldoBreakdown['terpakai_n2'] . ' hr (N-2)';
+                    if($saldoBreakdown['terpakai_n1'] > 0) $pecahan[] = $saldoBreakdown['terpakai_n1'] . ' hr (N-1)';
+                    if($saldoBreakdown['terpakai_n'] > 0) $pecahan[] = $saldoBreakdown['terpakai_n'] . ' hr (N)';
+                @endphp
+                <p class="mt-1 text-xs text-indigo-600 font-medium truncate" title="{{ implode(' + ', $pecahan) }}">
+                    {{ implode(' + ', $pecahan) }}
+                </p>
+            @else
+                <p class="mt-1 text-xs text-slate-500">Belum ada cuti terpakai</p>
+            @endif
             <div class="mt-2 w-full bg-slate-100 rounded-full h-1.5">
                 @php
                     $totalJatah = $saldoBreakdown['jatah_tahun_berjalan'] + $saldoBreakdown['carry_over_n1'] + $saldoBreakdown['carry_over_n2'];

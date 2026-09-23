@@ -54,6 +54,25 @@ class SaldoCutiService
     public function breakdown(int $pegawaiId, int $tahun): array
     {
         $saldo = $this->dapatkanAtauBuatSaldo($pegawaiId, $tahun);
+        $terpakai = (int) $saldo->terpakai;
+
+        $n2Jatah = (int) $saldo->carry_over_n2;
+        $n1Jatah = (int) $saldo->carry_over_n1;
+        $nJatah  = (int) ($saldo->jatah_tahun_berjalan + $saldo->tambahan_cuti_bersama);
+
+        // Alokasi pemotongan cuti sesuai aturan FIFO BKN: N-2 -> N-1 -> N
+        $terpakaiN2 = min($n2Jatah, $terpakai);
+        $remN2 = max(0, $terpakai - $n2Jatah);
+
+        $terpakaiN1 = min($n1Jatah, $remN2);
+        $remN1 = max(0, $remN2 - $n1Jatah);
+
+        $terpakaiN = min($nJatah, $remN1);
+
+        $sisaN2 = max(0, $n2Jatah - $terpakaiN2);
+        $sisaN1 = max(0, $n1Jatah - $terpakaiN1);
+        $sisaN  = max(0, $nJatah - $terpakaiN);
+
         return [
             'tahun' => $saldo->tahun,
             'jatah_tahun_berjalan' => $saldo->jatah_tahun_berjalan,
@@ -65,6 +84,14 @@ class SaldoCutiService
             'saldo_bisa_dipakai' => $saldo->saldo_bisa_dipakai,
             'jatah_dibekukan' => $saldo->jatah_dibekukan,
             'ditangguhkan' => $saldo->ditangguhkan,
+
+            // Sisa dinamis riil per tahun setelah dipotong FIFO:
+            'sisa_n2' => $sisaN2,
+            'terpakai_n2' => $terpakaiN2,
+            'sisa_n1' => $sisaN1,
+            'terpakai_n1' => $terpakaiN1,
+            'sisa_n' => $sisaN,
+            'terpakai_n' => $terpakaiN,
         ];
     }
 
