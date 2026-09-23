@@ -208,6 +208,55 @@ class SuratCutiPdfService
     }
 
     /**
+     * Dapatkan kode klasifikasi naskah dinas persuratan cuti sesuai regulasi kearsipan/kepegawaian.
+     */
+    public static function getKodeKlasifikasiSurat(?string $kodeJenis): string
+    {
+        return match($kodeJenis) {
+            'sakit' => '800.1.11.2',
+            'melahirkan' => '800.1.11.3',
+            'tahunan' => '800.1.11.4',
+            'alasan_penting' => '800.1.11.5',
+            'besar' => '800.1.11.6',
+            'cltn' => '800.1.11.7',
+            default => '800.1.11.4',
+        };
+    }
+
+    /**
+     * Format teks pangkat dan golongan ruang menjadi Title Case (huruf awal kata kapital)
+     * dengan mempertahankan kapitalisasi angka Romawi (I, II, III, IV, dsb.), format golongan (III/b), dan PPPK.
+     */
+    public static function formatPangkatGolongan(?string $rawPangkat): string
+    {
+        if (empty($rawPangkat) || $rawPangkat === '-') {
+            return '-';
+        }
+
+        // Ubah huruf kecil dulu lalu huruf pertama setiap kata kapital (Title Case)
+        $clean = ucwords(strtolower(trim($rawPangkat)));
+
+        // Perbaiki angka Romawi seperti I, II, III, IV, V, VI, VII, VIII, IX, X
+        $clean = preg_replace_callback(
+            '/\b(i{1,3}|iv|v|vi{0,3}|ix|x)\b/i',
+            fn($m) => strtoupper($m[0]),
+            $clean
+        );
+
+        // Perbaiki format golongan seperti iii/b -> III/b, iv/a -> IV/a
+        $clean = preg_replace_callback(
+            '/\b(I{1,3}|IV|V)\/([a-e])\b/i',
+            fn($m) => strtoupper($m[1]) . '/' . strtolower($m[2]),
+            $clean
+        );
+
+        // Pastikan PPPK tetap huruf kapital
+        $clean = preg_replace('/\bpppk\b/i', 'PPPK', $clean);
+
+        return $clean;
+    }
+
+    /**
      * Generate PDF Surat Izin Cuti Resmi Inspektorat (Sesuai Template Pengantar Cuti).
      */
     public function generateSuratIzinInspektorat(CutiPengajuan $pengajuan)
@@ -228,8 +277,15 @@ class SuratCutiPdfService
         $pybmcUser = $approvalPybmc?->aktor;
         $pybmcPegawai = $pybmcUser?->pegawai;
 
-        // Format Nomor Surat: bagian nomor/counter dikosongkan (5 spasi) untuk diisi manual bagian persuratan
-        $nomorSurat = "800/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/406.012/{$tahun}";
+        // Klasifikasi nomor surat berdasarkan jenis cuti
+        $kodeKlasifikasi = self::getKodeKlasifikasiSurat($pengajuan->jenisCuti?->kode);
+
+        if ($pengajuan->suratTerbit?->nomor_surat) {
+            $nomorSurat = $pengajuan->suratTerbit->nomor_surat;
+        } else {
+            // Format Nomor Surat default: bagian nomor/counter dikosongkan (5 spasi) untuk diisi manual bagian persuratan
+            $nomorSurat = "{$kodeKlasifikasi}/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/406.012/{$tahun}";
+        }
 
         $durasiAngka = $pengajuan->jumlah_hari_kerja;
         $durasiTerbilang = $this->terbilang($durasiAngka);
@@ -252,6 +308,9 @@ class SuratCutiPdfService
             fn($m) => strtoupper($m[0]),
             $pangkatClean
         );
+
+        // Format pangkat/golongan pegawai pemohon menjadi Title Case
+        $pegawaiPangkatGolongan = self::formatPangkatGolongan($pegawai->pangkat_golongan);
 
         // Hitung tahun saldo cuti yang diambil (N, N-1, N-2, atau gabungan)
         $tahunCutiList = [];
@@ -297,6 +356,7 @@ class SuratCutiPdfService
         $data = [
             'pengajuan' => $pengajuan,
             'pegawai' => $pegawai,
+            'pegawaiPangkatGolongan' => $pegawaiPangkatGolongan,
             'jenisCuti' => $pengajuan->jenisCuti,
             'nomorSurat' => $nomorSurat,
             'tahun' => $tahun,
@@ -327,10 +387,11 @@ class SuratCutiPdfService
     {
         $pengajuan->load(['pegawai.unitKerja', 'jenisCuti', 'suratTerbit']);
 
-        $pegawai = $pengajuan->pegawai;
+        $pegawai = $pegawai = $pengajuan->pegawai;
         $tahun = $pengajuan->tanggal_mulai->year;
 
-        $nomorSurat = $pengajuan->suratTerbit?->nomor_surat ?? ("800.1.11.4 / " . str_pad($pengajuan->id, 3, '0', STR_PAD_LEFT) . " / 406.008 / " . $tahun);
+        $kodeKlasifikasi = self::getKodeKlasifikasiSurat($pengajuan->jenisCuti?->kode);
+        $nomorSurat = $pengajuan->suratTerbit?->nomor_surat ?? ("{$kodeKlasifikasi} / " . str_pad($pengajuan->id, 3, '0', STR_PAD_LEFT) . " / 406.008 / " . $tahun);
 
         $durasiAngka = (int) $pengajuan->jumlah_hari_kerja;
         $durasiTerbilang = $this->terbilang($durasiAngka);
@@ -352,9 +413,12 @@ class SuratCutiPdfService
             $pangkatClean
         );
 
+        $pegawaiPangkatGolongan = self::formatPangkatGolongan($pegawai->pangkat_golongan);
+
         $data = [
             'pengajuan' => $pengajuan,
             'pegawai' => $pegawai,
+            'pegawaiPangkatGolongan' => $pegawaiPangkatGolongan,
             'jenisCuti' => $pengajuan->jenisCuti,
             'nomorSurat' => $nomorSurat,
             'tahun' => $tahun,

@@ -364,8 +364,23 @@ class PengajuanCutiTest extends TestCase
         $this->assertStringContainsString("untuk Tahun {$tahunN1} dan {$tahun}", $rendered);
         $this->assertStringContainsString("Pembina", $rendered);
         $this->assertStringNotContainsString("PEMBINA", $rendered);
+        $this->assertStringContainsString("Pegawai Negeri Sipil", $rendered);
+        $this->assertStringNotContainsString("Pegawai Negeri Sipil / Pegawai Pemerintah", $rendered);
+        $this->assertStringContainsString("Badan Kepegawaian dan", $rendered);
+        $this->assertStringNotContainsString("Badan Kepegawaian Dan", $rendered);
 
-        // 3. Akses via endpoint
+        // 3. Test Helper Nomenklatur Nomor dan Format Pangkat
+        $this->assertEquals('800.1.11.2', \App\Services\SuratCutiPdfService::getKodeKlasifikasiSurat('sakit'));
+        $this->assertEquals('800.1.11.3', \App\Services\SuratCutiPdfService::getKodeKlasifikasiSurat('melahirkan'));
+        $this->assertEquals('800.1.11.4', \App\Services\SuratCutiPdfService::getKodeKlasifikasiSurat('tahunan'));
+        $this->assertEquals('800.1.11.5', \App\Services\SuratCutiPdfService::getKodeKlasifikasiSurat('alasan_penting'));
+        $this->assertEquals('800.1.11.6', \App\Services\SuratCutiPdfService::getKodeKlasifikasiSurat('besar'));
+        $this->assertEquals('800.1.11.7', \App\Services\SuratCutiPdfService::getKodeKlasifikasiSurat('cltn'));
+
+        $this->assertEquals('Penata Muda Tingkat I', \App\Services\SuratCutiPdfService::formatPangkatGolongan('PENATA MUDA TINGKAT I'));
+        $this->assertEquals('IV/a - Pembina', \App\Services\SuratCutiPdfService::formatPangkatGolongan('IV/A - PEMBINA'));
+
+        // 4. Akses via endpoint
         $response = $this->actingAs($this->user)->get(route('pengajuan.surat-izin-pdf', $pengajuan));
         $response->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $response->headers->get('content-type'));

@@ -151,7 +151,7 @@
 
     <div class="content">
         <p style="margin-top: 10px; margin-bottom: 8px;">
-            Bersama ini kami sampaikan dengan hormat permohonan {{ $jenisCuti->nama }} Pegawai Negeri Sipil di lingkungan Pemerintah Kabupaten Trenggalek sebagai berikut:
+            Bersama ini kami sampaikan dengan hormat permohonan {{ $jenisCuti->nama }} {{ $pegawai->jenis_pegawai === 'PPPK' ? 'Pegawai Pemerintah dengan Perjanjian Kerja' : 'Pegawai Negeri Sipil' }} di lingkungan Pemerintah Kabupaten Trenggalek sebagai berikut:
         </p>
 
         <table class="identity-table">
@@ -168,7 +168,7 @@
             <tr>
                 <td>Pangkat / Gol. Ruang</td>
                 <td>:</td>
-                <td>{{ $pegawai->pangkat_golongan }}</td>
+                <td>{{ $pegawaiPangkatGolongan ?? ($pegawai->pangkat_golongan ?: '-') }}</td>
             </tr>
             <tr>
                 <td>Jabatan</td>

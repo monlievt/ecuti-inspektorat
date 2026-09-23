@@ -140,7 +140,7 @@
     <!-- ISI SURAT -->
     <div class="content">
         <p style="margin-bottom: 8px;">
-            Diberikan {{ $jenisCuti->nama }} untuk Tahun {{ $tahunCutiLabel ?? $tahun }} kepada Pegawai Negeri Sipil / Pegawai Pemerintah dengan Perjanjian Kerja :
+            Diberikan {{ $jenisCuti->nama }} untuk Tahun {{ $tahunCutiLabel ?? $tahun }} kepada {{ $pegawai->jenis_pegawai === 'PPPK' ? 'Pegawai Pemerintah dengan Perjanjian Kerja' : 'Pegawai Negeri Sipil' }} :
         </p>
 
         <table class="identity-table">
@@ -157,7 +157,7 @@
             <tr>
                 <td>Pangkat / Gol. Ruang</td>
                 <td>:</td>
-                <td>{{ $pegawai->pangkat_golongan ?: '-' }}</td>
+                <td>{{ $pegawaiPangkatGolongan ?? ($pegawai->pangkat_golongan ?: '-') }}</td>
             </tr>
             <tr>
                 <td>Jabatan</td>
@@ -197,7 +197,7 @@
             <td style="width: 50%; vertical-align: top;">
                 <div class="tembusan">
                     <strong><u>Tembusan kepada :</u></strong><br>
-                    Yth. Sdr. Kepala Badan Kepegawaian Dan<br>
+                    Yth. Sdr. Kepala Badan Kepegawaian dan<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pengembangan Sumber Daya Manusia<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Kab. Trenggalek
                 </div>

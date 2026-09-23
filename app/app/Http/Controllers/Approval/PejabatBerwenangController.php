@@ -119,11 +119,12 @@ class PejabatBerwenangController extends Controller
                 $request->catatan
             );
 
-            // 2. Generate nomor surat otomatis (Format: 800/ [Counter] /406.012/ [Tahun])
+            // 2. Generate nomor surat otomatis sesuai klasifikasi jenis cuti (Format: 800.1.11.x/ [Counter] /406.012/ [Tahun])
             // Kita hitung jumlah surat terbit di tahun berjalan untuk counter
             $tahun = now()->year;
             $counter = CutiSuratTerbit::whereYear('tanggal_terbit', $tahun)->count() + 1;
-            $nomorSurat = sprintf("800/%04d/406.012/%d", $counter, $tahun);
+            $kodeKlasifikasi = \App\Services\SuratCutiPdfService::getKodeKlasifikasiSurat($pengajuan->jenisCuti?->kode);
+            $nomorSurat = sprintf("%s/%04d/406.012/%d", $kodeKlasifikasi, $counter, $tahun);
 
             // 3. Simpan data surat terbit (Path PDF dummy untuk saat ini, akan digenerate saat diunduh / dipanggil di service)
             $pathPdf = "cuti_surat/{$pengajuan->nomor_pengajuan}.pdf";
@@ -251,10 +252,11 @@ class PejabatBerwenangController extends Controller
                 $request->catatan ?: 'Mengesahkan izin sementara yang telah diambil.'
             );
 
-            // 3. Generate nomor surat resmi
+            // 3. Generate nomor surat resmi sesuai klasifikasi jenis cuti
             $tahun = now()->year;
             $counter = CutiSuratTerbit::whereYear('tanggal_terbit', $tahun)->count() + 1;
-            $nomorSurat = sprintf("800/%04d/406.012/%d", $counter, $tahun);
+            $kodeKlasifikasi = \App\Services\SuratCutiPdfService::getKodeKlasifikasiSurat($pengajuan->jenisCuti?->kode);
+            $nomorSurat = sprintf("%s/%04d/406.012/%d", $kodeKlasifikasi, $counter, $tahun);
             $pathPdf = "cuti_surat/{$pengajuan->nomor_pengajuan}.pdf";
 
             CutiSuratTerbit::create([
