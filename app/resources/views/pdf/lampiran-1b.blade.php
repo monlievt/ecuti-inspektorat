@@ -33,8 +33,8 @@
             text-align: center;
             font-weight: bold;
             font-size: 8.5pt;
-            margin-top: 1px;
-            margin-bottom: 3px;
+            margin-top: 2px;
+            margin-bottom: 5px;
             text-decoration: underline;
             letter-spacing: 0.5px;
         }
@@ -43,16 +43,16 @@
             font-size: 7.2pt;
             background-color: #f2f2f2;
             padding: 1.5px 4px;
-            border: 1px solid #000;
-            margin-top: 2px;
+            border: 0.5pt solid #000;
+            margin-top: 6px;
         }
         table.data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
         table.data-table th, table.data-table td {
-            border: 1px solid #000;
+            border: 0.5pt solid #000;
             padding: 1.5px 3.5px;
             vertical-align: top;
             font-size: 6.8pt;
@@ -84,7 +84,7 @@
         .footnote-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 2px;
+            margin-top: 5px;
             font-size: 6.2pt;
             line-height: 1.15;
         }
@@ -192,41 +192,41 @@
             <!-- Kolom Kiri: 1. Cuti Tahunan -->
             <td style="width: 50%; padding: 0; vertical-align: top;">
                 <table style="width: 100%; border-collapse: collapse;">
-                    <tr style="background-color: #f7f7f7;">
-                        <th colspan="3" style="border-bottom: 1px solid #000; padding: 1.5px 3px; text-align: left; font-size: 6.8pt; font-weight: bold;">
+                    <tr>
+                        <td colspan="3" style="border-bottom: 0.5pt solid #000; padding: 1.5px 3px; text-align: left; font-size: 6.5pt;">
                             1. CUTI TAHUNAN
-                        </th>
-                    </tr>
-                    <tr style="background-color: #fcfcfc;">
-                        <th style="border: 1px solid #000; border-top: none; padding: 1px 2px; text-align: left; font-size: 6.5pt; width: 28%;">Tahun</th>
-                        <th style="border: 1px solid #000; border-top: none; padding: 1px 2px; text-align: center; font-size: 6.5pt; width: 22%;">Sisa</th>
-                        <th style="border: 1px solid #000; border-top: none; padding: 1px 2px; text-align: left; font-size: 6.5pt; width: 50%;">Keterangan</th>
+                        </td>
                     </tr>
                     <tr>
-                        <td style="border: 1px solid #000; padding: 1px 2px; font-size: 6.5pt;">N-2 ({{ $detailSaldo['tahun_n2'] }})</td>
-                        <td style="border: 1px solid #000; padding: 1px 2px; text-align: center; font-size: 6.5pt;">{{ $detailSaldo['n2']['sisa_akhir'] }} Hari</td>
-                        <td style="border: 1px solid #000; padding: 1px 2px; font-size: 6.2pt;">
+                        <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1px 2px; text-align: left; font-size: 6.5pt; width: 28%;">Tahun</td>
+                        <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1px 2px; text-align: center; font-size: 6.5pt; width: 22%;">Sisa</td>
+                        <td style="border-bottom: 0.5pt solid #000; padding: 1px 2px; text-align: left; font-size: 6.5pt; width: 50%;">Keterangan</td>
+                    </tr>
+                    <tr>
+                        <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1px 2px; font-size: 6.5pt;">N-2 ({{ $detailSaldo['tahun_n2'] }})</td>
+                        <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1px 2px; text-align: center; font-size: 6.5pt;">{{ $detailSaldo['n2']['sisa_akhir'] }} Hari</td>
+                        <td style="border-bottom: 0.5pt solid #000; padding: 1px 2px; font-size: 6.2pt;">
                             {{ $detailSaldo['n2']['potong'] > 0 ? ('Dipotong ' . $detailSaldo['n2']['potong'] . ' hr') : '-' }}
                         </td>
                     </tr>
                     <tr>
-                        <td style="border: 1px solid #000; padding: 1px 2px; font-size: 6.5pt;">N-1 ({{ $detailSaldo['tahun_n1'] }})</td>
-                        <td style="border: 1px solid #000; padding: 1px 2px; text-align: center; font-size: 6.5pt;">{{ $detailSaldo['n1']['sisa_akhir'] }} Hari</td>
-                        <td style="border: 1px solid #000; padding: 1px 2px; font-size: 6.2pt;">
+                        <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1px 2px; font-size: 6.5pt;">N-1 ({{ $detailSaldo['tahun_n1'] }})</td>
+                        <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1px 2px; text-align: center; font-size: 6.5pt;">{{ $detailSaldo['n1']['sisa_akhir'] }} Hari</td>
+                        <td style="border-bottom: 0.5pt solid #000; padding: 1px 2px; font-size: 6.2pt;">
                             {{ $detailSaldo['n1']['potong'] > 0 ? ('Dipotong ' . $detailSaldo['n1']['potong'] . ' hr') : '-' }}
                         </td>
                     </tr>
                     <tr>
-                        <td style="border: 1px solid #000; padding: 1px 2px; font-size: 6.5pt;">N ({{ $detailSaldo['tahun_n'] }})</td>
-                        <td style="border: 1px solid #000; padding: 1px 2px; text-align: center; font-size: 6.5pt;">{{ $detailSaldo['n']['sisa_akhir'] }} Hari</td>
-                        <td style="border: 1px solid #000; padding: 1px 2px; font-size: 6.2pt;">
+                        <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1px 2px; font-size: 6.5pt;">N ({{ $detailSaldo['tahun_n'] }})</td>
+                        <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1px 2px; text-align: center; font-size: 6.5pt;">{{ $detailSaldo['n']['sisa_akhir'] }} Hari</td>
+                        <td style="border-bottom: 0.5pt solid #000; padding: 1px 2px; font-size: 6.2pt;">
                             {{ $detailSaldo['n']['potong'] > 0 ? ('Dipotong ' . $detailSaldo['n']['potong'] . ' hr') : '-' }}
                         </td>
                     </tr>
-                    <tr style="background-color: #f2f2f2; font-weight: bold;">
-                        <td style="border: 1px solid #000; padding: 1px 2px; font-size: 6.5pt;">Total Sisa</td>
-                        <td style="border: 1px solid #000; padding: 1px 2px; text-align: center; font-size: 6.5pt;">{{ $detailSaldo['total_sisa_akhir'] }} Hari</td>
-                        <td style="border: 1px solid #000; padding: 1px 2px; font-size: 6.2pt;">Sisa aktif pasca potong</td>
+                    <tr>
+                        <td style="border-right: 0.5pt solid #000; padding: 1px 2px; font-size: 6.5pt;">Total Sisa</td>
+                        <td style="border-right: 0.5pt solid #000; padding: 1px 2px; text-align: center; font-size: 6.5pt;">{{ $detailSaldo['total_sisa_akhir'] }} Hari</td>
+                        <td style="padding: 1px 2px; font-size: 6.2pt;">Sisa aktif pasca potong</td>
                     </tr>
                 </table>
             </td>
@@ -235,32 +235,32 @@
             <td style="width: 50%; padding: 0; vertical-align: top;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
-                        <td style="border: 1px solid #000; border-top: none; padding: 1.5px 3px; font-size: 6.5pt; width: 68%;">2. CUTI BESAR</td>
-                        <td style="border: 1px solid #000; border-top: none; padding: 1.5px 3px; font-size: 6.5pt; text-align: center; width: 32%;">
+                        <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1.5px 3px; font-size: 6.5pt; width: 68%;">2. CUTI BESAR</td>
+                        <td style="border-bottom: 0.5pt solid #000; padding: 1.5px 3px; font-size: 6.5pt; text-align: center; width: 32%;">
                             {{ $jenisCuti->kode === 'besar' ? ($pengajuan->jumlah_hari_kerja . ' ' . $satuanLabel) : '-' }}
                         </td>
                     </tr>
                     <tr>
-                        <td style="border: 1px solid #000; padding: 1.5px 3px; font-size: 6.5pt;">3. CUTI SAKIT</td>
-                        <td style="border: 1px solid #000; padding: 1.5px 3px; font-size: 6.5pt; text-align: center;">
+                        <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1.5px 3px; font-size: 6.5pt;">3. CUTI SAKIT</td>
+                        <td style="border-bottom: 0.5pt solid #000; padding: 1.5px 3px; font-size: 6.5pt; text-align: center;">
                             {{ $jenisCuti->kode === 'sakit' ? ($pengajuan->jumlah_hari_kerja . ' ' . $satuanLabel) : '-' }}
                         </td>
                     </tr>
                     <tr>
-                        <td style="border: 1px solid #000; padding: 1.5px 3px; font-size: 6.5pt;">4. CUTI MELAHIRKAN</td>
-                        <td style="border: 1px solid #000; padding: 1.5px 3px; font-size: 6.5pt; text-align: center;">
+                        <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1.5px 3px; font-size: 6.5pt;">4. CUTI MELAHIRKAN</td>
+                        <td style="border-bottom: 0.5pt solid #000; padding: 1.5px 3px; font-size: 6.5pt; text-align: center;">
                             {{ $jenisCuti->kode === 'melahirkan' ? ($pengajuan->jumlah_hari_kerja . ' ' . $satuanLabel) : '-' }}
                         </td>
                     </tr>
                     <tr>
-                        <td style="border: 1px solid #000; padding: 1.5px 3px; font-size: 6.5pt;">5. CUTI KARENA ALASAN PENTING</td>
-                        <td style="border: 1px solid #000; padding: 1.5px 3px; font-size: 6.5pt; text-align: center;">
+                        <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1.5px 3px; font-size: 6.5pt;">5. CUTI KARENA ALASAN PENTING</td>
+                        <td style="border-bottom: 0.5pt solid #000; padding: 1.5px 3px; font-size: 6.5pt; text-align: center;">
                             {{ $jenisCuti->kode === 'alasan_penting' ? ($pengajuan->jumlah_hari_kerja . ' ' . $satuanLabel) : '-' }}
                         </td>
                     </tr>
                     <tr>
-                        <td style="border: 1px solid #000; padding: 1.5px 3px; font-size: 6.5pt;">6. CUTI DI LUAR TANGGUNGAN NEGARA</td>
-                        <td style="border: 1px solid #000; padding: 1.5px 3px; font-size: 6.5pt; text-align: center;">
+                        <td style="border-right: 0.5pt solid #000; padding: 1.5px 3px; font-size: 6.5pt;">6. CUTI DI LUAR TANGGUNGAN NEGARA</td>
+                        <td style="padding: 1.5px 3px; font-size: 6.5pt; text-align: center;">
                             {{ $jenisCuti->kode === 'cltn' ? ($pengajuan->jumlah_hari_kerja . ' ' . $satuanLabel) : '-' }}
                         </td>
                     </tr>
@@ -281,7 +281,7 @@
             <td style="padding: 3px 4px;">{{ $pengajuan->alamat_selama_cuti ?: '-' }}</td>
             <td style="padding: 3px 4px; text-align: center;">{{ $pengajuan->telp_selama_cuti ?: '-' }}</td>
             <td style="padding: 3px 4px; text-align: center;">
-                <br><br><br>
+                <br><br><br><br>
                 ( <span style="font-weight: bold; text-decoration: underline;">{{ $pegawai->nama_lengkap }}</span> )<br>
                 NIP. {{ $pegawai->nip }}
             </td>
@@ -319,7 +319,7 @@
                 </div>
                 <div class="signature-box" style="margin-top: 3px;">
                     Atasan Langsung,<br>
-                    <br><br><br>
+                    <br><br><br><br>
                     @if(!empty($isInspektur))
                         ( <span style="font-weight: bold;">Sekretaris Daerah Kabupaten Trenggalek</span> )<br>
                         NIP. .......................................................
@@ -368,20 +368,18 @@
                     @if(!empty($isCutiKhususBkpsdm))
                         a.n. BUPATI TRENGGALEK<br>
                         Kepala BKPSDM Kabupaten Trenggalek,<br>
-                        <br><br><br>
+                        <br><br><br><br>
                         ( <span style="font-weight: bold; text-decoration: underline;">{{ $pybmcNama }}</span> )<br>
-                        {{ $pybmcPangkat }}<br>
                         NIP. {{ $pybmcNip }}
                     @elseif(!empty($isInspektur))
                         Bupati Trenggalek,<br>
-                        <br><br><br>
+                        <br><br><br><br>
                         ( ....................................................... )<br>
                         NIP. .......................................................
                     @else
                         Inspektur Kabupaten Trenggalek,<br>
-                        <br><br><br>
+                        <br><br><br><br>
                         ( <span style="font-weight: bold; text-decoration: underline;">{{ $pybmcNama }}</span> )<br>
-                        {{ $pybmcPangkat }}<br>
                         NIP. {{ $pybmcNip }}
                     @endif
                 </div>
@@ -400,7 +398,7 @@
         </tr>
         <tr>
             <td>**</td>
-            <td>Pilih salah satu dengan memberi tanda centang ( &#10003; )</td>
+            <td>Pilih salah satu dengan memberi tanda centang ( <span class="check" style="font-size: 7pt;">&#10003;</span> )</td>
         </tr>
         <tr>
             <td>***</td>
