@@ -234,8 +234,8 @@ class SuratCutiPdfService
         $durasiAngka = $pengajuan->jumlah_hari_kerja;
         $durasiTerbilang = $this->terbilang($durasiAngka);
 
-        // Ambil hanya pangkat (hapus golongan ruang, misal: "IV/a - PEMBINA" -> "PEMBINA")
-        $rawPangkat = $pybmcPegawai ? $pybmcPegawai->pangkat_golongan : 'PEMBINA';
+        // Ambil hanya pangkat (hapus golongan ruang, misal: "IV/a - PEMBINA" -> "Pembina")
+        $rawPangkat = $pybmcPegawai ? $pybmcPegawai->pangkat_golongan : 'Pembina';
         $pybmcPangkat = $rawPangkat;
         if (str_contains($rawPangkat, '-')) {
             $parts = explode('-', $rawPangkat);
@@ -245,12 +245,62 @@ class SuratCutiPdfService
             $pybmcPangkat = trim($parts[0]);
         }
 
+        // Format huruf kapital hanya di awal kata (Title Case, contoh: "Pembina", bukan "PEMBINA")
+        $pangkatClean = ucwords(strtolower($pybmcPangkat));
+        $pybmcPangkat = preg_replace_callback(
+            '/\b(i{1,3}|iv|v|vi{0,3}|ix|x)\b/i',
+            fn($m) => strtoupper($m[0]),
+            $pangkatClean
+        );
+
+        // Hitung tahun saldo cuti yang diambil (N, N-1, N-2, atau gabungan)
+        $tahunCutiList = [];
+        if ($pengajuan->jenisCuti?->kode === \App\Models\CutiJenis::TAHUNAN) {
+            $sudahDipotong = in_array($pengajuan->status, [
+                CutiPengajuan::STATUS_DISETUJUI_PYBMC,
+                CutiPengajuan::STATUS_DIRATIFIKASI,
+                CutiPengajuan::STATUS_DITERBITKAN,
+                CutiPengajuan::STATUS_DIPANGGIL_KEMBALI,
+            ]);
+
+            $detailSaldo = $this->saldoCutiService->hitungRincianSisaPerTahun(
+                $pegawai->id,
+                $tahun,
+                (int) $pengajuan->jumlah_hari_kerja,
+                $sudahDipotong
+            );
+
+            if (($detailSaldo['n2']['potong'] ?? 0) > 0) {
+                $tahunCutiList[] = $detailSaldo['tahun_n2'];
+            }
+            if (($detailSaldo['n1']['potong'] ?? 0) > 0) {
+                $tahunCutiList[] = $detailSaldo['tahun_n1'];
+            }
+            if (($detailSaldo['n']['potong'] ?? 0) > 0) {
+                $tahunCutiList[] = $detailSaldo['tahun_n'];
+            }
+        }
+
+        if (empty($tahunCutiList)) {
+            $tahunCutiList[] = $tahun;
+        }
+
+        if (count($tahunCutiList) === 1) {
+            $tahunCutiLabel = (string) $tahunCutiList[0];
+        } elseif (count($tahunCutiList) === 2) {
+            $tahunCutiLabel = $tahunCutiList[0] . ' dan ' . $tahunCutiList[1];
+        } else {
+            $lastTahun = array_pop($tahunCutiList);
+            $tahunCutiLabel = implode(', ', $tahunCutiList) . ', dan ' . $lastTahun;
+        }
+
         $data = [
             'pengajuan' => $pengajuan,
             'pegawai' => $pegawai,
             'jenisCuti' => $pengajuan->jenisCuti,
             'nomorSurat' => $nomorSurat,
             'tahun' => $tahun,
+            'tahunCutiLabel' => $tahunCutiLabel,
             'durasiAngka' => $durasiAngka,
             'durasiTerbilang' => $durasiTerbilang,
             'satuanLabel' => str_replace('_', ' ', $pengajuan->satuan_hari),
@@ -285,6 +335,23 @@ class SuratCutiPdfService
         $durasiAngka = (int) $pengajuan->jumlah_hari_kerja;
         $durasiTerbilang = $this->terbilang($durasiAngka);
 
+        // Ambil pangkat Title Case
+        $rawPangkat = $pegawai->pangkat_golongan ?: 'Pembina';
+        $pegawaiPangkat = $rawPangkat;
+        if (str_contains($rawPangkat, '-')) {
+            $parts = explode('-', $rawPangkat);
+            $pegawaiPangkat = trim(end($parts));
+        } elseif (str_contains($rawPangkat, '/')) {
+            $parts = explode('/', $rawPangkat);
+            $pegawaiPangkat = trim($parts[0]);
+        }
+        $pangkatClean = ucwords(strtolower($pegawaiPangkat));
+        $pegawaiPangkat = preg_replace_callback(
+            '/\b(i{1,3}|iv|v|vi{0,3}|ix|x)\b/i',
+            fn($m) => strtoupper($m[0]),
+            $pangkatClean
+        );
+
         $data = [
             'pengajuan' => $pengajuan,
             'pegawai' => $pegawai,
@@ -297,6 +364,7 @@ class SuratCutiPdfService
             'tanggalSurat' => $pengajuan->created_at ? $pengajuan->created_at->translatedFormat('d F Y') : now()->translatedFormat('d F Y'),
             'tanggalMulai' => $pengajuan->tanggal_mulai->translatedFormat('d F Y'),
             'tanggalSelesai' => $pengajuan->tanggal_selesai->translatedFormat('d F Y'),
+            'pegawaiPangkat' => $pegawaiPangkat,
         ];
 
         $pdf = Pdf::loadView('pdf.surat-pengantar-bupati', $data);

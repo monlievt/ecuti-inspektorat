@@ -298,4 +298,76 @@ class PengajuanCutiTest extends TestCase
             'jenis_cuti_id' => $this->cutiSakit->id,
         ]);
     }
+
+    public function test_surat_izin_cuti_inspektorat_tahun_saldo_dan_format_pangkat(): void
+    {
+        $tahun = now()->year;
+        $tahunN1 = $tahun - 1;
+
+        // Reset saldo: 3 hari dari N-1, dan 12 hari dari N
+        CutiSaldoTahunan::where('pegawai_id', $this->pegawai->id)->delete();
+        CutiSaldoTahunan::create([
+            'pegawai_id' => $this->pegawai->id,
+            'tahun' => $tahun,
+            'jatah_tahun_berjalan' => 12,
+            'carry_over_n1' => 3,
+            'carry_over_n2' => 0,
+            'terpakai' => 0,
+        ]);
+
+        // Ajukan 5 hari kerja (3 hari akan memotong N-1, 2 hari akan memotong N)
+        $mulai = Carbon::parse('next monday');
+        $selesai = $mulai->copy()->addDays(4);
+
+        $pengajuan = CutiPengajuan::create([
+            'nomor_pengajuan' => 'CUTI/2026/TEST-SURAT',
+            'pegawai_id' => $this->pegawai->id,
+            'jenis_cuti_id' => $this->cutiTahunan->id,
+            'alasan' => 'Keperluan keluarga',
+            'tanggal_mulai' => $mulai->toDateString(),
+            'tanggal_selesai' => $selesai->toDateString(),
+            'jumlah_hari_kerja' => 5,
+            'satuan_hari' => 'hari_kerja',
+            'alamat_selama_cuti' => 'Trenggalek',
+            'telp_selama_cuti' => '081234567890',
+            'status' => CutiPengajuan::STATUS_DITERBITKAN,
+        ]);
+
+        $service = app(\App\Services\SuratCutiPdfService::class);
+        $pdf = $service->generateSuratIzinInspektorat($pengajuan);
+        $outputHtml = $pdf->output();
+
+        // 1. Cek tahun saldo cuti gabungan dan format pangkat
+        $this->assertNotNull($outputHtml);
+        $this->assertEquals(1, $pdf->getCanvas()->get_page_count());
+
+        // 2. Cek render view secara langsung
+        $rendered = view('pdf.surat-izin-inspektorat', [
+            'pengajuan' => $pengajuan,
+            'pegawai' => $this->pegawai,
+            'jenisCuti' => $pengajuan->jenisCuti,
+            'nomorSurat' => '800/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/406.012/2026',
+            'tahun' => $tahun,
+            'tahunCutiLabel' => "{$tahunN1} dan {$tahun}",
+            'durasiAngka' => 5,
+            'durasiTerbilang' => 'lima',
+            'satuanLabel' => 'hari kerja',
+            'tanggalSurat' => '23 September 2026',
+            'tanggalMulai' => '28 September 2026',
+            'tanggalSelesai' => '02 Oktober 2026',
+            'pybmcNama' => 'Ir. WIJIONO, S.T., M.MKes.',
+            'pybmcPangkat' => 'Pembina',
+            'pybmcNip' => '197308051997031007',
+            'pybmcJabatan' => 'Plt. INSPEKTUR KABUPATEN TRENGGALEK',
+        ])->render();
+
+        $this->assertStringContainsString("untuk Tahun {$tahunN1} dan {$tahun}", $rendered);
+        $this->assertStringContainsString("Pembina", $rendered);
+        $this->assertStringNotContainsString("PEMBINA", $rendered);
+
+        // 3. Akses via endpoint
+        $response = $this->actingAs($this->user)->get(route('pengajuan.surat-izin-pdf', $pengajuan));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('application/pdf', $response->headers->get('content-type'));
+    }
 }

@@ -6,58 +6,52 @@
     <style>
         @page {
             size: 215mm 330mm;
-            margin: 15mm 20mm 15mm 20mm;
+            margin: 20mm;
         }
         body {
             font-family: 'Bookman Old Style', 'Times New Roman', Times, serif;
             font-size: 11pt;
-            line-height: 1.4;
+            line-height: 1.45;
             color: #000;
             margin: 0;
             padding: 0;
         }
-        .header-container {
-            text-align: center;
+        .header-table {
+            width: 100%;
             border-bottom: 3px double #000;
             padding-bottom: 8px;
             margin-bottom: 15px;
-            position: relative;
+            border-collapse: collapse;
         }
-        .header-logo {
-            position: absolute;
-            left: 5px;
-            top: 0px;
-            width: 70px;
-            height: auto;
+        .header-table td {
+            vertical-align: middle;
         }
-        .header-text {
-            margin-left: 60px;
-            margin-right: 20px;
-        }
-        .header-text h3 {
-            margin: 0;
+        .header-title-1 {
             font-size: 13pt;
             font-weight: bold;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             text-transform: uppercase;
+            font-family: 'Bookman Old Style', serif;
+            margin: 0;
         }
-        .header-text h2 {
-            margin: 2px 0 0 0;
+        .header-title-2 {
             font-size: 15pt;
             font-weight: bold;
             letter-spacing: 1px;
             text-transform: uppercase;
+            margin: 2px 0 0 0;
+            font-family: 'Bookman Old Style', serif;
         }
-        .header-text p {
-            margin: 3px 0 0 0;
+        .header-address {
+            margin: 4px 0 0 0;
             font-size: 8.5pt;
             font-family: Arial, Helvetica, sans-serif;
-            line-height: 1.2;
+            line-height: 1.25;
         }
         .meta-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         .meta-table td {
             vertical-align: top;
@@ -71,7 +65,7 @@
         }
         .identity-table {
             width: 100%;
-            margin: 8px 0 12px 15px;
+            margin: 8px 0 12px 10px;
             border-collapse: collapse;
         }
         .identity-table td {
@@ -89,8 +83,9 @@
             font-size: 11pt;
         }
         .tembusan {
-            margin-top: 30px;
+            margin-top: 25px;
             font-size: 9.5pt;
+            line-height: 1.35;
         }
         .tembusan ol {
             margin: 2px 0 0 0;
@@ -101,20 +96,24 @@
 <body>
 
     <!-- KOP SURAT RESMI PEMKAB TRENGGALEK -->
-    <div class="header-container">
-        @php
-            $logoPath = public_path('images/logo-trenggalek.png');
-            $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : null;
-        @endphp
-        @if($logoData)
-            <img src="data:image/png;base64,{{ $logoData }}" class="header-logo" alt="Logo Pemkab Trenggalek">
-        @endif
-        <div class="header-text">
-            <h3>PEMERINTAH KABUPATEN TRENGGALEK</h3>
-            <h2>INSPEKTORAT DAERAH</h2>
-            <p>Jl. Veteran No. 27 Trenggalek, Jawa Timur 66311<br>Telepon: (0355) 791444 | Email: inspektorat@trenggalekkab.go.id</p>
-        </div>
-    </div>
+    @php
+        $logoPath = public_path('images/logo-trenggalek.png');
+        $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : null;
+    @endphp
+    <table class="header-table">
+        <tr>
+            <td style="width: 70px; text-align: left;">
+                @if($logoData)
+                    <img src="data:image/png;base64,{{ $logoData }}" style="width: 65px; height: auto;" alt="Logo Pemkab Trenggalek">
+                @endif
+            </td>
+            <td style="text-align: center; padding-right: 65px;">
+                <h3 class="header-title-1">PEMERINTAH KABUPATEN TRENGGALEK</h3>
+                <h2 class="header-title-2">INSPEKTORAT DAERAH</h2>
+                <p class="header-address">Jl. Veteran No. 27 Trenggalek, Jawa Timur 66311<br>Telepon: (0355) 791444 | Email: inspektorat@trenggalekkab.go.id</p>
+            </td>
+        </tr>
+    </table>
 
     <!-- TANGGAL & TUJUAN SURAT -->
     <table class="meta-table">
@@ -221,12 +220,12 @@
     <table class="signature-table">
         <tr>
             <td style="width: 50%;"></td>
-            <td style="width: 50%; text-align: center;">
+            <td style="width: 50%; vertical-align: top; text-align: left; padding-left: 35px;">
                 Pemohon,<br>
                 <span style="font-weight: bold;">{{ $pegawai->jabatan }}</span>
-                <br><br><br><br>
+                <div style="height: 50px;"></div>
                 <span style="font-weight: bold; text-decoration: underline;">{{ $pegawai->nama_lengkap }}</span><br>
-                {{ $pegawai->pangkat_golongan }}<br>
+                {{ $pegawaiPangkat ?? $pegawai->pangkat_golongan }}<br>
                 NIP. {{ $pegawai->nip }}
             </td>
         </tr>
