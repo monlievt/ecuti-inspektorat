@@ -255,4 +255,39 @@ class MasterDataController extends Controller
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
+
+    // ── 6. Pejabat Kepala BKPSDM ─────────────────────────────────────────────
+
+    public function pejabatBkpsdm()
+    {
+        $bkpsdm = [
+            'nama' => \App\Services\SettingService::get('kepala_bkpsdm_nama', 'HERI YULIANTO, S.Sos., M.Si.'),
+            'nip' => \App\Services\SettingService::get('kepala_bkpsdm_nip', '197107121991011001'),
+            'pangkat_golongan' => \App\Services\SettingService::get('kepala_bkpsdm_pangkat_golongan', 'Pembina Utama Muda (IV/c)'),
+            'jabatan' => \App\Services\SettingService::get('kepala_bkpsdm_jabatan', 'Kepala Badan Kepegawaian dan Pengembangan Sumber Daya Manusia Kabupaten Trenggalek'),
+        ];
+
+        return view('admin.master.bkpsdm', compact('bkpsdm'));
+    }
+
+    public function updatePejabatBkpsdm(Request $request)
+    {
+        $validated = $request->validate([
+            'kepala_bkpsdm_nama' => 'required|string|max:255',
+            'kepala_bkpsdm_nip' => 'required|string|max:30',
+            'kepala_bkpsdm_pangkat_golongan' => 'required|string|max:100',
+            'kepala_bkpsdm_jabatan' => 'required|string|max:255',
+        ], [
+            'kepala_bkpsdm_nama.required' => 'Nama Kepala BKPSDM wajib diisi.',
+            'kepala_bkpsdm_nip.required' => 'NIP Kepala BKPSDM wajib diisi.',
+            'kepala_bkpsdm_pangkat_golongan.required' => 'Pangkat / Golongan Ruang wajib diisi.',
+            'kepala_bkpsdm_jabatan.required' => 'Jabatan wajib diisi.',
+        ]);
+
+        foreach ($validated as $key => $value) {
+            \App\Services\SettingService::set($key, $value);
+        }
+
+        return redirect()->route('admin.master.bkpsdm')->with('success', 'Data Pejabat Kepala BKPSDM berhasil diperbarui.');
+    }
 }

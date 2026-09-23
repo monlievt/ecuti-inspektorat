@@ -248,4 +248,31 @@ class SettingTest extends TestCase
         $loginRes->assertSee('class="g-recaptcha"', false);
         $loginRes->assertSee('data-sitekey="6LeIx0cD_LIVE_KEY_TEST"', false);
     }
+
+    public function test_admin_can_view_and_update_pejabat_bkpsdm_in_master_data(): void
+    {
+        // 1. Akses halaman master BKPSDM
+        $response = $this->actingAs($this->adminUser)->get(route('admin.master.bkpsdm'));
+        $response->assertStatus(200);
+        $response->assertSee('Data Master Pejabat Kepala BKPSDM');
+        $response->assertSee('HERI YULIANTO, S.Sos., M.Si.');
+
+        // 2. Non admin ditolak
+        $nonAdmin = $this->actingAs($this->regularUser)->get(route('admin.master.bkpsdm'));
+        $nonAdmin->assertStatus(403);
+
+        // 3. Update data pejabat BKPSDM
+        $updateRes = $this->actingAs($this->adminUser)->post(route('admin.master.bkpsdm.update'), [
+            'kepala_bkpsdm_nama' => 'DRS. BUDI PRASETYO, M.M.',
+            'kepala_bkpsdm_nip' => '197505052000031001',
+            'kepala_bkpsdm_pangkat_golongan' => 'Pembina Utama Madya (IV/d)',
+            'kepala_bkpsdm_jabatan' => 'Plt. Kepala BKPSDM Kabupaten Trenggalek',
+        ]);
+
+        $updateRes->assertRedirect(route('admin.master.bkpsdm'));
+        $updateRes->assertSessionHas('success');
+
+        $this->assertEquals('DRS. BUDI PRASETYO, M.M.', SettingService::get('kepala_bkpsdm_nama'));
+        $this->assertEquals('197505052000031001', SettingService::get('kepala_bkpsdm_nip'));
+    }
 }
