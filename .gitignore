@@ -17,8 +17,8 @@ app/bootstrap/cache/*.php
 app/public/hot
 app/public/storage
 
-# Build assets (di-generate saat deploy)
-app/public/build/
+# Build assets (di-commit agar server tidak butuh nodejs)
+# app/public/build/
 
 # IDE
 .idea/
