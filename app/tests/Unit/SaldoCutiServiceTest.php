@@ -285,4 +285,57 @@ class SaldoCutiServiceTest extends TestCase
         // Aldi hanya punya carry_over_n1 (2 hari) yang tersisa untuk dipakai
         $this->assertEquals(2, $this->service->hitungSaldoBisaDipakai($this->pegawai->id, 2024));
     }
+
+    /**
+     * Skenario H — Pegawai PPPK Tidak Mendapat Carry-over (Sesuai PP 49/2018)
+     */
+    public function test_skenario_pppk_tidak_dapat_carry_over(): void
+    {
+        $this->pegawai->update(['jenis_pegawai' => 'PPPK']);
+
+        CutiSaldoTahunan::create([
+            'pegawai_id' => $this->pegawai->id,
+            'tahun' => 2024,
+            'jatah_tahun_berjalan' => 12,
+            'carry_over_n1' => 0,
+            'carry_over_n2' => 0,
+            'tambahan_cuti_bersama' => 0,
+            'terpakai' => 2, // Sisa 10 hari
+        ]);
+
+        $saldo2025 = $this->service->prosesYearEnd($this->pegawai->id, 2024);
+
+        // PPPK: sisa tahun lalu hangus, jatah baru tetap 12, carry N-1 dan N-2 = 0
+        $this->assertEquals(12, $saldo2025->jatah_tahun_berjalan);
+        $this->assertEquals(0, $saldo2025->carry_over_n1);
+        $this->assertEquals(0, $saldo2025->carry_over_n2);
+        $this->assertEquals(12, $this->service->hitungSisa($this->pegawai->id, 2025));
+    }
+
+    /**
+     * Skenario I — Auto-rollover otomatis saat dapatkanAtauBuatSaldo dipanggil di tahun baru
+     */
+    public function test_auto_rollover_saat_dapatkan_atau_buat_saldo(): void
+    {
+        // 2024 ada saldo sisa 4 hari
+        CutiSaldoTahunan::create([
+            'pegawai_id' => $this->pegawai->id,
+            'tahun' => 2024,
+            'jatah_tahun_berjalan' => 12,
+            'carry_over_n1' => 0,
+            'carry_over_n2' => 0,
+            'tambahan_cuti_bersama' => 0,
+            'terpakai' => 8, // Sisa 4 hari
+        ]);
+
+        // Belum ada saldo 2025 di DB, panggil dapatkanAtauBuatSaldo untuk 2025
+        $saldo2025 = $this->service->dapatkanAtauBuatSaldo($this->pegawai->id, 2025);
+
+        // Harus otomatis melakukan rollover dari 2024
+        $this->assertEquals(2025, $saldo2025->tahun);
+        $this->assertEquals(12, $saldo2025->jatah_tahun_berjalan);
+        $this->assertEquals(4, $saldo2025->carry_over_n1);
+        $this->assertEquals(0, $saldo2025->carry_over_n2);
+        $this->assertEquals(16, $this->service->hitungSisa($this->pegawai->id, 2025));
+    }
 }

@@ -16,18 +16,28 @@ class SaldoCutiService
      */
     public function dapatkanAtauBuatSaldo(int $pegawaiId, int $tahun): CutiSaldoTahunan
     {
-        return CutiSaldoTahunan::firstOrCreate(
-            ['pegawai_id' => $pegawaiId, 'tahun' => $tahun],
-            [
-                'jatah_tahun_berjalan' => 12,
-                'carry_over_n1' => 0,
-                'carry_over_n2' => 0,
-                'tambahan_cuti_bersama' => 0,
-                'terpakai' => 0,
-                'jatah_dibekukan' => false,
-                'ditangguhkan' => false,
-            ]
-        );
+        $existing = CutiSaldoTahunan::where('pegawai_id', $pegawaiId)->where('tahun', $tahun)->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        // Cek apakah ada data saldo tahun sebelumnya ($tahun - 1) untuk rollover otomatis
+        $saldoTahunLalu = CutiSaldoTahunan::where('pegawai_id', $pegawaiId)->where('tahun', $tahun - 1)->first();
+        if ($saldoTahunLalu) {
+            return $this->prosesYearEnd($pegawaiId, $tahun - 1);
+        }
+
+        return CutiSaldoTahunan::create([
+            'pegawai_id' => $pegawaiId,
+            'tahun' => $tahun,
+            'jatah_tahun_berjalan' => 12,
+            'carry_over_n1' => 0,
+            'carry_over_n2' => 0,
+            'tambahan_cuti_bersama' => 0,
+            'terpakai' => 0,
+            'jatah_dibekukan' => false,
+            'ditangguhkan' => false,
+        ]);
     }
 
     /**
