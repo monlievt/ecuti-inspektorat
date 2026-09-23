@@ -31,8 +31,8 @@ class ValidasiPengajuanService
             throw new Exception("Aturan bisnis untuk jenis cuti {$jenisCuti->kode} tidak ditemukan.");
         }
 
-        $tanggalMulai = \Carbon\Carbon::parse($data['tanggal_mulai']);
-        $tanggalSelesai = \Carbon\Carbon::parse($data['tanggal_selesai']);
+        $tanggalMulai = \Carbon\Carbon::parse($data['tanggal_mulai'])->startOfDay();
+        $tanggalSelesai = \Carbon\Carbon::parse($data['tanggal_selesai'])->startOfDay();
 
         // 0a. Validasi Batas Tanggal Mundur (Backdate Maksimal 1 Bulan Sebelum Hari Ini)
         $batasMundur = now()->subMonth()->startOfDay();

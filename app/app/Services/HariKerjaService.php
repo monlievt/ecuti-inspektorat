@@ -14,6 +14,9 @@ class HariKerjaService
      */
     public function hitungHariKerja(Carbon $mulai, Carbon $selesai): int
     {
+        $mulai = $mulai->copy()->startOfDay();
+        $selesai = $selesai->copy()->startOfDay();
+
         if ($mulai->gt($selesai)) {
             return 0;
         }
@@ -49,6 +52,9 @@ class HariKerjaService
      */
     public function hitungHariKalender(Carbon $mulai, Carbon $selesai): int
     {
+        $mulai = $mulai->copy()->startOfDay();
+        $selesai = $selesai->copy()->startOfDay();
+
         if ($mulai->gt($selesai)) {
             return 0;
         }
