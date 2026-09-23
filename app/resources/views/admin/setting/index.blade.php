@@ -69,14 +69,6 @@
                 Profil Instansi &amp; Kop Surat
             </button>
 
-            <button type="button" @click="activeTab = 'pejabat_bkpsdm'"
-                    :class="activeTab === 'pejabat_bkpsdm' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 font-medium'"
-                    class="whitespace-nowrap py-3 px-1 border-b-2 text-sm flex items-center gap-2 transition">
-                <svg class="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                Pejabat Kepala BKPSDM
-            </button>
         </nav>
     </div>
 
@@ -372,45 +364,6 @@
                 @endif
             </div>
 
-            <!-- ── TAB 5: PEJABAT KEPALA BKPSDM ───────────────────────────────── -->
-            <div x-show="activeTab === 'pejabat_bkpsdm'" class="space-y-6" style="display: none;">
-                <div class="border-b border-slate-100 pb-4">
-                    <h3 class="text-base font-bold text-slate-900">Pejabat Penandatangan Kepala BKPSDM</h3>
-                    <p class="text-xs text-slate-500 mt-1">Data Kepala BKPSDM ini digunakan sebagai penandatangan resmi pada <strong>Tabel VIII Formulir Cuti BKN</strong> untuk permohonan <strong>selain Cuti Tahunan dan Cuti Sakit</strong> (seperti Cuti Besar, Cuti Melahirkan, Cuti Alasan Penting, dan CLTN) atas nama Bupati Trenggalek.</p>
-                </div>
-
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 flex items-start gap-2.5">
-                    <svg class="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                    </svg>
-                    <div>
-                        <p class="font-bold">Ketentuan Wewenang Penandatanganan:</p>
-                        <p class="mt-0.5">Sesuai pendelegasian wewenang Pemerintah Kabupaten Trenggalek: Cuti Tahunan dan Cuti Sakit ditandatangani oleh <strong>Inspektur Daerah</strong>. Sedangkan Cuti Besar, Cuti Melahirkan, Cuti Alasan Penting, dan CLTN ditandatangani oleh <strong>Kepala BKPSDM Kabupaten Trenggalek</strong>.</p>
-                    </div>
-                </div>
-
-                @if(isset($settings['pejabat_bkpsdm']))
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        @foreach($settings['pejabat_bkpsdm'] as $s)
-                            <div class="{{ in_array($s->key, ['kepala_bkpsdm_jabatan', 'kepala_bkpsdm_nama']) ? 'md:col-span-2' : '' }}">
-                                <label for="{{ $s->key }}" class="block text-sm font-semibold text-slate-700">
-                                    {{ $s->label }}
-                                </label>
-                                <div class="mt-1.5">
-                                    <input type="text" 
-                                           name="{{ $s->key }}" id="{{ $s->key }}" 
-                                           value="{{ old($s->key, $s->value) }}"
-                                           placeholder="Masukkan {{ $s->label }}"
-                                           class="block w-full rounded-xl border-slate-300 py-2.5 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                                </div>
-                                @if($s->deskripsi)
-                                    <p class="mt-1 text-xs text-slate-400">{{ $s->deskripsi }}</p>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
 
             <!-- Tombol Simpan Terpadu -->
             <div class="pt-6 border-t border-slate-200 flex justify-end gap-3">
