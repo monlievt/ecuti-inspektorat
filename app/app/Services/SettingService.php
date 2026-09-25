@@ -54,8 +54,8 @@ class SettingService
                 return null;
             }
 
-            // Khusus recaptcha_enabled, pastikan tipenya selalu boolean
-            if ($key === 'recaptcha_enabled') {
+            // Khusus recaptcha_enabled dan spreadsheet_sync_enabled, pastikan tipenya selalu boolean
+            if (in_array($key, ['recaptcha_enabled', 'spreadsheet_sync_enabled'])) {
                 $tipe = 'boolean';
             }
 

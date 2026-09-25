@@ -386,7 +386,8 @@
                 </div>
 
                 @php
-                    $isSpreadsheetActive = \App\Services\SettingService::get('spreadsheet_sync_enabled', '0') === '1';
+                    $rawSpreadsheetSync = \App\Services\SettingService::get('spreadsheet_sync_enabled', false);
+                    $isSpreadsheetActive = filter_var($rawSpreadsheetSync, FILTER_VALIDATE_BOOLEAN);
                     $webhookUrlSetting = \App\Services\SettingService::get('spreadsheet_webhook_url', '');
                 @endphp
 
@@ -417,9 +418,12 @@
                             </label>
                             <p class="text-xs text-slate-500 mt-0.5">Jika dicentang, seluruh permohonan baru atau perubahan status persetujuan cuti akan otomatis dicatat/diperbarui ke Google Spreadsheet secara real-time.</p>
                         </div>
-                        <input type="checkbox" name="spreadsheet_sync_enabled" id="spreadsheet_sync_enabled" value="1"
-                               {{ old('spreadsheet_sync_enabled', $isSpreadsheetActive) ? 'checked' : '' }}
-                               class="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                        <div class="flex items-center">
+                            <input type="hidden" name="spreadsheet_sync_enabled" value="0">
+                            <input type="checkbox" name="spreadsheet_sync_enabled" id="spreadsheet_sync_enabled" value="1"
+                                   {{ old('spreadsheet_sync_enabled', $isSpreadsheetActive ? '1' : '0') == '1' ? 'checked' : '' }}
+                                   class="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                        </div>
                     </div>
 
                     <!-- Input Webhook URL -->

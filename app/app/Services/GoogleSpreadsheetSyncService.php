@@ -14,10 +14,10 @@ class GoogleSpreadsheetSyncService
      */
     public function isConfigured(): bool
     {
-        $enabled = SettingService::get('spreadsheet_sync_enabled', '0');
+        $enabled = SettingService::get('spreadsheet_sync_enabled', false);
         $url = trim((string) SettingService::get('spreadsheet_webhook_url', ''));
 
-        return ($enabled === '1' || $enabled === 'true' || $enabled === true) && !empty($url);
+        return filter_var($enabled, FILTER_VALIDATE_BOOLEAN) && !empty($url);
     }
 
     /**

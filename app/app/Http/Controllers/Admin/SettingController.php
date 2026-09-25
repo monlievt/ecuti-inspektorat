@@ -55,13 +55,30 @@ class SettingController extends Controller
 
         foreach ($data as $key => $value) {
             $existing = PengaturanSistem::where('key', $key)->first();
+            
+            $kategori = $existing?->kategori;
+            $label = $existing?->label;
+            $tipe = $existing?->tipe;
+            $deskripsi = $existing?->deskripsi;
+
+            if ($key === 'spreadsheet_sync_enabled') {
+                $kategori = 'spreadsheet';
+                $label = 'Aktifkan Auto-Rekap Google Spreadsheet';
+                $tipe = 'boolean';
+                $deskripsi = 'Jika dicentang, seluruh permohonan baru atau perubahan status persetujuan cuti akan otomatis dicatat/diperbarui ke Google Spreadsheet secara real-time.';
+            } elseif ($key === 'spreadsheet_webhook_url') {
+                $kategori = 'spreadsheet';
+                $label = 'URL Webhook Google Apps Script';
+                $tipe = 'string';
+            }
+
             SettingService::set(
                 $key,
                 $value,
-                $existing?->kategori ?? 'umum',
-                $existing?->label ?? ucwords(str_replace('_', ' ', $key)),
-                $existing?->tipe ?? 'string',
-                $existing?->deskripsi
+                $kategori ?? 'umum',
+                $label ?? ucwords(str_replace('_', ' ', $key)),
+                $tipe ?? 'string',
+                $deskripsi
             );
         }
 
