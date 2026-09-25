@@ -385,4 +385,121 @@ class PengajuanCutiTest extends TestCase
         $response->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $response->headers->get('content-type'));
     }
+
+    public function test_penyesuaian_dokumen_surat_dan_formulir_cuti(): void
+    {
+        $service = app(\App\Services\SuratCutiPdfService::class);
+
+        // 1. Uji Cuti Tahunan: Tujuan surat ke Inspektur
+        $pengajuanTahunan = CutiPengajuan::create([
+            'pegawai_id' => $this->pegawai->id,
+            'jenis_cuti_id' => $this->cutiTahunan->id,
+            'nomor_pengajuan' => 'CUTI/2026/09/991',
+            'tanggal_mulai' => now()->addDays(5)->toDateString(),
+            'tanggal_selesai' => now()->addDays(7)->toDateString(),
+            'jumlah_hari_kerja' => 3,
+            'satuan_hari' => 'hari_kerja',
+            'alasan' => 'Urusan keluarga mendesak',
+            'alamat_selama_cuti' => 'Trenggalek',
+            'telp_selama_cuti' => '081234567890',
+            'status' => CutiPengajuan::STATUS_DITERBITKAN,
+        ]);
+
+        $pdfIzin = $service->generateSuratIzinInspektorat($pengajuanTahunan);
+        $this->assertNotNull($pdfIzin);
+
+        // Render lampiran 1b tahunan
+        $pdfLampiranTahunan = $service->generateAnakLampiran1b($pengajuanTahunan);
+        $this->assertNotNull($pdfLampiranTahunan);
+
+        // 2. Uji Cuti Khusus (Alasan Penting): Tujuan surat ke Kepala BKPSDM
+        $jenisPenting = CutiJenis::firstOrCreate(
+            ['kode' => CutiJenis::ALASAN_PENTING],
+            ['nama' => 'Cuti Karena Alasan Penting', 'aktif' => true]
+        );
+        $pengajuanPenting = CutiPengajuan::create([
+            'pegawai_id' => $this->pegawai->id,
+            'jenis_cuti_id' => $jenisPenting->id,
+            'nomor_pengajuan' => 'CUTI/2026/09/992',
+            'tanggal_mulai' => now()->addDays(10)->toDateString(),
+            'tanggal_selesai' => now()->addDays(12)->toDateString(),
+            'jumlah_hari_kerja' => 3,
+            'satuan_hari' => 'hari_kerja',
+            'alasan' => 'Mendampingi keluarga sakit',
+            'alamat_selama_cuti' => 'Trenggalek',
+            'telp_selama_cuti' => '081234567890',
+            'status' => CutiPengajuan::STATUS_MENUNGGU_ATASAN,
+        ]);
+
+        $pdfLampiranPenting = $service->generateAnakLampiran1b($pengajuanPenting);
+        $this->assertNotNull($pdfLampiranPenting);
+
+        // 3. Verifikasi template view surat izin dinas (Kop, Alamat, Font, Nomor 406.008)
+        $renderedIzin = view('pdf.surat-izin-inspektorat', [
+            'pengajuan' => $pengajuanTahunan,
+            'pegawai' => $this->pegawai,
+            'jenisCuti' => $pengajuanTahunan->jenisCuti,
+            'nomorSurat' => '800.1.11.4/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/406.008/2026',
+            'tahun' => 2026,
+            'durasiAngka' => 3,
+            'durasiTerbilang' => 'tiga',
+            'satuanLabel' => 'hari kerja',
+            'tanggalSurat' => '25 September 2026',
+            'tanggalMulai' => '30 September 2026',
+            'tanggalSelesai' => '02 Oktober 2026',
+            'pybmcNama' => 'Ir. WIJIONO, S.T., M.MKes.',
+            'pybmcPangkat' => 'Pembina',
+            'pybmcNip' => '197308051997031007',
+            'pybmcJabatan' => 'Inspektur Kabupaten Trenggalek',
+        ])->render();
+
+        $this->assertStringContainsString('Jl. KH. Wachid Hasyim No. 5 Ngantru', $renderedIzin);
+        $this->assertStringContainsString('font-family: Arial', $renderedIzin);
+        $this->assertStringContainsString('406.008', $renderedIzin);
+        $this->assertStringContainsString('width: 85px;', $renderedIzin);
+
+        // 4. Verifikasi template Formulir Lampiran 1b (Section III 4 enter & Section V Sudah diambil)
+        $detailSaldoDummy = [
+            'tahun_n' => 2026,
+            'tahun_n1' => 2025,
+            'tahun_n2' => 2024,
+            'n' => ['sisa_akhir' => 9, 'potong' => 3],
+            'n1' => ['sisa_akhir' => 0, 'potong' => 0],
+            'n2' => ['sisa_akhir' => 0, 'potong' => 0],
+            'total_sisa_akhir' => 9,
+        ];
+
+        $renderedFormulir = view('pdf.lampiran-1b', [
+            'pengajuan' => $pengajuanTahunan,
+            'pegawai' => $this->pegawai,
+            'jenisCuti' => $pengajuanTahunan->jenisCuti,
+            'detailSaldo' => $detailSaldoDummy,
+            'tanggalSurat' => '25 September 2026',
+            'tanggalMulai' => '30 September 2026',
+            'tanggalSelesai' => '02 Oktober 2026',
+            'durasiTerbilang' => 'tiga',
+            'satuanLabel' => 'hari kerja',
+            'tujuanSurat' => 'Inspektur Kabupaten Trenggalek<br>di - TRENGGALEK',
+            'atasanNama' => 'Atasan Langsung',
+            'atasanNip' => '198001012000011001',
+            'pybmcNama' => 'Ir. WIJIONO, S.T., M.MKes.',
+            'pybmcNip' => '197308051997031007',
+            'pybmcPangkat' => 'Pembina (IV/a)',
+            'pybmcJabatan' => 'Inspektur Kabupaten Trenggalek',
+            'isInspektur' => false,
+            'isCutiKhususBkpsdm' => false,
+            'approvalAtasan' => null,
+            'approvalPybmc' => null,
+            'isAtasanSetuju' => true,
+            'isAtasanRevisi' => false,
+            'isAtasanTolak' => false,
+            'isPybmcSetuju' => true,
+            'isPybmcTangguh' => false,
+            'isPybmcTolak' => false,
+        ])->render();
+
+        $this->assertStringContainsString('Sudah diambil 3 hari', $renderedFormulir);
+        $this->assertStringNotContainsString('Dipotong 3 hr', $renderedFormulir);
+        $this->assertStringContainsString('<br><br><br><br>', $renderedFormulir);
+    }
 }

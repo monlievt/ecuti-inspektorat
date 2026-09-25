@@ -168,7 +168,10 @@
     <div class="section-title">III. ALASAN CUTI</div>
     <table class="data-table">
         <tr>
-            <td style="padding: 2.5px 4px; min-height: 18px;">{{ $pengajuan->alasan }}</td>
+            <td style="padding: 4px 6px; min-height: 48px; vertical-align: top;">
+                {{ $pengajuan->alasan }}
+                <br><br><br><br>
+            </td>
         </tr>
     </table>
 
@@ -206,27 +209,27 @@
                         <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1px 2px; font-size: 6.5pt;">N-2 ({{ $detailSaldo['tahun_n2'] }})</td>
                         <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1px 2px; text-align: center; font-size: 6.5pt;">{{ $detailSaldo['n2']['sisa_akhir'] }} Hari</td>
                         <td style="border-bottom: 0.5pt solid #000; padding: 1px 2px; font-size: 6.2pt;">
-                            {{ $detailSaldo['n2']['potong'] > 0 ? ('Dipotong ' . $detailSaldo['n2']['potong'] . ' hr') : '-' }}
+                            {{ $detailSaldo['n2']['potong'] > 0 ? ('Sudah diambil ' . $detailSaldo['n2']['potong'] . ' hari') : '-' }}
                         </td>
                     </tr>
                     <tr>
                         <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1px 2px; font-size: 6.5pt;">N-1 ({{ $detailSaldo['tahun_n1'] }})</td>
                         <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1px 2px; text-align: center; font-size: 6.5pt;">{{ $detailSaldo['n1']['sisa_akhir'] }} Hari</td>
                         <td style="border-bottom: 0.5pt solid #000; padding: 1px 2px; font-size: 6.2pt;">
-                            {{ $detailSaldo['n1']['potong'] > 0 ? ('Dipotong ' . $detailSaldo['n1']['potong'] . ' hr') : '-' }}
+                            {{ $detailSaldo['n1']['potong'] > 0 ? ('Sudah diambil ' . $detailSaldo['n1']['potong'] . ' hari') : '-' }}
                         </td>
                     </tr>
                     <tr>
                         <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1px 2px; font-size: 6.5pt;">N ({{ $detailSaldo['tahun_n'] }})</td>
                         <td style="border-bottom: 0.5pt solid #000; border-right: 0.5pt solid #000; padding: 1px 2px; text-align: center; font-size: 6.5pt;">{{ $detailSaldo['n']['sisa_akhir'] }} Hari</td>
                         <td style="border-bottom: 0.5pt solid #000; padding: 1px 2px; font-size: 6.2pt;">
-                            {{ $detailSaldo['n']['potong'] > 0 ? ('Dipotong ' . $detailSaldo['n']['potong'] . ' hr') : '-' }}
+                            {{ $detailSaldo['n']['potong'] > 0 ? ('Sudah diambil ' . $detailSaldo['n']['potong'] . ' hari') : '-' }}
                         </td>
                     </tr>
                     <tr>
                         <td style="border-right: 0.5pt solid #000; padding: 1px 2px; font-size: 6.5pt;">Total Sisa</td>
                         <td style="border-right: 0.5pt solid #000; padding: 1px 2px; text-align: center; font-size: 6.5pt;">{{ $detailSaldo['total_sisa_akhir'] }} Hari</td>
-                        <td style="padding: 1px 2px; font-size: 6.2pt;">Sisa aktif pasca potong</td>
+                        <td style="padding: 1px 2px; font-size: 6.2pt;">Sisa cuti aktif</td>
                     </tr>
                 </table>
             </td>

@@ -153,14 +153,18 @@ class SuratCutiPdfService
                 $pybmcNip = SettingService::get('kepala_bkpsdm_nip', '197107121991011001');
                 $pybmcPangkat = SettingService::get('kepala_bkpsdm_pangkat_golongan', 'Pembina Utama Muda (IV/c)');
                 $pybmcJabatan = SettingService::get('kepala_bkpsdm_jabatan', 'Kepala Badan Kepegawaian dan Pengembangan Sumber Daya Manusia Kabupaten Trenggalek');
-                $tujuanSurat = "Bupati Trenggalek<br>cq. Kepala Badan Kepegawaian dan Pengembangan SDM<br>di - <span style=\"font-weight: bold;\">TRENGGALEK</span>";
+                $tujuanSurat = "Kepala Badan Kepegawaian dan Pengembangan Sumber Daya Manusia<br>Kabupaten Trenggalek<br>di - <span style=\"font-weight: bold;\">TRENGGALEK</span>";
             } else {
                 // Cuti Tahunan & Sakit -> Inspektur Daerah
                 $pybmcNama = $pybmcPegawai?->nama_lengkap ?? $approvalPybmc?->aktor?->name ?? 'Ir. WIJIONO, S.T., M.MKes.';
                 $pybmcNip = $pybmcPegawai?->nip ?? '197308051997031007';
                 $pybmcPangkat = $pybmcPegawai?->pangkat_golongan ?? 'Pembina (IV/a)';
-                $pybmcJabatan = 'Inspektur Kabupaten Trenggalek';
-                $tujuanSurat = "Inspektur Kabupaten Trenggalek<br>di - <span style=\"font-weight: bold;\">TRENGGALEK</span>";
+                $inspekturJabatan = 'Inspektur Kabupaten Trenggalek';
+                if ($pybmcPegawai && str_contains(strtoupper($pybmcPegawai->jabatan ?? ''), 'PLT')) {
+                    $inspekturJabatan = 'Plt. Inspektur Kabupaten Trenggalek';
+                }
+                $pybmcJabatan = $inspekturJabatan;
+                $tujuanSurat = "{$inspekturJabatan}<br>di - <span style=\"font-weight: bold;\">TRENGGALEK</span>";
             }
         }
 
@@ -284,7 +288,7 @@ class SuratCutiPdfService
             $nomorSurat = $pengajuan->suratTerbit->nomor_surat;
         } else {
             // Format Nomor Surat default: bagian nomor/counter dikosongkan (5 spasi) untuk diisi manual bagian persuratan
-            $nomorSurat = "{$kodeKlasifikasi}/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/406.012/{$tahun}";
+            $nomorSurat = "{$kodeKlasifikasi}/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/406.008/{$tahun}";
         }
 
         $durasiAngka = $pengajuan->jumlah_hari_kerja;
@@ -390,8 +394,7 @@ class SuratCutiPdfService
         $pegawai = $pegawai = $pengajuan->pegawai;
         $tahun = $pengajuan->tanggal_mulai->year;
 
-        $kodeKlasifikasi = self::getKodeKlasifikasiSurat($pengajuan->jenisCuti?->kode);
-        $nomorSurat = $pengajuan->suratTerbit?->nomor_surat ?? ("{$kodeKlasifikasi} / " . str_pad($pengajuan->id, 3, '0', STR_PAD_LEFT) . " / 406.008 / " . $tahun);
+        $nomorSurat = $pengajuan->suratTerbit?->nomor_surat ?? ("{$kodeKlasifikasi}/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/406.008/{$tahun}");
 
         $durasiAngka = (int) $pengajuan->jumlah_hari_kerja;
         $durasiTerbilang = $this->terbilang($durasiAngka);

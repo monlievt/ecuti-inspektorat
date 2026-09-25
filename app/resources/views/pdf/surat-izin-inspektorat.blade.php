@@ -9,8 +9,8 @@
             margin: 20mm;      /* Margin atas, bawah, kanan, kiri sama persis 20mm (2 cm) */
         }
         body {
-            font-family: 'Bookman Old Style', 'Times New Roman', Times, serif;
-            font-size: 11pt;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12pt;
             line-height: 1.45;
             color: #000;
             margin: 0;
@@ -27,24 +27,24 @@
             vertical-align: middle;
         }
         .header-title-1 {
-            font-size: 13pt;
+            font-size: 13.5pt;
             font-weight: bold;
             letter-spacing: 0.5px;
             text-transform: uppercase;
-            font-family: 'Bookman Old Style', serif;
+            font-family: Arial, Helvetica, sans-serif;
             margin: 0;
         }
         .header-title-2 {
-            font-size: 15pt;
+            font-size: 15.5pt;
             font-weight: bold;
             letter-spacing: 1px;
             text-transform: uppercase;
             margin: 2px 0 0 0;
-            font-family: 'Bookman Old Style', serif;
+            font-family: Arial, Helvetica, sans-serif;
         }
         .header-address {
             margin: 4px 0 0 0;
-            font-size: 8.5pt;
+            font-size: 9pt;
             font-family: Arial, Helvetica, sans-serif;
             line-height: 1.25;
         }
@@ -54,20 +54,23 @@
             margin-bottom: 18px;
         }
         .title-text {
-            font-size: 12pt;
+            font-size: 13pt;
             font-weight: bold;
             text-decoration: underline;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            font-family: Arial, Helvetica, sans-serif;
         }
         .nomor-surat {
-            font-size: 11pt;
+            font-size: 12pt;
             margin-top: 3px;
+            font-family: Arial, Helvetica, sans-serif;
         }
         .content {
             text-align: justify;
-            font-size: 11pt;
+            font-size: 12pt;
             line-height: 1.45;
+            font-family: Arial, Helvetica, sans-serif;
         }
         .identity-table {
             width: 100%;
@@ -77,11 +80,14 @@
         .identity-table td {
             padding: 2.5px 0;
             vertical-align: top;
-            font-size: 11pt;
+            font-size: 12pt;
+            font-family: Arial, Helvetica, sans-serif;
         }
         .terms-list {
             margin: 6px 0 14px 0;
             padding-left: 20px;
+            font-size: 12pt;
+            font-family: Arial, Helvetica, sans-serif;
         }
         .terms-list li {
             margin-bottom: 4px;
@@ -94,12 +100,14 @@
         }
         .signature-table td {
             vertical-align: top;
-            font-size: 11pt;
+            font-size: 12pt;
+            font-family: Arial, Helvetica, sans-serif;
         }
         .tembusan {
             margin-top: 10px;
-            font-size: 9.5pt;
+            font-size: 10pt;
             line-height: 1.35;
+            font-family: Arial, Helvetica, sans-serif;
         }
     </style>
 </head>
@@ -112,15 +120,15 @@
     @endphp
     <table class="header-table">
         <tr>
-            <td style="width: 70px; text-align: left;">
+            <td style="width: 90px; text-align: left;">
                 @if($logoData)
-                    <img src="data:image/png;base64,{{ $logoData }}" style="width: 65px; height: auto;" alt="Logo Pemkab Trenggalek">
+                    <img src="data:image/png;base64,{{ $logoData }}" style="width: 85px; height: auto;" alt="Logo Pemkab Trenggalek">
                 @endif
             </td>
-            <td style="text-align: center; padding-right: 65px;">
+            <td style="text-align: center; padding-right: 90px;">
                 <h3 class="header-title-1">PEMERINTAH KABUPATEN TRENGGALEK</h3>
                 <h2 class="header-title-2">INSPEKTORAT DAERAH</h2>
-                <p class="header-address">Jl. Veteran No. 27 Trenggalek, Jawa Timur 66311<br>Telepon: (0355) 791444 | Email: inspektorat@trenggalekkab.go.id</p>
+                <p class="header-address">Jl. KH. Wachid Hasyim No. 5 Ngantru, Kec. Trenggalek, Kabupaten Trenggalek, Jawa Timur 66311<br>Telepon: (0355) 791444 | Email: inspektorat@trenggalekkab.go.id</p>
             </td>
         </tr>
     </table>

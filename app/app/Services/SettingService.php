@@ -216,7 +216,7 @@ class SettingService
             ],
             [
                 'key' => 'instansi_alamat',
-                'value' => 'Jl. Panglima Sudirman No. 15, Trenggalek, Jawa Timur 66311',
+                'value' => 'Jl. KH. Wachid Hasyim No. 5 Ngantru, Kec. Trenggalek, Kabupaten Trenggalek, Jawa Timur 66311',
                 'kategori' => 'instansi',
                 'tipe' => 'string',
                 'label' => 'Alamat Kantor',
