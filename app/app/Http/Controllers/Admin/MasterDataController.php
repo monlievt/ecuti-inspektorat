@@ -182,6 +182,25 @@ class MasterDataController extends Controller
         return redirect()->route('admin.master.libur')->with('success', 'Hari Libur Nasional berhasil ditambahkan.');
     }
 
+    public function updateHariLibur(Request $request, CutiHariLibur $hariLibur)
+    {
+        $request->validate([
+            'tanggal' => 'required|date|unique:cuti_hari_libur,tanggal,' . $hariLibur->id,
+            'keterangan' => 'required|string|max:255',
+        ]);
+
+        $hariLibur->update($request->only(['tanggal', 'keterangan']));
+
+        return redirect()->route('admin.master.libur')->with('success', 'Hari Libur Nasional berhasil diperbarui.');
+    }
+
+    public function destroyHariLibur(CutiHariLibur $hariLibur)
+    {
+        $hariLibur->delete();
+
+        return redirect()->route('admin.master.libur')->with('success', 'Hari Libur Nasional berhasil dihapus.');
+    }
+
     // ── 4. Cuti Bersama ─────────────────────────────────────────────────────
 
     public function cutiBersama()
@@ -202,6 +221,26 @@ class MasterDataController extends Controller
         CutiBersama::create($request->all());
 
         return redirect()->route('admin.master.cuti-bersama')->with('success', 'Cuti Bersama berhasil ditambahkan.');
+    }
+
+    public function updateCutiBersama(Request $request, CutiBersama $cutiBersama)
+    {
+        $request->validate([
+            'tanggal' => 'required|date|unique:cuti_bersama,tanggal,' . $cutiBersama->id,
+            'keterangan' => 'required|string|max:255',
+            'nomor_keppres' => 'nullable|string|max:100',
+        ]);
+
+        $cutiBersama->update($request->only(['tanggal', 'keterangan', 'nomor_keppres']));
+
+        return redirect()->route('admin.master.cuti-bersama')->with('success', 'Cuti Bersama berhasil diperbarui.');
+    }
+
+    public function destroyCutiBersama(CutiBersama $cutiBersama)
+    {
+        $cutiBersama->delete();
+
+        return redirect()->route('admin.master.cuti-bersama')->with('success', 'Cuti Bersama berhasil dihapus.');
     }
 
     // ── 5. Koreksi Saldo Manual (Audit Trail) ───────────────────────────────

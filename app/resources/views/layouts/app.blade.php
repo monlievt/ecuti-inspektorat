@@ -97,6 +97,12 @@
                                     </div>
                                 </div>
                             @endif
+
+                            <!-- Panduan Pengguna & SOP -->
+                            <a href="{{ route('panduan') }}" class="inline-flex items-center border-b-2 {{ request()->routeIs('panduan*') ? 'border-indigo-500 text-slate-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }} px-1 pt-1 text-sm font-medium">
+                                <svg class="w-4 h-4 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                Panduan
+                            </a>
                         </div>
                     @endauth
                 </div>
@@ -111,7 +117,7 @@
                                     </div>
                                 </button>
                             </div>
-                            <div x-show="open" @click.away="open = false" class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu">
+                            <div x-show="open" @click.away="open = false" class="absolute right-0 z-10 mt-2 w-52 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu">
                                 <div class="px-4 py-2 border-b border-slate-100">
                                     <p class="text-sm font-semibold text-slate-800">{{ auth()->user()->name }}</p>
                                     @if(auth()->user()->pegawai)
@@ -133,6 +139,13 @@
                                     @endphp
                                     <span class="mt-1 inline-block text-[11px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">{{ $roleBadge }}</span>
                                 </div>
+                                <a href="{{ route('panduan') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center justify-between" role="menuitem">
+                                    <span class="font-medium text-indigo-600 flex items-center">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                        Buku Panduan
+                                    </span>
+                                    <span class="text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-bold">Manual</span>
+                                </a>
                                 @if(auth()->user()->isAdminCuti())
                                     <a href="{{ Route::has('admin.setting.index') ? route('admin.setting.index') : url('/admin/setting') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 font-medium" role="menuitem">
                                         Pengaturan Sistem

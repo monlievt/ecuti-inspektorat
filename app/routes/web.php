@@ -26,6 +26,9 @@ Route::middleware(['auth'])->group(function () {
     
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Panduan Pengguna & SOP
+    Route::get('/panduan', [\App\Http\Controllers\PanduanController::class, 'index'])->name('panduan');
 
     // Profil & Ubah Password
     Route::get('/profil/ubah-password', [LoginController::class, 'showChangePassword'])->name('profil.ubah-password');
@@ -90,9 +93,13 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/master/libur', [\App\Http\Controllers\Admin\MasterDataController::class, 'hariLibur'])->name('admin.master.libur');
         Route::post('/master/libur', [\App\Http\Controllers\Admin\MasterDataController::class, 'storeHariLibur']);
+        Route::put('/master/libur/{hariLibur}', [\App\Http\Controllers\Admin\MasterDataController::class, 'updateHariLibur'])->name('admin.master.libur.update');
+        Route::delete('/master/libur/{hariLibur}', [\App\Http\Controllers\Admin\MasterDataController::class, 'destroyHariLibur'])->name('admin.master.libur.destroy');
 
         Route::get('/master/cuti-bersama', [\App\Http\Controllers\Admin\MasterDataController::class, 'cutiBersama'])->name('admin.master.cuti-bersama');
         Route::post('/master/cuti-bersama', [\App\Http\Controllers\Admin\MasterDataController::class, 'storeCutiBersama']);
+        Route::put('/master/cuti-bersama/{cutiBersama}', [\App\Http\Controllers\Admin\MasterDataController::class, 'updateCutiBersama'])->name('admin.master.cuti-bersama.update');
+        Route::delete('/master/cuti-bersama/{cutiBersama}', [\App\Http\Controllers\Admin\MasterDataController::class, 'destroyCutiBersama'])->name('admin.master.cuti-bersama.destroy');
 
         Route::get('/master/koreksi', [\App\Http\Controllers\Admin\MasterDataController::class, 'koreksiSaldo'])->name('admin.master.koreksi');
         Route::post('/master/koreksi', [\App\Http\Controllers\Admin\MasterDataController::class, 'storeKoreksiSaldo']);

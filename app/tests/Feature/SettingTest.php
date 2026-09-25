@@ -275,4 +275,64 @@ class SettingTest extends TestCase
         $this->assertEquals('DRS. BUDI PRASETYO, M.M.', SettingService::get('kepala_bkpsdm_nama'));
         $this->assertEquals('197505052000031001', SettingService::get('kepala_bkpsdm_nip'));
     }
+
+    public function test_admin_can_crud_hari_libur_dan_cuti_bersama(): void
+    {
+        // 1. Tambah Hari Libur
+        $response = $this->actingAs($this->adminUser)->post(route('admin.master.libur'), [
+            'tanggal' => '2026-05-01',
+            'keterangan' => 'Hari Buruh Internasional',
+        ]);
+        $response->assertRedirect(route('admin.master.libur'));
+        $response->assertSessionHas('success');
+
+        $libur = \App\Models\CutiHariLibur::where('keterangan', 'Hari Buruh Internasional')->first();
+        $this->assertNotNull($libur);
+
+        // 2. Edit / Update Hari Libur
+        $updateRes = $this->actingAs($this->adminUser)->put(route('admin.master.libur.update', $libur), [
+            'tanggal' => '2026-05-01',
+            'keterangan' => 'Hari Buruh Internasional (May Day)',
+        ]);
+        $updateRes->assertRedirect(route('admin.master.libur'));
+        $this->assertEquals('Hari Buruh Internasional (May Day)', $libur->fresh()->keterangan);
+
+        // 3. Hapus Hari Libur
+        $deleteRes = $this->actingAs($this->adminUser)->delete(route('admin.master.libur.destroy', $libur));
+        $deleteRes->assertRedirect(route('admin.master.libur'));
+        $this->assertNull(\App\Models\CutiHariLibur::find($libur->id));
+
+        // 4. Tambah Cuti Bersama
+        $cbRes = $this->actingAs($this->adminUser)->post(route('admin.master.cuti-bersama'), [
+            'tanggal' => '2026-05-02',
+            'keterangan' => 'Cuti Bersama Hari Buruh',
+            'nomor_keppres' => 'Keppres No. 1 Tahun 2026',
+        ]);
+        $cbRes->assertRedirect(route('admin.master.cuti-bersama'));
+
+        $cb = \App\Models\CutiBersama::where('keterangan', 'Cuti Bersama Hari Buruh')->first();
+        $this->assertNotNull($cb);
+
+        // 5. Update Cuti Bersama
+        $cbUpdate = $this->actingAs($this->adminUser)->put(route('admin.master.cuti-bersama.update', $cb), [
+            'tanggal' => '2026-05-02',
+            'keterangan' => 'Cuti Bersama Nasional',
+            'nomor_keppres' => 'Keppres No. 2 Tahun 2026',
+        ]);
+        $cbUpdate->assertRedirect(route('admin.master.cuti-bersama'));
+        $this->assertEquals('Cuti Bersama Nasional', $cb->fresh()->keterangan);
+
+        // 6. Hapus Cuti Bersama
+        $cbDelete = $this->actingAs($this->adminUser)->delete(route('admin.master.cuti-bersama.destroy', $cb));
+        $cbDelete->assertRedirect(route('admin.master.cuti-bersama'));
+        $this->assertNull(\App\Models\CutiBersama::find($cb->id));
+    }
+
+    public function test_authenticated_user_can_access_panduan_page(): void
+    {
+        $response = $this->actingAs($this->regularUser)->get(route('panduan'));
+        $response->assertStatus(200);
+        $response->assertSee('Panduan Pengguna Aplikasi e-Cuti');
+        $response->assertSee('Inspektorat Kabupaten Trenggalek');
+    }
 }
