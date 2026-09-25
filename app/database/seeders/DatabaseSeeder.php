@@ -45,7 +45,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'admin@cuti.test'],
             [
                 'name' => 'Admin Kepegawaian',
-                'password' => bcrypt('password'),
+                'password' => bcrypt(env('DEFAULT_USER_PASSWORD', 'password')),
                 'role' => 'admin_cuti',
                 'bisa_beri_izin_sementara' => false
             ]
@@ -178,7 +178,7 @@ class DatabaseSeeder extends Seeder
                 ['email' => $email],
                 [
                     'name' => $namaLengkap,
-                    'password' => bcrypt('password'), // password default
+                    'password' => bcrypt(env('DEFAULT_USER_PASSWORD', 'password')), // password default dari .env jika ada
                     'role' => $role,
                     'bisa_beri_izin_sementara' => $bisaBeriIzinSementara
                 ]
