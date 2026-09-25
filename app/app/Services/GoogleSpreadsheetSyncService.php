@@ -192,6 +192,85 @@ class GoogleSpreadsheetSyncService
     }
 
     /**
+     * Sinkronkan seluruh data master pegawai dan saldo cuti ke tab khusus di Google Spreadsheet.
+     */
+    public function syncMasterPegawai(): array
+    {
+        if (!$this->isConfigured()) {
+            return [
+                'success' => false,
+                'message' => 'Integrasi Google Spreadsheet belum aktif atau URL Webhook belum diatur.',
+                'total' => 0,
+            ];
+        }
+
+        $url = $this->getWebhookUrl();
+        $tahun = now()->year;
+        $saldoService = app(SaldoCutiService::class);
+
+        $daftarPegawai = \App\Models\Pegawai::with(['unitKerja'])
+            ->where('aktif', true)
+            ->orderBy('nama_lengkap', 'asc')
+            ->get();
+
+        $rows = [];
+        foreach ($daftarPegawai as $p) {
+            $breakdown = $saldoService->breakdown($p->id, $tahun);
+
+            $rows[] = [
+                'nip' => $p->nip,
+                'nama_lengkap' => $p->nama_lengkap,
+                'unit_kerja' => $p->unitKerja?->nama ?? '-',
+                'jabatan' => $p->jabatan ?? '-',
+                'pangkat_golongan' => $p->pangkat_golongan ?? '-',
+                'status_pegawai' => strtoupper((string) $p->jenis_pegawai),
+                'nomor_hp' => $p->nomor_hp ?? '-',
+                'tahun' => $tahun,
+                'jatah_n' => (int) $breakdown['jatah_tahun_berjalan'],
+                'sisa_n' => (int) $breakdown['sisa_n'],
+                'sisa_n1' => (int) $breakdown['sisa_n1'],
+                'sisa_n2' => (int) $breakdown['sisa_n2'],
+                'terpakai' => (int) $breakdown['terpakai'],
+                'total_sisa' => (int) $breakdown['sisa'],
+            ];
+        }
+
+        try {
+            $payload = [
+                'action' => 'sync_master_pegawai',
+                'updated_at' => now()->setTimezone('Asia/Jakarta')->format('d/m/Y H:i:s') . ' WIB',
+                'tahun' => $tahun,
+                'total_pegawai' => count($rows),
+                'data_pegawai' => $rows,
+            ];
+
+            $response = Http::timeout(15)
+                ->withOptions(['allow_redirects' => true])
+                ->post($url, $payload);
+
+            if ($response->successful() || $response->status() === 302) {
+                return [
+                    'success' => true,
+                    'message' => "Berhasil menyinkronkan " . count($rows) . " data master pegawai & saldo ke Google Spreadsheet (Tab: Master Pegawai & Saldo).",
+                    'total' => count($rows),
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Gagal sinkron master pegawai ke Google Spreadsheet: HTTP ' . $response->status(),
+                'total' => count($rows),
+            ];
+        } catch (Throwable $e) {
+            return [
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memanggil Webhook: ' . $e->getMessage(),
+                'total' => count($rows),
+            ];
+        }
+    }
+
+    /**
      * Konversi kode status cuti menjadi label teks Bahasa Indonesia yang ramah pengguna.
      */
     public function getStatusLabel(string $status): string

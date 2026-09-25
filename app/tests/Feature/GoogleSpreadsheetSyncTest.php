@@ -163,4 +163,35 @@ class GoogleSpreadsheetSyncTest extends TestCase
         $testRes->assertRedirect(route('admin.setting.index'));
         $testRes->assertSessionHas('success');
     }
+
+    public function test_sync_master_pegawai_sends_all_employees_with_balances(): void
+    {
+        Http::fake([
+            'https://script.google.com/macros/s/TEST/exec' => Http::response(['status' => 'success'], 200),
+        ]);
+
+        SettingService::set('spreadsheet_sync_enabled', '1', 'spreadsheet');
+        SettingService::set('spreadsheet_webhook_url', 'https://script.google.com/macros/s/TEST/exec', 'spreadsheet');
+
+        $service = app(GoogleSpreadsheetSyncService::class);
+        $res = $service->syncMasterPegawai();
+
+        $this->assertTrue($res['success']);
+        $this->assertEquals(1, $res['total']);
+
+        Http::assertSent(function ($request) {
+            $data = $request->data();
+            return $request->url() === 'https://script.google.com/macros/s/TEST/exec' &&
+                   $data['action'] === 'sync_master_pegawai' &&
+                   count($data['data_pegawai']) === 1 &&
+                   $data['data_pegawai'][0]['nip'] === '198501012010011001' &&
+                   $data['data_pegawai'][0]['nama_lengkap'] === 'Budi Santoso' &&
+                   $data['data_pegawai'][0]['unit_kerja'] === 'Inspektorat Pembantu I';
+        });
+
+        // Test endpoint sync master
+        $endpointRes = $this->actingAs($this->adminUser)->post(route('admin.setting.sync-master-spreadsheet'));
+        $endpointRes->assertRedirect(route('admin.setting.index'));
+        $endpointRes->assertSessionHas('success');
+    }
 }

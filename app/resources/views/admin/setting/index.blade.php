@@ -446,19 +446,50 @@
 
                     <!-- Tombol Bulk Sync Data Lama -->
                     @if($isSpreadsheetActive && !empty($webhookUrlSetting))
-                        <div class="bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-4 flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-bold text-emerald-900">Sinkronkan Semua Data Pengajuan Saat Ini</p>
-                                <p class="text-[11px] text-emerald-700 mt-0.5">Kirimkan seluruh data pengajuan cuti yang sudah ada di database ke Google Spreadsheet sekaligus.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-4 flex flex-col justify-between">
+                                <div>
+                                    <p class="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Tab 1: Rekap Pengajuan Cuti
+                                    </p>
+                                    <p class="text-[11px] text-emerald-700 mt-1">Kirimkan seluruh data pengajuan cuti yang sudah ada di database ke sheet &quot;Rekap Pengajuan Cuti&quot;.</p>
+                                </div>
+                                <div class="mt-3 text-right">
+                                    <button type="submit" formaction="{{ route('admin.setting.sync-all-spreadsheet') }}" formmethod="POST"
+                                            onclick="return confirm('Apakah Anda yakin ingin menyinkronkan seluruh riwayat pengajuan cuti ke Google Spreadsheet?')"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-500 shadow-sm transition whitespace-nowrap">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        Sinkronkan Pengajuan
+                                    </button>
+                                </div>
                             </div>
-                            <button type="submit" formaction="{{ route('admin.setting.sync-all-spreadsheet') }}" formmethod="POST"
-                                    onclick="return confirm('Apakah Anda yakin ingin menyinkronkan seluruh data pengajuan cuti ke Google Spreadsheet?')"
-                                    class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-500 shadow-sm transition whitespace-nowrap">
-                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                Sinkronkan Semua Data
-                            </button>
+
+                            <div class="bg-indigo-50/60 border border-indigo-200/80 rounded-xl p-4 flex flex-col justify-between">
+                                <div>
+                                    <p class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        </svg>
+                                        Tab 2: Master Pegawai &amp; Saldo
+                                    </p>
+                                    <p class="text-[11px] text-indigo-700 mt-1">Ekspor seluruh data pegawai (NIP, nama, jabatan, unit kerja) beserta rincian saldo cuti (N, N-1, N-2, sisa) ke sheet &quot;Master Pegawai &amp; Saldo&quot;.</p>
+                                </div>
+                                <div class="mt-3 text-right">
+                                    <button type="submit" formaction="{{ route('admin.setting.sync-master-spreadsheet') }}" formmethod="POST"
+                                            onclick="return confirm('Apakah Anda yakin ingin menyinkronkan seluruh Data Master Pegawai & Saldo ke Google Spreadsheet?')"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-500 shadow-sm transition whitespace-nowrap">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                        </svg>
+                                        Sinkronkan Master Pegawai
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     @endif
                 </div>
@@ -468,7 +499,7 @@
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center">?</span>
-                            <h4 class="font-bold text-sm text-slate-900">Cara Memasang Webhook di Google Spreadsheet (Hanya 2 Menit):</h4>
+                            <h4 class="font-bold text-sm text-slate-900">Cara Memasang Webhook di Google Spreadsheet (Mendukung 2 Tab Otomatis):</h4>
                         </div>
                         <button type="button" 
                                 @click="navigator.clipboard.writeText(document.getElementById('google-apps-script-code').innerText); copied = true; setTimeout(() => copied = false, 2500)"
@@ -480,24 +511,112 @@
                         </button>
                     </div>
 
+                    <p class="text-xs text-slate-600">Kode Google Apps Script ini secara cerdas akan membuat dan mengisi <strong>2 Tab lembar kerja</strong> dalam 1 spreadsheet Anda:</p>
+                    <ul class="list-disc pl-5 space-y-1 text-slate-600">
+                        <li><strong>Tab 1: Rekap Pengajuan Cuti</strong> &mdash; Mencatat nomor pengajuan, tanggal, jenis cuti, status persetujuan terkini, dan alasan.</li>
+                        <li><strong>Tab 2: Master Pegawai &amp; Saldo</strong> &mdash; Menampilkan seluruh pegawai (NIP, nama, jabatan, unit kerja) beserta saldo cuti aktif (N, N-1, N-2, dan total sisa).</li>
+                    </ul>
+
                     <ol class="list-decimal pl-5 space-y-2 leading-relaxed">
                         <li>Buka <a href="https://sheets.new" target="_blank" class="text-indigo-600 font-semibold underline">Google Spreadsheet baru</a> (atau gunakan sheet yang sudah ada).</li>
                         <li>Di menu atas spreadsheet, klik <strong>Ekstensi (Extensions)</strong> &rarr; <strong>Apps Script</strong>.</li>
                         <li>Hapus semua teks yang ada di editor Apps Script, lalu <strong>salin dan tempelkan (paste)</strong> kode di bawah ini:</li>
                     </ol>
 
-                    <div class="relative bg-slate-900 text-slate-100 rounded-xl p-4 font-mono text-[11px] overflow-x-auto max-h-60 leading-normal select-all">
+                    <div class="relative bg-slate-900 text-slate-100 rounded-xl p-4 font-mono text-[11px] overflow-x-auto max-h-72 leading-normal select-all">
 <pre id="google-apps-script-code">function doPost(e) {
   var lock = LockService.getScriptLock();
-  lock.tryLock(10000);
+  lock.tryLock(15000);
   
   try {
     var rawData = e.postData.contents;
     var data = JSON.parse(rawData);
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
     
-    // Inisialisasi Header Otomatis jika Sheet Masih Kosong
-    var headers = [
+    // 1. UJI KONEKSI (TEST ACTION)
+    if (data.action === &quot;test&quot;) {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: &quot;success&quot;,
+        message: &quot;Koneksi Webhook Google Spreadsheet Berhasil Terhubung!&quot;
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // 2. SINKRONISASI DATA MASTER PEGAWAI &amp; SALDO (TAB 2)
+    if (data.action === &quot;sync_master_pegawai&quot;) {
+      var masterSheet = ss.getSheetByName(&quot;Master Pegawai &amp; Saldo&quot;);
+      if (!masterSheet) {
+        masterSheet = ss.insertSheet(&quot;Master Pegawai &amp; Saldo&quot;);
+      }
+      
+      var masterHeaders = [
+        &quot;NIP&quot;, 
+        &quot;Nama Pegawai&quot;, 
+        &quot;Unit Kerja&quot;, 
+        &quot;Jabatan&quot;, 
+        &quot;Pangkat / Golongan&quot;, 
+        &quot;Status (PNS/PPPK)&quot;, 
+        &quot;No. HP / WA&quot;, 
+        &quot;Tahun&quot;, 
+        &quot;Jatah N&quot;, 
+        &quot;Sisa N&quot;, 
+        &quot;Sisa N-1&quot;, 
+        &quot;Sisa N-2&quot;, 
+        &quot;Terpakai Tahun Ini&quot;, 
+        &quot;Total Sisa Saldo&quot;, 
+        &quot;Terakhir Diperbarui&quot;
+      ];
+      
+      // Bersihkan dan tulis header
+      masterSheet.clearContents();
+      masterSheet.appendRow(masterHeaders);
+      var headerRange = masterSheet.getRange(1, 1, 1, masterHeaders.length);
+      headerRange.setFontWeight(&quot;bold&quot;);
+      headerRange.setBackground(&quot;#E0E7FF&quot;); // Soft Indigo
+      masterSheet.setFrozenRows(1);
+      
+      var pegawaiList = data.data_pegawai || [];
+      if (pegawaiList.length &gt; 0) {
+        var masterRows = pegawaiList.map(function(p) {
+          return [
+            &quot;'&quot; + (p.nip || &quot;-&quot;),
+            p.nama_lengkap || &quot;-&quot;,
+            p.unit_kerja || &quot;-&quot;,
+            p.jabatan || &quot;-&quot;,
+            p.pangkat_golongan || &quot;-&quot;,
+            p.status_pegawai || &quot;-&quot;,
+            p.nomor_hp || &quot;-&quot;,
+            p.tahun || &quot;&quot;,
+            p.jatah_n || 0,
+            p.sisa_n || 0,
+            p.sisa_n1 || 0,
+            p.sisa_n2 || 0,
+            p.terpakai || 0,
+            p.total_sisa || 0,
+            data.updated_at || &quot;&quot;
+          ];
+        });
+        masterSheet.getRange(2, 1, masterRows.length, masterHeaders.length).setValues(masterRows);
+      }
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        status: &quot;success&quot;,
+        message: &quot;Data master pegawai &amp; saldo berhasil diperbarui (&quot; + pegawaiList.length + &quot; pegawai)&quot;
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // 3. SINKRONISASI REKAP PENGAJUAN CUTI (TAB 1)
+    var cutiSheet = ss.getSheetByName(&quot;Rekap Pengajuan Cuti&quot;);
+    if (!cutiSheet) {
+      var active = ss.getActiveSheet();
+      if (active.getName().indexOf(&quot;Sheet&quot;) === 0) {
+        cutiSheet = active;
+        cutiSheet.setName(&quot;Rekap Pengajuan Cuti&quot;);
+      } else {
+        cutiSheet = ss.insertSheet(&quot;Rekap Pengajuan Cuti&quot;);
+      }
+    }
+    
+    var cutiHeaders = [
       &quot;Waktu Update&quot;, 
       &quot;Nomor Pengajuan&quot;, 
       &quot;NIP&quot;, 
@@ -515,26 +634,18 @@
       &quot;Catatan / Riwayat&quot;
     ];
     
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(headers);
-      var headerRange = sheet.getRange(1, 1, 1, headers.length);
-      headerRange.setFontWeight(&quot;bold&quot;);
-      headerRange.setBackground(&quot;#E5E7EB&quot;);
-      sheet.setFrozenRows(1);
-    }
-    
-    // Khusus action test ping dari aplikasi
-    if (data.action === &quot;test&quot;) {
-      return ContentService.createTextOutput(JSON.stringify({
-        status: &quot;success&quot;,
-        message: &quot;Koneksi Webhook Google Spreadsheet Berhasil Terhubung!&quot;
-      })).setMimeType(ContentService.MimeType.JSON);
+    if (cutiSheet.getLastRow() === 0) {
+      cutiSheet.appendRow(cutiHeaders);
+      var cutiHeaderRange = cutiSheet.getRange(1, 1, 1, cutiHeaders.length);
+      cutiHeaderRange.setFontWeight(&quot;bold&quot;);
+      cutiHeaderRange.setBackground(&quot;#D1FAE5&quot;); // Soft Emerald
+      cutiSheet.setFrozenRows(1);
     }
     
     var rowData = [
       data.updated_at || new Date().toLocaleString(&quot;id-ID&quot;, { timeZone: &quot;Asia/Jakarta&quot; }),
       data.nomor_pengajuan || &quot;-&quot;,
-      &quot;'&quot; + (data.nip || &quot;-&quot;), // Petik satu agar NIP tidak terbaca sebagai angka eksponen
+      &quot;'&quot; + (data.nip || &quot;-&quot;),
       data.nama_pegawai || &quot;-&quot;,
       data.unit_kerja || &quot;-&quot;,
       data.jabatan || &quot;-&quot;,
@@ -549,13 +660,12 @@
       data.catatan || &quot;-&quot;
     ];
     
-    // Cari apakah Nomor Pengajuan sudah ada (Kolom B = kolom ke-2)
     var nomorPengajuan = data.nomor_pengajuan;
-    var lastRow = sheet.getLastRow();
+    var lastRow = cutiSheet.getLastRow();
     var rowIndex = -1;
     
     if (lastRow &gt; 1 &amp;&amp; nomorPengajuan) {
-      var values = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+      var values = cutiSheet.getRange(2, 2, lastRow - 1, 1).getValues();
       for (var i = 0; i &lt; values.length; i++) {
         if (values[i][0] == nomorPengajuan) {
           rowIndex = i + 2;
@@ -565,11 +675,9 @@
     }
     
     if (rowIndex &gt; 0) {
-      // Perbarui baris yang sudah ada (Upsert)
-      sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
+      cutiSheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
     } else {
-      // Tambah baris baru di paling bawah
-      sheet.appendRow(rowData);
+      cutiSheet.appendRow(rowData);
     }
     
     return ContentService.createTextOutput(JSON.stringify({

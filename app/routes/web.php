@@ -117,5 +117,6 @@ Route::middleware(['auth'])->group(function () {
         Route::match(['get', 'post', 'put'], '/setting/test-whatsapp', [\App\Http\Controllers\Admin\SettingController::class, 'testWhatsApp'])->middleware('throttle:10,1')->name('admin.setting.test-whatsapp');
         Route::match(['get', 'post', 'put'], '/setting/test-spreadsheet', [\App\Http\Controllers\Admin\SettingController::class, 'testSpreadsheet'])->middleware('throttle:10,1')->name('admin.setting.test-spreadsheet');
         Route::post('/setting/sync-all-spreadsheet', [\App\Http\Controllers\Admin\SettingController::class, 'syncAllSpreadsheet'])->middleware('throttle:5,1')->name('admin.setting.sync-all-spreadsheet');
+        Route::post('/setting/sync-master-spreadsheet', [\App\Http\Controllers\Admin\SettingController::class, 'syncMasterSpreadsheet'])->middleware('throttle:5,1')->name('admin.setting.sync-master-spreadsheet');
     });
 });

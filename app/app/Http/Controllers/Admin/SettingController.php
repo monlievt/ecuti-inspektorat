@@ -267,4 +267,19 @@ class SettingController extends Controller
         return redirect()->route('admin.setting.index')
             ->with('error', '❌ ' . $res['message']);
     }
+
+    /**
+     * Sinkronkan data master pegawai dan saldo cuti ke Google Spreadsheet.
+     */
+    public function syncMasterSpreadsheet(Request $request, GoogleSpreadsheetSyncService $spreadsheetService)
+    {
+        $res = $spreadsheetService->syncMasterPegawai();
+        if ($res['success']) {
+            return redirect()->route('admin.setting.index')
+                ->with('success', '✅ ' . $res['message']);
+        }
+
+        return redirect()->route('admin.setting.index')
+            ->with('error', '❌ ' . $res['message']);
+    }
 }
