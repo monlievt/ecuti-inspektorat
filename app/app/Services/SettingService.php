@@ -179,6 +179,24 @@ class SettingService
                 'deskripsi' => 'Secret key rahasia untuk verifikasi backend Google reCAPTCHA.'
             ],
 
+            // ── Google Spreadsheet Webhook ─────────────────────────────────
+            [
+                'key' => 'spreadsheet_sync_enabled',
+                'value' => env('SPREADSHEET_SYNC_ENABLED', '0'),
+                'kategori' => 'spreadsheet',
+                'tipe' => 'boolean',
+                'label' => 'Aktifkan Auto-Rekap Google Spreadsheet',
+                'deskripsi' => 'Jika dicentang, seluruh permohonan baru atau perubahan status persetujuan cuti akan otomatis dicatat/diperbarui ke Google Spreadsheet secara real-time.'
+            ],
+            [
+                'key' => 'spreadsheet_webhook_url',
+                'value' => env('SPREADSHEET_WEBHOOK_URL', ''),
+                'kategori' => 'spreadsheet',
+                'tipe' => 'string',
+                'label' => 'URL Webhook Google Apps Script',
+                'deskripsi' => 'URL Web App Google Apps Script (contoh: https://script.google.com/macros/s/.../exec).'
+            ],
+
             // ── Profil Instansi & Kop Surat ─────────────────────────────────
             [
                 'key' => 'instansi_nama',

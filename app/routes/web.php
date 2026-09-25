@@ -115,5 +115,7 @@ Route::middleware(['auth'])->group(function () {
         Route::match(['get', 'post', 'put'], '/setting/test-telegram', [\App\Http\Controllers\Admin\SettingController::class, 'testTelegram'])->middleware('throttle:10,1')->name('admin.setting.test-telegram');
         Route::match(['get', 'post', 'put'], '/setting/detect-telegram-chat-id', [\App\Http\Controllers\Admin\SettingController::class, 'detectTelegramChatId'])->middleware('throttle:10,1')->name('admin.setting.detect-telegram-chat-id');
         Route::match(['get', 'post', 'put'], '/setting/test-whatsapp', [\App\Http\Controllers\Admin\SettingController::class, 'testWhatsApp'])->middleware('throttle:10,1')->name('admin.setting.test-whatsapp');
+        Route::match(['get', 'post', 'put'], '/setting/test-spreadsheet', [\App\Http\Controllers\Admin\SettingController::class, 'testSpreadsheet'])->middleware('throttle:10,1')->name('admin.setting.test-spreadsheet');
+        Route::post('/setting/sync-all-spreadsheet', [\App\Http\Controllers\Admin\SettingController::class, 'syncAllSpreadsheet'])->middleware('throttle:5,1')->name('admin.setting.sync-all-spreadsheet');
     });
 });

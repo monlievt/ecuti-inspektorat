@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PengaturanSistem;
 use App\Services\SettingService;
 use App\Services\WhatsAppNotificationService;
+use App\Services\GoogleSpreadsheetSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Throwable;
@@ -47,7 +48,7 @@ class SettingController extends Controller
         $data = $request->except(['_token', '_method']);
 
         // Khusus checkbox boolean: jika tidak dicentang, nilainya '0'
-        $booleanKeys = ['recaptcha_enabled'];
+        $booleanKeys = ['recaptcha_enabled', 'spreadsheet_sync_enabled'];
         foreach ($booleanKeys as $bKey) {
             $data[$bKey] = ($request->input($bKey) === '1' || $request->input($bKey) === 'on' || $request->boolean($bKey)) ? '1' : '0';
         }
@@ -224,5 +225,46 @@ class SettingController extends Controller
             return redirect()->route('admin.setting.index')
                 ->with('error', 'Terjadi kesalahan koneksi WhatsApp: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Uji coba Webhook Google Spreadsheet.
+     */
+    public function testSpreadsheet(Request $request, GoogleSpreadsheetSyncService $spreadsheetService)
+    {
+        $inputUrl = trim((string) $request->input('spreadsheet_webhook_url', ''));
+        if (!empty($inputUrl)) {
+            SettingService::set('spreadsheet_webhook_url', $inputUrl, 'spreadsheet', 'URL Webhook Google Apps Script', 'string');
+        }
+
+        $url = $inputUrl ?: SettingService::get('spreadsheet_webhook_url');
+        if (empty($url)) {
+            return redirect()->route('admin.setting.index')
+                ->with('error', 'URL Webhook Google Apps Script wajib diisi terlebih dahulu sebelum melakukan uji coba.');
+        }
+
+        $res = $spreadsheetService->testConnection($url);
+        if ($res['success']) {
+            return redirect()->route('admin.setting.index')
+                ->with('success', '✅ ' . $res['message']);
+        }
+
+        return redirect()->route('admin.setting.index')
+            ->with('error', '❌ ' . $res['message']);
+    }
+
+    /**
+     * Sinkronkan seluruh data pengajuan cuti yang ada ke Google Spreadsheet.
+     */
+    public function syncAllSpreadsheet(Request $request, GoogleSpreadsheetSyncService $spreadsheetService)
+    {
+        $res = $spreadsheetService->syncAll();
+        if ($res['success']) {
+            return redirect()->route('admin.setting.index')
+                ->with('success', '✅ ' . $res['message']);
+        }
+
+        return redirect()->route('admin.setting.index')
+            ->with('error', '❌ ' . $res['message']);
     }
 }

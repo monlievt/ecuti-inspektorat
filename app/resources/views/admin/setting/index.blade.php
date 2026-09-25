@@ -69,6 +69,15 @@
                 Profil Instansi &amp; Kop Surat
             </button>
 
+            <button type="button" @click="activeTab = 'spreadsheet'"
+                    :class="activeTab === 'spreadsheet' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 font-medium'"
+                    class="whitespace-nowrap py-3 px-1 border-b-2 text-sm flex items-center gap-2 transition">
+                <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-2h2v2zm0-4H7v-2h2v2zm0-4H7V7h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/>
+                </svg>
+                Google Spreadsheet
+            </button>
+
         </nav>
     </div>
 
@@ -362,6 +371,237 @@
                         @endforeach
                     </div>
                 @endif
+            </div>
+
+            <!-- ── TAB 5: GOOGLE SPREADSHEET ─────────────────────────────────── -->
+            <div x-show="activeTab === 'spreadsheet'" class="space-y-6" style="display: none;">
+                <div class="border-b border-slate-100 pb-4">
+                    <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-2h2v2zm0-4H7v-2h2v2zm0-4H7V7h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/>
+                        </svg>
+                        Integrasi Auto-Rekapitulasi Google Spreadsheet
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">Setiap kali ada permohonan cuti baru diajukan atau terjadi perubahan status persetujuan, data akan <strong>otomatis disinkronkan dan diperbarui secara real-time</strong> ke lembar kerja Google Spreadsheet Anda.</p>
+                </div>
+
+                @php
+                    $isSpreadsheetActive = \App\Services\SettingService::get('spreadsheet_sync_enabled', '0') === '1';
+                    $webhookUrlSetting = \App\Services\SettingService::get('spreadsheet_webhook_url', '');
+                @endphp
+
+                <!-- Status Banner -->
+                <div class="{{ $isSpreadsheetActive && !empty($webhookUrlSetting) ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200' }} border rounded-2xl p-5 flex items-start gap-4 transition">
+                    <div class="w-10 h-10 rounded-xl {{ $isSpreadsheetActive && !empty($webhookUrlSetting) ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-500' }} flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <div>
+                        @if($isSpreadsheetActive && !empty($webhookUrlSetting))
+                            <p class="font-bold text-sm text-emerald-800">Status Integrasi: AKTIF &amp; Real-time</p>
+                            <p class="mt-0.5 text-xs text-emerald-700">Setiap pengajuan baru atau persetujuan cuti otomatis memperbarui baris data di Google Spreadsheet tujuan.</p>
+                        @else
+                            <p class="font-bold text-sm text-slate-700">Status Integrasi: Belum Aktif / Non-aktif</p>
+                            <p class="mt-0.5 text-xs text-slate-500">Centang kotak &quot;Aktifkan Auto-Rekap Google Spreadsheet&quot; dan masukkan Webhook URL Google Apps Script di bawah untuk mengaktifkan.</p>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-5">
+                    <!-- Checkbox Aktifkan -->
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+                        <div>
+                            <label for="spreadsheet_sync_enabled" class="text-sm font-bold text-slate-800 cursor-pointer">
+                                Aktifkan Auto-Rekap Google Spreadsheet
+                            </label>
+                            <p class="text-xs text-slate-500 mt-0.5">Jika dicentang, seluruh permohonan baru atau perubahan status persetujuan cuti akan otomatis dicatat/diperbarui ke Google Spreadsheet secara real-time.</p>
+                        </div>
+                        <input type="checkbox" name="spreadsheet_sync_enabled" id="spreadsheet_sync_enabled" value="1"
+                               {{ old('spreadsheet_sync_enabled', $isSpreadsheetActive) ? 'checked' : '' }}
+                               class="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                    </div>
+
+                    <!-- Input Webhook URL -->
+                    <div>
+                        <label for="spreadsheet_webhook_url" class="block text-sm font-semibold text-slate-700">
+                            URL Webhook Google Apps Script
+                        </label>
+                        <div class="mt-1.5 flex gap-2">
+                            <input type="url" name="spreadsheet_webhook_url" id="spreadsheet_webhook_url"
+                                   value="{{ old('spreadsheet_webhook_url', $webhookUrlSetting) }}"
+                                   placeholder="https://script.google.com/macros/s/.../exec"
+                                   class="block flex-1 rounded-xl border-slate-300 py-2.5 px-4 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm font-mono text-xs">
+                            
+                            <button type="submit" formaction="{{ route('admin.setting.test-spreadsheet') }}" formmethod="POST"
+                                    class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 text-white rounded-xl text-xs font-semibold hover:bg-slate-700 shadow-sm transition whitespace-nowrap">
+                                <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Uji Koneksi Webhook
+                            </button>
+                        </div>
+                        <p class="mt-1.5 text-xs text-slate-400">URL Web App yang diperoleh setelah menerapkan (Deploy as Web App) script Google Apps Script di Google Spreadsheet Anda.</p>
+                    </div>
+
+                    <!-- Tombol Bulk Sync Data Lama -->
+                    @if($isSpreadsheetActive && !empty($webhookUrlSetting))
+                        <div class="bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-4 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-emerald-900">Sinkronkan Semua Data Pengajuan Saat Ini</p>
+                                <p class="text-[11px] text-emerald-700 mt-0.5">Kirimkan seluruh data pengajuan cuti yang sudah ada di database ke Google Spreadsheet sekaligus.</p>
+                            </div>
+                            <button type="submit" formaction="{{ route('admin.setting.sync-all-spreadsheet') }}" formmethod="POST"
+                                    onclick="return confirm('Apakah Anda yakin ingin menyinkronkan seluruh data pengajuan cuti ke Google Spreadsheet?')"
+                                    class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-500 shadow-sm transition whitespace-nowrap">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Sinkronkan Semua Data
+                            </button>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Panduan Setup & Script Google Apps Script -->
+                <div class="border border-slate-200 rounded-2xl p-5 bg-slate-50/60 space-y-4 text-xs text-slate-700" x-data="{ copied: false }">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center">?</span>
+                            <h4 class="font-bold text-sm text-slate-900">Cara Memasang Webhook di Google Spreadsheet (Hanya 2 Menit):</h4>
+                        </div>
+                        <button type="button" 
+                                @click="navigator.clipboard.writeText(document.getElementById('google-apps-script-code').innerText); copied = true; setTimeout(() => copied = false, 2500)"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm">
+                            <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            </svg>
+                            <span x-text="copied ? 'Tersalin ke Clipboard!' : 'Salin Kode Script'">Salin Kode Script</span>
+                        </button>
+                    </div>
+
+                    <ol class="list-decimal pl-5 space-y-2 leading-relaxed">
+                        <li>Buka <a href="https://sheets.new" target="_blank" class="text-indigo-600 font-semibold underline">Google Spreadsheet baru</a> (atau gunakan sheet yang sudah ada).</li>
+                        <li>Di menu atas spreadsheet, klik <strong>Ekstensi (Extensions)</strong> &rarr; <strong>Apps Script</strong>.</li>
+                        <li>Hapus semua teks yang ada di editor Apps Script, lalu <strong>salin dan tempelkan (paste)</strong> kode di bawah ini:</li>
+                    </ol>
+
+                    <div class="relative bg-slate-900 text-slate-100 rounded-xl p-4 font-mono text-[11px] overflow-x-auto max-h-60 leading-normal select-all">
+<pre id="google-apps-script-code">function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.tryLock(10000);
+  
+  try {
+    var rawData = e.postData.contents;
+    var data = JSON.parse(rawData);
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    
+    // Inisialisasi Header Otomatis jika Sheet Masih Kosong
+    var headers = [
+      &quot;Waktu Update&quot;, 
+      &quot;Nomor Pengajuan&quot;, 
+      &quot;NIP&quot;, 
+      &quot;Nama Pegawai&quot;, 
+      &quot;Unit Kerja&quot;, 
+      &quot;Jabatan&quot;, 
+      &quot;Jenis Cuti&quot;, 
+      &quot;Tgl Mulai&quot;, 
+      &quot;Tgl Selesai&quot;, 
+      &quot;Hari Kerja&quot;, 
+      &quot;Alasan&quot;, 
+      &quot;Alamat Selama Cuti&quot;, 
+      &quot;No. Telp&quot;, 
+      &quot;Status Terkini&quot;, 
+      &quot;Catatan / Riwayat&quot;
+    ];
+    
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(headers);
+      var headerRange = sheet.getRange(1, 1, 1, headers.length);
+      headerRange.setFontWeight(&quot;bold&quot;);
+      headerRange.setBackground(&quot;#E5E7EB&quot;);
+      sheet.setFrozenRows(1);
+    }
+    
+    // Khusus action test ping dari aplikasi
+    if (data.action === &quot;test&quot;) {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: &quot;success&quot;,
+        message: &quot;Koneksi Webhook Google Spreadsheet Berhasil Terhubung!&quot;
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    var rowData = [
+      data.updated_at || new Date().toLocaleString(&quot;id-ID&quot;, { timeZone: &quot;Asia/Jakarta&quot; }),
+      data.nomor_pengajuan || &quot;-&quot;,
+      &quot;'&quot; + (data.nip || &quot;-&quot;), // Petik satu agar NIP tidak terbaca sebagai angka eksponen
+      data.nama_pegawai || &quot;-&quot;,
+      data.unit_kerja || &quot;-&quot;,
+      data.jabatan || &quot;-&quot;,
+      data.jenis_cuti || &quot;-&quot;,
+      data.tanggal_mulai || &quot;-&quot;,
+      data.tanggal_selesai || &quot;-&quot;,
+      data.jumlah_hari || 0,
+      data.alasan || &quot;-&quot;,
+      data.alamat_selama_cuti || &quot;-&quot;,
+      data.telp_selama_cuti || &quot;-&quot;,
+      data.status || &quot;-&quot;,
+      data.catatan || &quot;-&quot;
+    ];
+    
+    // Cari apakah Nomor Pengajuan sudah ada (Kolom B = kolom ke-2)
+    var nomorPengajuan = data.nomor_pengajuan;
+    var lastRow = sheet.getLastRow();
+    var rowIndex = -1;
+    
+    if (lastRow &gt; 1 &amp;&amp; nomorPengajuan) {
+      var values = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+      for (var i = 0; i &lt; values.length; i++) {
+        if (values[i][0] == nomorPengajuan) {
+          rowIndex = i + 2;
+          break;
+        }
+      }
+    }
+    
+    if (rowIndex &gt; 0) {
+      // Perbarui baris yang sudah ada (Upsert)
+      sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
+    } else {
+      // Tambah baris baru di paling bawah
+      sheet.appendRow(rowData);
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      status: &quot;success&quot;,
+      message: &quot;Data pengajuan berhasil dicatat ke Spreadsheet&quot;,
+      nomor_pengajuan: nomorPengajuan
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: &quot;error&quot;,
+      message: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}</pre>
+                    </div>
+
+                    <ol start="4" class="list-decimal pl-5 space-y-2 leading-relaxed">
+                        <li>Klik tombol biru <strong>Terapkan (Deploy)</strong> di kanan atas &rarr; pilih <strong>Penerapan baru (New deployment)</strong>.</li>
+                        <li>Klik ikon gerigi di sebelah kiri <em>Pilih jenis (Select type)</em> &rarr; pilih <strong>Aplikasi web (Web app)</strong>.</li>
+                        <li>Atur pengaturannya sebagai berikut:
+                            <ul class="list-disc pl-5 mt-1 space-y-1">
+                                <li><strong>Jalankan sebagai (Execute as):</strong> <em>Saya (Me / akun Google Anda)</em>.</li>
+                                <li><strong>Siapa yang memiliki akses (Who has access):</strong> <strong><em>Siapa saja (Anyone)</em></strong> &mdash; <em>(Penting agar server dapat mengirim data tanpa login akun Google)</em>.</li>
+                            </ul>
+                        </li>
+                        <li>Klik <strong>Terapkan (Deploy)</strong>. Jika muncul jendela izin otorisasi Google, izinkan aksesnya.</li>
+                        <li>Salin <strong>URL Aplikasi Web (Web App URL)</strong> yang diberikan, tempelkan ke kolom <strong>URL Webhook Google Apps Script</strong> di atas, lalu klik <strong>Uji Koneksi Webhook</strong>!</li>
+                    </ol>
+                </div>
             </div>
 
 
