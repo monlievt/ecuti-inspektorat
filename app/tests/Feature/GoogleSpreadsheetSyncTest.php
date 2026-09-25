@@ -189,9 +189,17 @@ class GoogleSpreadsheetSyncTest extends TestCase
                    $data['data_pegawai'][0]['unit_kerja'] === 'Inspektorat Pembantu I';
         });
 
-        // Test endpoint sync master
+        // Test endpoint sync master via POST & PUT
         $endpointRes = $this->actingAs($this->adminUser)->post(route('admin.setting.sync-master-spreadsheet'));
         $endpointRes->assertRedirect(route('admin.setting.index'));
         $endpointRes->assertSessionHas('success');
+
+        $putRes = $this->actingAs($this->adminUser)->put(route('admin.setting.sync-master-spreadsheet'));
+        $putRes->assertRedirect(route('admin.setting.index'));
+        $putRes->assertSessionHas('success');
+
+        $putSyncAllRes = $this->actingAs($this->adminUser)->put(route('admin.setting.sync-all-spreadsheet'));
+        $putSyncAllRes->assertRedirect(route('admin.setting.index'));
+        $putSyncAllRes->assertSessionHas('success');
     }
 }
