@@ -184,7 +184,7 @@ class DatabaseSeeder extends Seeder
                 ]
             );
 
-            $pangkatGolongan = !empty($pangkat) ? "{$golongan} - {$pangkat}" : $golongan;
+            $pangkatGolongan = \App\Services\SuratCutiPdfService::formatPangkatGolongan(!empty($pangkat) ? "{$golongan} - {$pangkat}" : $golongan);
 
             // 2. Buat/Update Profil Pegawai
             $pegawai = Pegawai::updateOrCreate(

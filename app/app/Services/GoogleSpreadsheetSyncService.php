@@ -222,7 +222,7 @@ class GoogleSpreadsheetSyncService
                 'nama_lengkap' => $p->nama_lengkap,
                 'unit_kerja' => $p->unitKerja?->nama ?? '-',
                 'jabatan' => $p->jabatan ?? '-',
-                'pangkat_golongan' => $p->pangkat_golongan ?? '-',
+                'pangkat_golongan' => \App\Services\SuratCutiPdfService::formatPangkatGolongan($p->pangkat_golongan ?? '-'),
                 'status_pegawai' => strtoupper((string) $p->jenis_pegawai),
                 'nomor_hp' => $p->nomor_hp ?? '-',
                 'tahun' => $tahun,
