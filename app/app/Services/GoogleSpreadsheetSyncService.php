@@ -56,7 +56,7 @@ class GoogleSpreadsheetSyncService
                 'timestamp' => now()->setTimezone('Asia/Jakarta')->translatedFormat('d-m-Y H:i:s') . ' WIB',
             ];
 
-            $response = Http::timeout(12)
+            $response = Http::timeout(25)
                 ->withOptions(['allow_redirects' => true])
                 ->post($url, $payload);
 
@@ -128,7 +128,7 @@ class GoogleSpreadsheetSyncService
                 'catatan' => $catatan,
             ];
 
-            $response = Http::timeout(10)
+            $response = Http::timeout(30)
                 ->withOptions(['allow_redirects' => true])
                 ->post($url, $payload);
 
@@ -244,7 +244,9 @@ class GoogleSpreadsheetSyncService
                 'data_pegawai' => $rows,
             ];
 
-            $response = Http::timeout(15)
+            @set_time_limit(120);
+
+            $response = Http::timeout(90)
                 ->withOptions(['allow_redirects' => true])
                 ->post($url, $payload);
 

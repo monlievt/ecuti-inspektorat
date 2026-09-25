@@ -530,7 +530,7 @@
                     <div class="relative bg-slate-900 text-slate-100 rounded-xl p-4 font-mono text-[11px] overflow-x-auto max-h-72 leading-normal select-all">
 <pre id="google-apps-script-code">function doPost(e) {
   var lock = LockService.getScriptLock();
-  lock.tryLock(15000);
+  lock.tryLock(30000);
   
   try {
     var rawData = e.postData.contents;
@@ -570,37 +570,37 @@
         &quot;Terakhir Diperbarui&quot;
       ];
       
-      // Bersihkan dan tulis header
+      // Bersihkan dan tulis header + data sekaligus (batching cepat)
       masterSheet.clearContents();
-      masterSheet.appendRow(masterHeaders);
+      
+      var pegawaiList = data.data_pegawai || [];
+      var masterRows = pegawaiList.map(function(p) {
+        return [
+          &quot;'&quot; + (p.nip || &quot;-&quot;),
+          p.nama_lengkap || &quot;-&quot;,
+          p.unit_kerja || &quot;-&quot;,
+          p.jabatan || &quot;-&quot;,
+          p.pangkat_golongan || &quot;-&quot;,
+          p.status_pegawai || &quot;-&quot;,
+          p.nomor_hp || &quot;-&quot;,
+          p.tahun || &quot;&quot;,
+          p.jatah_n || 0,
+          p.sisa_n || 0,
+          p.sisa_n1 || 0,
+          p.sisa_n2 || 0,
+          p.terpakai || 0,
+          p.total_sisa || 0,
+          data.updated_at || &quot;&quot;
+        ];
+      });
+      
+      var allRows = [masterHeaders].concat(masterRows);
+      masterSheet.getRange(1, 1, allRows.length, masterHeaders.length).setValues(allRows);
+      
       var headerRange = masterSheet.getRange(1, 1, 1, masterHeaders.length);
       headerRange.setFontWeight(&quot;bold&quot;);
       headerRange.setBackground(&quot;#E0E7FF&quot;); // Soft Indigo
       masterSheet.setFrozenRows(1);
-      
-      var pegawaiList = data.data_pegawai || [];
-      if (pegawaiList.length &gt; 0) {
-        var masterRows = pegawaiList.map(function(p) {
-          return [
-            &quot;'&quot; + (p.nip || &quot;-&quot;),
-            p.nama_lengkap || &quot;-&quot;,
-            p.unit_kerja || &quot;-&quot;,
-            p.jabatan || &quot;-&quot;,
-            p.pangkat_golongan || &quot;-&quot;,
-            p.status_pegawai || &quot;-&quot;,
-            p.nomor_hp || &quot;-&quot;,
-            p.tahun || &quot;&quot;,
-            p.jatah_n || 0,
-            p.sisa_n || 0,
-            p.sisa_n1 || 0,
-            p.sisa_n2 || 0,
-            p.terpakai || 0,
-            p.total_sisa || 0,
-            data.updated_at || &quot;&quot;
-          ];
-        });
-        masterSheet.getRange(2, 1, masterRows.length, masterHeaders.length).setValues(masterRows);
-      }
       
       return ContentService.createTextOutput(JSON.stringify({
         status: &quot;success&quot;,
