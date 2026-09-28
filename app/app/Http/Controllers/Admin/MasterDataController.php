@@ -119,12 +119,18 @@ class MasterDataController extends Controller
     public function storePemetaanPejabat(Request $request)
     {
         $request->validate([
-            'unit_kerja_id' => 'required|exists:unit_kerja,id',
+            'unit_kerja_id' => 'required',
             'pejabat_id' => 'required|exists:pegawai,id',
             'jenis_cuti_id' => 'required|exists:cuti_jenis,id',
             'nomor_sk_delegasi' => 'nullable|string|max:100',
             'berlaku_mulai' => 'required|date',
         ]);
+
+        $unitKerjaId = ($request->unit_kerja_id === 'all' || empty($request->unit_kerja_id)) ? null : (int)$request->unit_kerja_id;
+
+        if ($unitKerjaId !== null && !\App\Models\UnitKerja::where('id', $unitKerjaId)->exists()) {
+            return redirect()->back()->with('error', 'Unit kerja yang dipilih tidak valid.');
+        }
 
         // CLTN tidak boleh didelegasikan wewenang PyBMC-nya
         $cltn = CutiJenis::where('kode', CutiJenis::CLTN)->first();
@@ -136,7 +142,13 @@ class MasterDataController extends Controller
         $kemarin = $mulai->copy()->subDay()->toDateString();
 
         // Nonaktifkan pemetaan lama yang konflik atau masih aktif
-        CutiPemetaanPejabatBerwenang::where('unit_kerja_id', $request->unit_kerja_id)
+        CutiPemetaanPejabatBerwenang::where(function ($q) use ($unitKerjaId) {
+                if (is_null($unitKerjaId)) {
+                    $q->whereNull('unit_kerja_id');
+                } else {
+                    $q->where('unit_kerja_id', $unitKerjaId);
+                }
+            })
             ->where('jenis_cuti_id', $request->jenis_cuti_id)
             ->where(function ($q) use ($mulai) {
                 $q->whereNull('berlaku_sampai')
@@ -145,7 +157,7 @@ class MasterDataController extends Controller
             ->update(['berlaku_sampai' => $kemarin]);
 
         CutiPemetaanPejabatBerwenang::create([
-            'unit_kerja_id' => $request->unit_kerja_id,
+            'unit_kerja_id' => $unitKerjaId,
             'pejabat_id' => $request->pejabat_id,
             'jenis_cuti_id' => $request->jenis_cuti_id,
             'nomor_sk_delegasi' => $request->nomor_sk_delegasi,

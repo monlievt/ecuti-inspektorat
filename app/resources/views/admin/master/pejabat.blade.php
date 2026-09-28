@@ -21,10 +21,14 @@
                     <select id="unit_kerja_id" name="unit_kerja_id" required
                             class="mt-1 block w-full rounded-xl border-slate-300 py-2.5 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-xs">
                         <option value="">-- Pilih Unit Kerja --</option>
-                        @foreach($unitKerja as $uk)
-                            <option value="{{ $uk->id }}">{{ $uk->nama }}</option>
-                        @endforeach
+                        <option value="all" class="font-bold text-indigo-700">⭐ Seluruh Unit Kerja (Global Inspektorat)</option>
+                        <optgroup label="Pilih Unit Kerja Spesifik">
+                            @foreach($unitKerja as $uk)
+                                <option value="{{ $uk->id }}">{{ $uk->nama }}</option>
+                            @endforeach
+                        </optgroup>
                     </select>
+                    <p class="mt-1 text-[11px] text-slate-400">Pilih <em>"Seluruh Unit Kerja"</em> jika wewenang berlaku untuk seluruh pegawai se-Inspektorat (misal Inspektur / Plt. Inspektur).</p>
                 </div>
 
                 <div>

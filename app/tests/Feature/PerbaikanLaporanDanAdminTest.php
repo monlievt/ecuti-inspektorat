@@ -249,4 +249,38 @@ class PerbaikanLaporanDanAdminTest extends TestCase
         $responseDelete->assertRedirect(route('admin.master.pejabat'));
         $this->assertDatabaseMissing('cuti_pemetaan_pejabat_berwenang', ['id' => $delegasi->id]);
     }
+
+    public function test_admin_dapat_menyimpan_delegasi_seluruh_unit_kerja(): void
+    {
+        $jenisCuti = CutiJenis::firstOrCreate(
+            ['kode' => 'sakit'],
+            [
+                'nama' => 'Cuti Sakit',
+                'kuota_tahunan' => 0,
+                'maksimal_hari_berurutan' => 14,
+                'butuh_lampiran' => true,
+                'pengurangan_saldo' => false,
+                'aktif' => true,
+            ]
+        );
+
+        $response = $this->actingAs($this->adminUser)->post(route('admin.master.pejabat'), [
+            'unit_kerja_id' => 'all', // Seluruh Unit Kerja
+            'pejabat_id' => $this->wijionoPegawai->id,
+            'jenis_cuti_id' => $jenisCuti->id,
+            'nomor_sk_delegasi' => 'SK/GLOBAL/001',
+            'berlaku_mulai' => '2026-01-01',
+        ]);
+
+        $response->assertRedirect(route('admin.master.pejabat'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('cuti_pemetaan_pejabat_berwenang', [
+            'unit_kerja_id' => null,
+            'pejabat_id' => $this->wijionoPegawai->id,
+            'jenis_cuti_id' => $jenisCuti->id,
+            'nomor_sk_delegasi' => 'SK/GLOBAL/001',
+        ]);
+    }
 }
+
