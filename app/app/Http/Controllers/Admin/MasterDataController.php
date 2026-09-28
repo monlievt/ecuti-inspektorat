@@ -295,6 +295,61 @@ class MasterDataController extends Controller
         }
     }
 
+    /**
+     * Hapus riwayat audit koreksi saldo tertentu dan opsional netralkan kembali efek saldonya.
+     */
+    public function destroyKoreksiSaldo(CutiSaldoKoreksi $koreksi, Request $request)
+    {
+        try {
+            DB::transaction(function () use ($koreksi, $request) {
+                $rollback = $request->boolean('rollback', true);
+
+                if ($rollback) {
+                    $saldo = $this->saldoCutiService->dapatkanAtauBuatSaldo($koreksi->pegawai_id, $koreksi->tahun);
+                    if ($koreksi->jenis_koreksi === 'tambah') {
+                        // Sebelumnya ditambah, saat dibatalkan dikurangi kembali
+                        $saldo->update([
+                            'jatah_tahun_berjalan' => max(0, $saldo->jatah_tahun_berjalan - $koreksi->jumlah_hari)
+                        ]);
+                    } else {
+                        // Sebelumnya dikurang, saat dibatalkan ditambah kembali
+                        $saldo->update([
+                            'jatah_tahun_berjalan' => $saldo->jatah_tahun_berjalan + $koreksi->jumlah_hari
+                        ]);
+                    }
+                }
+
+                $koreksi->delete();
+            });
+
+            return redirect()->route('admin.master.koreksi')->with('success', 'Riwayat koreksi berhasil dihapus dan saldo jatah cuti pegawai telah dinetralkan kembali.');
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus riwayat koreksi: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Bersihkan seluruh riwayat audit koreksi saldo (pembersihan trial).
+     */
+    public function bersihkanSemuaKoreksi(Request $request)
+    {
+        try {
+            DB::transaction(function () use ($request) {
+                if ($request->boolean('reset_jatah_default', false)) {
+                    CutiSaldoTahunan::where('tahun', now()->year)->update([
+                        'jatah_tahun_berjalan' => 12,
+                    ]);
+                }
+
+                CutiSaldoKoreksi::truncate();
+            });
+
+            return redirect()->route('admin.master.koreksi')->with('success', 'Seluruh riwayat audit penyesuaian saldo berhasil dibersihkan.');
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Gagal membersihkan riwayat: ' . $e->getMessage());
+        }
+    }
+
     // ── 6. Pejabat Kepala BKPSDM ─────────────────────────────────────────────
 
     public function pejabatBkpsdm()

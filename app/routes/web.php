@@ -104,6 +104,8 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/master/koreksi', [\App\Http\Controllers\Admin\MasterDataController::class, 'koreksiSaldo'])->name('admin.master.koreksi');
         Route::post('/master/koreksi', [\App\Http\Controllers\Admin\MasterDataController::class, 'storeKoreksiSaldo']);
+        Route::delete('/master/koreksi/{koreksi}', [\App\Http\Controllers\Admin\MasterDataController::class, 'destroyKoreksiSaldo'])->name('admin.master.koreksi.destroy');
+        Route::post('/master/koreksi/bersihkan-semua', [\App\Http\Controllers\Admin\MasterDataController::class, 'bersihkanSemuaKoreksi'])->name('admin.master.koreksi.bersihkan');
 
         // Laporan & Rekapitulasi Cuti
         Route::get('/laporan/rekapitulasi', [\App\Http\Controllers\Admin\LaporanController::class, 'rekapitulasi'])->name('admin.laporan.rekapitulasi');

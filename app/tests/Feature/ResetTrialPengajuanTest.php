@@ -112,4 +112,113 @@ class ResetTrialPengajuanTest extends TestCase
         $this->assertEquals(1, User::count());
         $this->assertEquals(1, UnitKerja::count());
     }
+
+    public function test_admin_dapat_menghapus_riwayat_koreksi_saldo_dan_mengembalikan_jatah(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin Cuti',
+            'email' => 'admin_koreksi@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin_cuti',
+        ]);
+
+        $unit = UnitKerja::create(['nama' => 'Sekretariat', 'kode' => 'SEK2']);
+        $pegawai = Pegawai::create([
+            'user_id' => $admin->id,
+            'nip' => '199201012015011002',
+            'nama_lengkap' => 'Pegawai Koreksi',
+            'jenis_kelamin' => 'P',
+            'tmt_cpns' => Carbon::parse('2015-01-01'),
+            'pangkat_golongan' => 'III/a',
+            'jabatan' => 'Staf',
+            'unit_kerja_id' => $unit->id,
+            'jenis_pegawai' => 'PNS',
+            'aktif' => true,
+        ]);
+
+        $saldo = CutiSaldoTahunan::create([
+            'pegawai_id' => $pegawai->id,
+            'tahun' => 2026,
+            'jatah_tahun_berjalan' => 17, // 12 + 5 hasil testing
+            'terpakai' => 0,
+        ]);
+
+        $koreksi = \App\Models\CutiSaldoKoreksi::create([
+            'pegawai_id' => $pegawai->id,
+            'tahun' => 2026,
+            'jenis_koreksi' => 'tambah',
+            'jumlah_hari' => 5,
+            'alasan' => 'Testing tambah 5 hari',
+            'dikoreksi_oleh' => $admin->id,
+        ]);
+
+        $this->assertEquals(1, \App\Models\CutiSaldoKoreksi::count());
+
+        // 1. Admin menghapus baris riwayat koreksi dengan opsi rollback = 1
+        $response = $this->actingAs($admin)->delete(route('admin.master.koreksi.destroy', $koreksi->id), [
+            'rollback' => 1,
+        ]);
+
+        $response->assertRedirect(route('admin.master.koreksi'));
+        $response->assertSessionHas('success');
+
+        // Cek log audit terhapus
+        $this->assertEquals(0, \App\Models\CutiSaldoKoreksi::count());
+
+        // Cek saldo kembali berkurang 5 (dari 17 kembali ke 12)
+        $this->assertEquals(12, $saldo->fresh()->jatah_tahun_berjalan);
+    }
+
+    public function test_admin_dapat_membersihkan_seluruh_riwayat_koreksi(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin Cuti 2',
+            'email' => 'admin_koreksi2@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin_cuti',
+        ]);
+
+        $unit = UnitKerja::create(['nama' => 'Sekretariat', 'kode' => 'SEK3']);
+        $pegawai = Pegawai::create([
+            'user_id' => $admin->id,
+            'nip' => '199301012015011003',
+            'nama_lengkap' => 'Pegawai Koreksi 2',
+            'jenis_kelamin' => 'L',
+            'tmt_cpns' => Carbon::parse('2015-01-01'),
+            'pangkat_golongan' => 'III/a',
+            'jabatan' => 'Staf',
+            'unit_kerja_id' => $unit->id,
+            'jenis_pegawai' => 'PNS',
+            'aktif' => true,
+        ]);
+
+        \App\Models\CutiSaldoKoreksi::create([
+            'pegawai_id' => $pegawai->id,
+            'tahun' => now()->year,
+            'jenis_koreksi' => 'tambah',
+            'jumlah_hari' => 5,
+            'alasan' => 'Testing 1',
+            'dikoreksi_oleh' => $admin->id,
+        ]);
+
+        \App\Models\CutiSaldoKoreksi::create([
+            'pegawai_id' => $pegawai->id,
+            'tahun' => now()->year,
+            'jenis_koreksi' => 'kurang',
+            'jumlah_hari' => 1,
+            'alasan' => 'Testing 2',
+            'dikoreksi_oleh' => $admin->id,
+        ]);
+
+        $this->assertEquals(2, \App\Models\CutiSaldoKoreksi::count());
+
+        $response = $this->actingAs($admin)->post(route('admin.master.koreksi.bersihkan'), [
+            'reset_jatah_default' => 1,
+        ]);
+
+        $response->assertRedirect(route('admin.master.koreksi'));
+        $response->assertSessionHas('success');
+        $this->assertEquals(0, \App\Models\CutiSaldoKoreksi::count());
+    }
 }
+
