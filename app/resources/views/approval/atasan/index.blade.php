@@ -60,6 +60,15 @@
                                     <div class="flex space-x-2">
                                         <a href="{{ route('pengajuan.show', $pengajuan->id) }}" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm">Detail</a>
                                         
+                                        @if(auth()->user()->bisa_beri_izin_sementara || auth()->user()->isAdminCuti())
+                                            <button @click="selectedId = {{ $pengajuan->id }}; actionType = 'darurat'; actionNotes = ''" 
+                                                    class="inline-flex items-center rounded-lg bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-500 transition shadow-sm"
+                                                    title="Berikan Izin Sementara langsung di tempat untuk kondisi darurat">
+                                                <svg class="h-3.5 w-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                Izin Darurat
+                                            </button>
+                                        @endif
+                                        
                                         <button @click="selectedId = {{ $pengajuan->id }}; actionType = 'setujui'; actionNotes = ''" 
                                                 class="inline-flex items-center rounded-lg bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition shadow-sm">Setujui</button>
                                         
@@ -81,14 +90,21 @@
                 <!-- Modal Body -->
                 <div @click.away="selectedId = null" class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden">
                     <div class="p-6">
-                        <h3 class="text-lg font-bold text-slate-900" x-text="actionType === 'setujui' ? 'Setujui Permohonan' : (actionType === 'revisi' ? 'Minta Revisi' : 'Tolak Permohonan')"></h3>
-                        <p class="text-sm text-slate-500 mt-1" x-text="actionType === 'setujui' ? 'Berikan catatan persetujuan Anda (opsional).' : 'Tuliskan alasan penolakan/revisi secara rinci (wajib).'"></p>
+                        <h3 class="text-lg font-bold text-slate-900" x-text="actionType === 'setujui' ? 'Setujui Permohonan' : (actionType === 'revisi' ? 'Minta Revisi' : (actionType === 'darurat' ? 'Beri Izin Sementara (Jalur Darurat)' : 'Tolak Permohonan'))"></h3>
+                        <p class="text-sm text-slate-500 mt-1" x-text="actionType === 'setujui' ? 'Berikan catatan persetujuan Anda (opsional).' : (actionType === 'darurat' ? 'Pengajuan akan langsung aktif sebagai Izin Sementara di tempat karena kondisi darurat dan diteruskan ke PyBMC untuk ratifikasi.' : 'Tuliskan alasan penolakan/revisi secara rinci (wajib).')"></p>
                         
-                        <textarea x-model="actionNotes" rows="3" class="mt-4 block w-full rounded-xl border-slate-300 py-3 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm placeholder:text-slate-400" placeholder="Tulis catatan di sini..."></textarea>
+                        <textarea x-model="actionNotes" rows="3" class="mt-4 block w-full rounded-xl border-slate-300 py-3 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm placeholder:text-slate-400" :placeholder="actionType === 'darurat' ? 'Contoh: Diberikan izin sementara mendesak karena orang tua sakit keras...' : 'Tulis catatan di sini...'"></textarea>
                         
                         <div class="mt-6 flex justify-end space-x-3">
                             <button @click="selectedId = null" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">Batal</button>
                             
+                            <!-- Izin Darurat Form -->
+                            <form x-show="actionType === 'darurat'" :action="'/pengajuan/' + selectedId + '/izin-sementara'" method="POST">
+                                @csrf
+                                <input type="hidden" name="catatan" :value="actionNotes">
+                                <button type="submit" class="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 transition shadow-sm">Aktifkan Izin Darurat</button>
+                            </form>
+
                             <!-- Setujui Form -->
                             <form x-show="actionType === 'setujui'" :action="'/approval/atasan/' + selectedId + '/setujui'" method="POST">
                                 @csrf

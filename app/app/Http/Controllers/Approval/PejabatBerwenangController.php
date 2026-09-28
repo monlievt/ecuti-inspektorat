@@ -34,16 +34,23 @@ class PejabatBerwenangController extends Controller
         if ($isInspektur) {
             // Pimpinan Tertinggi (Inspektur) memiliki wewenang PyBMC penuh untuk seluruh pegawai OPD
             $pengajuanMenunggu = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti'])
-                ->whereIn('status', [CutiPengajuan::STATUS_MENUNGGU_PYBMC, 'menunggu_pybmc'])
+                ->whereIn('status', [
+                    CutiPengajuan::STATUS_MENUNGGU_PYBMC,
+                    'menunggu_pybmc',
+                    CutiPengajuan::STATUS_IZIN_SEMENTARA_AKTIF,
+                    CutiPengajuan::STATUS_MENUNGGU_RATIFIKASI,
+                ])
                 ->orderBy('created_at', 'asc')
                 ->get();
 
             $riwayatKeputusan = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti', 'suratTerbit'])
                 ->whereIn('status', [
                     CutiPengajuan::STATUS_DISETUJUI_PYBMC,
+                    CutiPengajuan::STATUS_DIRATIFIKASI,
                     CutiPengajuan::STATUS_DITERBITKAN,
                     CutiPengajuan::STATUS_DITANGGUHKAN_PYBMC,
                     CutiPengajuan::STATUS_DITOLAK_PYBMC,
+                    CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
                 ])
                 ->orderBy('updated_at', 'desc')
                 ->take(30)
@@ -63,7 +70,11 @@ class PejabatBerwenangController extends Controller
                 $jenisCutiIds = $pemetaanDelegasi->pluck('jenis_cuti_id')->filter()->unique()->toArray();
 
                 $queryMenunggu = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti'])
-                    ->where('status', CutiPengajuan::STATUS_MENUNGGU_PYBMC);
+                    ->whereIn('status', [
+                        CutiPengajuan::STATUS_MENUNGGU_PYBMC,
+                        CutiPengajuan::STATUS_IZIN_SEMENTARA_AKTIF,
+                        CutiPengajuan::STATUS_MENUNGGU_RATIFIKASI,
+                    ]);
 
                 if (!empty($jenisCutiIds)) {
                     $queryMenunggu->whereIn('jenis_cuti_id', $jenisCutiIds);
@@ -80,9 +91,11 @@ class PejabatBerwenangController extends Controller
                 $queryRiwayat = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti', 'suratTerbit'])
                     ->whereIn('status', [
                         CutiPengajuan::STATUS_DISETUJUI_PYBMC,
+                        CutiPengajuan::STATUS_DIRATIFIKASI,
                         CutiPengajuan::STATUS_DITERBITKAN,
                         CutiPengajuan::STATUS_DITANGGUHKAN_PYBMC,
                         CutiPengajuan::STATUS_DITOLAK_PYBMC,
+                        CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
                     ]);
 
                 if (!empty($jenisCutiIds)) {
@@ -262,7 +275,7 @@ class PejabatBerwenangController extends Controller
             CutiSuratTerbit::create([
                 'pengajuan_id' => $pengajuan->id,
                 'nomor_surat' => $nomorSurat,
-                'ditandatangani_oleh' => $request->user()->pegawai->id,
+                'ditandatangani_oleh' => $request->user()->pegawai?->id ?? \App\Models\Pegawai::where('jabatan', 'LIKE', '%INSPEKTUR%')->first()?->id ?? 1,
                 'tanggal_terbit' => now()->toDateString(),
                 'path_pdf' => $pathPdf,
             ]);

@@ -168,6 +168,60 @@
             </div>
         @endif
 
+        @if(in_array($pengajuan->status, ['izin_sementara_aktif', 'menunggu_ratifikasi']))
+            <div class="bg-rose-50 border border-rose-200 rounded-2xl p-6 text-center shadow-sm space-y-3">
+                <div class="flex items-center justify-center h-10 w-10 rounded-full bg-rose-100 text-rose-600 mx-auto">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <h4 class="text-sm font-bold text-rose-900">Izin Sementara (Jalur Darurat) Aktif</h4>
+                <p class="text-xs text-rose-700 leading-relaxed">
+                    Pegawai telah diberikan izin cuti di tempat karena kondisi darurat. Menunggu penetapan ratifikasi resmi oleh Pejabat Berwenang (PyBMC).
+                </p>
+            </div>
+        @endif
+
+        @if(in_array($pengajuan->status, ['diajukan', 'menunggu_atasan']) && (auth()->user()->bisa_beri_izin_sementara || auth()->user()->isAdminCuti()))
+            <div class="bg-rose-50/70 border border-rose-200 rounded-2xl p-6 text-center shadow-sm space-y-3" x-data="{ openModal: false, catatan: '' }">
+                <div class="flex items-center justify-center h-10 w-10 rounded-full bg-rose-100 text-rose-600 mx-auto">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <h4 class="text-sm font-bold text-rose-900">Otoritas Izin Darurat</h4>
+                <p class="text-xs text-rose-700">Anda memiliki wewenang untuk memberikan Izin Sementara langsung di tempat untuk keperluan mendesak.</p>
+                
+                <div class="pt-1">
+                    <button type="button" @click="openModal = true" class="inline-flex w-full items-center justify-center rounded-xl bg-rose-600 py-2.5 px-4 text-xs font-semibold text-white shadow-sm hover:bg-rose-500 transition">
+                        Beri Izin Sementara (Darurat)
+                    </button>
+                </div>
+
+                <!-- Modal Dialog -->
+                <div x-show="openModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 text-left" style="display: none;">
+                    <div @click.away="openModal = false" class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-6 space-y-4">
+                        <h3 class="text-lg font-bold text-slate-900">Konfirmasi Izin Darurat Sementara</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Permohonan ini akan langsung diaktifkan sebagai <strong>Izin Sementara di Tempat</strong> sehingga pegawai dapat segera menjalankan izin. Permohonan selanjutnya akan diteruskan ke antrian PyBMC untuk proses ratifikasi SK resmi.
+                        </p>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan Kedaruratan (Opsional)</label>
+                            <textarea x-model="catatan" rows="3" class="w-full rounded-xl border-slate-300 text-xs py-2 px-3 focus:ring-rose-500 focus:border-rose-500" placeholder="Contoh: Diberikan izin sementara mendesak karena keluarga sakit keras..."></textarea>
+                        </div>
+                        <div class="flex justify-end gap-2 pt-2">
+                            <button type="button" @click="openModal = false" class="px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
+                            <form action="{{ route('pengajuan.izin-sementara', $pengajuan->id) }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="catatan" :value="catatan">
+                                <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-sm">Ya, Aktifkan Sekarang</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         @if(in_array($pengajuan->status, ['diterbitkan', 'disetujui_pybmc', 'disetujui_pyBMC']))
             <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 text-center shadow-sm space-y-3">
                 <div class="flex items-center justify-center h-10 w-10 rounded-full bg-emerald-100 text-emerald-600 mx-auto">

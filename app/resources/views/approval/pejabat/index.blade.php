@@ -89,6 +89,14 @@
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-900 font-semibold">
                                     {{ $pengajuan->jenisCuti->nama }}
+                                    @if(in_array($pengajuan->status, ['izin_sementara_aktif', 'menunggu_ratifikasi']))
+                                        <div>
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-200 px-2 py-0.5 text-[10px] font-bold text-rose-700 mt-1">
+                                                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                Izin Darurat Aktif
+                                            </span>
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
                                     {{ $pengajuan->tanggal_mulai->format('d/m/Y') }} - {{ $pengajuan->tanggal_selesai->format('d/m/Y') }}
@@ -101,8 +109,13 @@
                                     <div class="flex space-x-2">
                                         <a href="{{ route('pengajuan.show', $pengajuan->id) }}" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm">Detail</a>
                                         
-                                        <button @click="selectedId = {{ $pengajuan->id }}; actionType = 'setujui'; actionNotes = ''" 
-                                                class="inline-flex items-center rounded-lg bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition shadow-sm">Setujui & Terbitkan</button>
+                                        @if(in_array($pengajuan->status, ['izin_sementara_aktif', 'menunggu_ratifikasi']))
+                                            <button @click="selectedId = {{ $pengajuan->id }}; actionType = 'ratifikasi'; actionNotes = ''" 
+                                                    class="inline-flex items-center rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 transition shadow-sm">Ratifikasi SK</button>
+                                        @else
+                                            <button @click="selectedId = {{ $pengajuan->id }}; actionType = 'setujui'; actionNotes = ''" 
+                                                    class="inline-flex items-center rounded-lg bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition shadow-sm">Setujui & Terbitkan</button>
+                                        @endif
                                         
                                         <button @click="selectedId = {{ $pengajuan->id }}; actionType = 'tangguhkan'; actionNotes = ''" 
                                                 class="inline-flex items-center rounded-lg bg-amber-500 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-amber-400 transition shadow-sm">Tangguhkan</button>
@@ -220,14 +233,21 @@
         <!-- Modal Body -->
         <div @click.away="selectedId = null" class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden">
             <div class="p-6">
-                <h3 class="text-lg font-bold text-slate-900" x-text="actionType === 'setujui' ? 'Setujui & Terbitkan Surat' : (actionType === 'tangguhkan' ? 'Tangguhkan Permohonan' : 'Tolak Permohonan')"></h3>
-                <p class="text-sm text-slate-500 mt-1" x-text="actionType === 'setujui' ? 'Berikan catatan persetujuan Anda (opsional). Sistem akan otomatis menghasilkan nomor surat resmi.' : 'Tuliskan alasan penangguhan/penolakan secara rinci (wajib).'"></p>
+                <h3 class="text-lg font-bold text-slate-900" x-text="actionType === 'setujui' ? 'Setujui & Terbitkan Surat' : (actionType === 'ratifikasi' ? 'Ratifikasi Izin Darurat' : (actionType === 'tangguhkan' ? 'Tangguhkan Permohonan' : 'Tolak Permohonan'))"></h3>
+                <p class="text-sm text-slate-500 mt-1" x-text="actionType === 'setujui' ? 'Berikan catatan persetujuan Anda (opsional). Sistem akan otomatis menghasilkan nomor surat resmi.' : (actionType === 'ratifikasi' ? 'Mengesahkan izin darurat yang telah berjalan menjadi Surat Izin Cuti resmi dan menerbitkan nomor SK.' : 'Tuliskan alasan penangguhan/penolakan secara rinci (wajib).')"></p>
                 
                 <textarea x-model="actionNotes" rows="3" class="mt-4 block w-full rounded-xl border-slate-300 py-3 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm placeholder:text-slate-400" placeholder="Tulis catatan di sini..."></textarea>
                 
                 <div class="mt-6 flex justify-end space-x-3">
                     <button @click="selectedId = null" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">Batal</button>
                     
+                    <!-- Ratifikasi Form -->
+                    <form x-show="actionType === 'ratifikasi'" :action="'/approval/pejabat/' + selectedId + '/ratifikasi'" method="POST">
+                        @csrf
+                        <input type="hidden" name="catatan" :value="actionNotes">
+                        <button type="submit" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 transition shadow-sm">Ratifikasi &amp; Terbitkan SK</button>
+                    </form>
+
                     <!-- Setujui Form -->
                     <form x-show="actionType === 'setujui'" :action="'/approval/pejabat/' + selectedId + '/setujui'" method="POST">
                         @csrf

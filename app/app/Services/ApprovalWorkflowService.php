@@ -32,6 +32,7 @@ class ApprovalWorkflowService
             CutiPengajuan::STATUS_DISETUJUI_ATASAN,
             CutiPengajuan::STATUS_DITOLAK_ATASAN,
             CutiPengajuan::STATUS_DIREVISI,
+            CutiPengajuan::STATUS_IZIN_SEMENTARA_AKTIF,
         ],
         CutiPengajuan::STATUS_DIREVISI => [
             CutiPengajuan::STATUS_MENUNGGU_ATASAN,
@@ -49,6 +50,8 @@ class ApprovalWorkflowService
         ],
         CutiPengajuan::STATUS_IZIN_SEMENTARA_AKTIF => [
             CutiPengajuan::STATUS_MENUNGGU_RATIFIKASI,
+            CutiPengajuan::STATUS_DIRATIFIKASI,
+            CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
         ],
         CutiPengajuan::STATUS_MENUNGGU_RATIFIKASI => [
             CutiPengajuan::STATUS_DIRATIFIKASI,

@@ -588,4 +588,106 @@ class PengajuanCutiTest extends TestCase
         $resPengantar->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $resPengantar->headers->get('content-type'));
     }
+
+    public function test_alur_izin_sementara_darurat_dan_ratifikasi_oleh_pybmc(): void
+    {
+        // 1. Buat Atasan yang berwenang memberikan Izin Darurat (bisa_beri_izin_sementara = true)
+        $userAtasan = \App\Models\User::create([
+            'name' => 'Atasan Berwenang Darurat',
+            'email' => 'atasan_darurat@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pegawai',
+            'bisa_beri_izin_sementara' => true,
+        ]);
+        $pegawaiAtasan = \App\Models\Pegawai::create([
+            'user_id' => $userAtasan->id,
+            'unit_kerja_id' => $this->pegawai->unit_kerja_id,
+            'nip' => '198001012005011002',
+            'nama_lengkap' => 'Atasan Berwenang Darurat',
+            'jenis_kelamin' => 'L',
+            'tmt_cpns' => Carbon::parse('2005-01-01'),
+            'jabatan' => 'Sekretaris Inspektorat',
+            'pangkat_golongan' => 'Pembina (IV/a)',
+            'jenis_pegawai' => 'PNS',
+            'aktif' => true,
+        ]);
+
+        // Hubungkan pemetaan atasan
+        \App\Models\CutiPemetaanAtasan::create([
+            'pegawai_id' => $this->pegawai->id,
+            'atasan_id' => $pegawaiAtasan->id,
+            'berlaku_mulai' => now()->subMonth()->toDateString(),
+            'aktif' => true,
+        ]);
+
+        // 2. Buat Pengajuan Cuti dalam status 'menunggu_atasan'
+        $pengajuan = CutiPengajuan::create([
+            'pegawai_id' => $this->pegawai->id,
+            'jenis_cuti_id' => $this->cutiTahunan->id,
+            'nomor_pengajuan' => 'CUTI/2026/09/999',
+            'tanggal_mulai' => now()->toDateString(),
+            'tanggal_selesai' => now()->addDays(2)->toDateString(),
+            'jumlah_hari_kerja' => 2,
+            'satuan_hari' => 'hari_kerja',
+            'alasan' => 'Bencana alam mendadak di kampung halaman',
+            'alamat_selama_cuti' => 'Trenggalek',
+            'telp_selama_cuti' => '081234567890',
+            'status' => CutiPengajuan::STATUS_MENUNGGU_ATASAN,
+        ]);
+
+        // 3. Atasan melihat halaman approval atasan, tombol Izin Darurat harus muncul
+        $resAtasanView = $this->actingAs($userAtasan)->get(route('approval.atasan'));
+        $resAtasanView->assertStatus(200);
+        $resAtasanView->assertSee('Izin Darurat');
+
+        // 4. Atasan mengaktifkan Izin Sementara (Jalur Darurat)
+        $resAktifkan = $this->actingAs($userAtasan)->post(route('pengajuan.izin-sementara', $pengajuan), [
+            'catatan' => 'Diberikan izin sementara mendesak karena terkena bencana alam.',
+        ]);
+        $resAktifkan->assertSessionHas('success');
+        $this->assertEquals(CutiPengajuan::STATUS_IZIN_SEMENTARA_AKTIF, $pengajuan->fresh()->status);
+
+        // 5. Cek tampilan detail pengajuan cuti, ada info Izin Darurat Aktif
+        $resShow = $this->actingAs($userAtasan)->get(route('pengajuan.show', $pengajuan));
+        $resShow->assertStatus(200);
+        $resShow->assertSee('Izin Sementara (Jalur Darurat) Aktif');
+
+        // 6. PyBMC (Inspektur) melihat antrian approval pejabat, ada permohonan dengan opsi Ratifikasi
+        $unitKerja = $this->pegawai->unitKerja;
+        $userInspektur = \App\Models\User::create([
+            'name' => 'Ir. WIJIONO, S.T., M.MKes.',
+            'email' => 'inspektur_pybmc@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pegawai',
+        ]);
+        $pegawaiInspektur = \App\Models\Pegawai::create([
+            'user_id' => $userInspektur->id,
+            'unit_kerja_id' => $unitKerja->id,
+            'nip' => '197308051997031008',
+            'nama_lengkap' => 'Ir. WIJIONO, S.T., M.MKes.',
+            'jenis_kelamin' => 'L',
+            'tmt_cpns' => Carbon::parse('1997-03-01'),
+            'jabatan' => 'Inspektur Daerah Kabupaten Trenggalek',
+            'pangkat_golongan' => 'Pembina Utama Muda (IV/c)',
+            'jenis_pegawai' => 'PNS',
+            'aktif' => true,
+        ]);
+
+        $resPybmcView = $this->actingAs($userInspektur)->get(route('approval.pejabat'));
+        $resPybmcView->assertStatus(200);
+        $resPybmcView->assertSee('Izin Darurat Aktif');
+        $resPybmcView->assertSee('Ratifikasi SK');
+
+        // 7. PyBMC melakukan ratifikasi pengesahan SK
+        $resRatifikasi = $this->actingAs($userInspektur)->post(route('approval.pejabat.ratifikasi', $pengajuan), [
+            'catatan' => 'Izin sementara disetujui dan diratifikasi.',
+        ]);
+        $resRatifikasi->assertRedirect(route('approval.pejabat'));
+        $resRatifikasi->assertSessionHas('success');
+
+        // Status final harus diterbitkan dan memiliki nomor surat terbit
+        $pengajuanFinal = $pengajuan->fresh();
+        $this->assertEquals(CutiPengajuan::STATUS_DITERBITKAN, $pengajuanFinal->status);
+        $this->assertNotNull($pengajuanFinal->suratTerbit);
+    }
 }

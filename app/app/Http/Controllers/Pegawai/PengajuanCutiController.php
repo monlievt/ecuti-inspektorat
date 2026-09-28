@@ -441,22 +441,22 @@ class PengajuanCutiController extends Controller
      */
     public function izinSementara(Request $request, CutiPengajuan $pengajuan)
     {
-        // Pastikan user memiliki flag bisa_beri_izin_sementara
-        if (!$request->user()->bisa_beri_izin_sementara) {
+        // Pastikan user memiliki flag bisa_beri_izin_sementara atau Admin Kepegawaian
+        if (!$request->user()->bisa_beri_izin_sementara && !$request->user()->isAdminCuti()) {
             abort(403, 'Anda tidak memiliki wewenang memberikan izin darurat/sementara.');
         }
 
         try {
-            // Jalankan transisi diajukan -> izin_sementara_aktif
+            // Jalankan transisi diajukan / menunggu_atasan -> izin_sementara_aktif
             $this->workflowService->transisi(
                 $pengajuan,
                 CutiPengajuan::STATUS_IZIN_SEMENTARA_AKTIF,
                 $request->user(),
-                'atasan_langsung',
+                $request->user()->isAdminCuti() ? 'admin' : 'atasan_langsung',
                 $request->catatan ?: 'Diberikan izin sementara karena kebutuhan darurat.'
             );
 
-            return redirect()->route('dashboard')->with('success', 'Izin darurat sementara telah diaktifkan untuk pegawai bersangkutan.');
+            return redirect()->back()->with('success', 'Izin darurat sementara telah berhasil diaktifkan untuk pegawai bersangkutan.');
         } catch (Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
