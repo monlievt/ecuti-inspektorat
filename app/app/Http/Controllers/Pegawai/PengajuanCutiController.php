@@ -224,21 +224,7 @@ class PengajuanCutiController extends Controller
      */
     public function show(CutiPengajuan $pengajuan, Request $request)
     {
-        $pegawai = $request->user()->pegawai;
-
-        // Validasi hak akses: hanya pemilik, atasannya, PyBMC, atau admin kepegawaian
-        // Di sini kita cek kepemilikan dulu untuk versi pegawai
-        if ($pengajuan->pegawai_id !== $pegawai->id && !$request->user()->isAdminCuti()) {
-            // Cek apakah user ini adalah atasan langsung
-            $isAtasan = CutiPemetaanAtasan::where('pegawai_id', $pengajuan->pegawai_id)
-                ->where('atasan_id', $pegawai->id)
-                ->aktif()
-                ->exists();
-
-            if (!$isAtasan) {
-                abort(403, 'Anda tidak diizinkan melihat pengajuan cuti ini.');
-            }
-        }
+        $this->authorizeLihatPengajuan($pengajuan, $request->user());
 
         $pengajuan->load(['jenisCuti', 'pegawai.unitKerja', 'approvalLogs.aktor', 'dokumen']);
 
@@ -250,11 +236,7 @@ class PengajuanCutiController extends Controller
      */
     public function edit(CutiPengajuan $pengajuan, Request $request)
     {
-        $pegawai = $request->user()->pegawai;
-
-        if ($pengajuan->pegawai_id !== $pegawai->id && !$request->user()->isAdminCuti()) {
-            abort(403, 'Anda tidak diizinkan mengubah pengajuan cuti ini.');
-        }
+        $this->authorizeUbahPengajuan($pengajuan, $request->user());
 
         if ($pengajuan->status !== CutiPengajuan::STATUS_DIREVISI) {
             return redirect()->route('pengajuan.show', $pengajuan)
@@ -263,13 +245,13 @@ class PengajuanCutiController extends Controller
 
         $pengajuan->load(['jenisCuti', 'dokumen', 'approvalLogs.aktor']);
         $jenisCuti = CutiJenis::where('aktif', true)->get();
-        $saldoTahunan = $this->saldoCutiService->breakdown($pegawai->id, now()->year);
+        $saldoTahunan = $this->saldoCutiService->breakdown($pengajuan->pegawai_id, now()->year);
 
         // Rekam jejak Cuti Alasan Penting tahun berjalan (abaikan pengajuan yang sedang diedit)
         $cutiAlasanPentingId = CutiJenis::where('kode', CutiJenis::ALASAN_PENTING)->value('id');
         $totalHariCapTahunIni = 0;
         if ($cutiAlasanPentingId) {
-            $totalHariCapTahunIni = CutiPengajuan::where('pegawai_id', $pegawai->id)
+            $totalHariCapTahunIni = CutiPengajuan::where('pegawai_id', $pengajuan->pegawai_id)
                 ->where('jenis_cuti_id', $cutiAlasanPentingId)
                 ->where('id', '!=', $pengajuan->id)
                 ->whereYear('tanggal_mulai', now()->year)
@@ -285,7 +267,7 @@ class PengajuanCutiController extends Controller
         $cutiBesarId = CutiJenis::where('kode', CutiJenis::BESAR)->value('id');
         $riwayatCutiBesar = null;
         if ($cutiBesarId) {
-            $riwayatCutiBesar = CutiPengajuan::where('pegawai_id', $pegawai->id)
+            $riwayatCutiBesar = CutiPengajuan::where('pegawai_id', $pengajuan->pegawai_id)
                 ->where('jenis_cuti_id', $cutiBesarId)
                 ->where('id', '!=', $pengajuan->id)
                 ->whereNotIn('status', [
@@ -310,11 +292,7 @@ class PengajuanCutiController extends Controller
      */
     public function update(CutiPengajuan $pengajuan, Request $request)
     {
-        $pegawai = $request->user()->pegawai;
-
-        if ($pengajuan->pegawai_id !== $pegawai->id && !$request->user()->isAdminCuti()) {
-            abort(403, 'Anda tidak diizinkan mengubah pengajuan cuti ini.');
-        }
+        $this->authorizeUbahPengajuan($pengajuan, $request->user());
 
         if ($pengajuan->status !== CutiPengajuan::STATUS_DIREVISI) {
             return redirect()->route('pengajuan.show', $pengajuan)
@@ -416,20 +394,7 @@ class PengajuanCutiController extends Controller
      */
     public function unduhDokumen(CutiDokumen $dokumen, Request $request)
     {
-        $pegawai = $request->user()->pegawai;
-        $pengajuan = $dokumen->pengajuan;
-
-        // Validasi hak akses
-        if ($pengajuan->pegawai_id !== $pegawai->id && !$request->user()->isAdminCuti()) {
-            $isAtasan = CutiPemetaanAtasan::where('pegawai_id', $pengajuan->pegawai_id)
-                ->where('atasan_id', $pegawai->id)
-                ->aktif()
-                ->exists();
-
-            if (!$isAtasan) {
-                abort(403, 'Anda tidak diizinkan mengunduh dokumen ini.');
-            }
-        }
+        $this->authorizeLihatPengajuan($dokumen->pengajuan, $request->user());
 
         if (!Storage::disk('local')->exists($dokumen->path_file)) {
             abort(404, 'Berkas dokumen tidak ditemukan di server.');
@@ -443,19 +408,7 @@ class PengajuanCutiController extends Controller
      */
     public function pdf(CutiPengajuan $pengajuan, Request $request, \App\Services\SuratCutiPdfService $pdfService)
     {
-        $pegawai = $request->user()->pegawai;
-
-        // Validasi hak akses: hanya pemilik, atasannya, PyBMC, atau admin kepegawaian
-        if ($pengajuan->pegawai_id !== $pegawai->id && !$request->user()->isAdminCuti()) {
-            $isAtasan = CutiPemetaanAtasan::where('pegawai_id', $pengajuan->pegawai_id)
-                ->where('atasan_id', $pegawai->id)
-                ->aktif()
-                ->exists();
-
-            if (!$isAtasan) {
-                abort(403, 'Anda tidak diizinkan mengakses dokumen cetak ini.');
-            }
-        }
+        $this->authorizeLihatPengajuan($pengajuan, $request->user());
 
         // Generate PDF
         $pdf = $pdfService->generateAnakLampiran1b($pengajuan);
@@ -469,19 +422,7 @@ class PengajuanCutiController extends Controller
      */
     public function suratIzinDinasPdf(CutiPengajuan $pengajuan, Request $request, \App\Services\SuratCutiPdfService $pdfService)
     {
-        $pegawai = $request->user()->pegawai;
-
-        // Validasi hak akses: hanya pemilik, atasannya, PyBMC, atau admin kepegawaian
-        if ($pengajuan->pegawai_id !== $pegawai->id && !$request->user()->isAdminCuti()) {
-            $isAtasan = CutiPemetaanAtasan::where('pegawai_id', $pengajuan->pegawai_id)
-                ->where('atasan_id', $pegawai->id)
-                ->aktif()
-                ->exists();
-
-            if (!$isAtasan) {
-                abort(403, 'Anda tidak diizinkan mengakses dokumen cetak ini.');
-            }
-        }
+        $this->authorizeLihatPengajuan($pengajuan, $request->user());
 
         // Generate PDF Surat Izin Cuti Resmi Inspektorat (atau Surat Pengantar ke Bupati jika pemohon Inspektur)
         if ($pengajuan->pegawai->isInspektur()) {
@@ -519,5 +460,59 @@ class PengajuanCutiController extends Controller
         } catch (Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
+    }
+
+    /**
+     * Validasi hak akses melihat data dan dokumen pengajuan cuti.
+     */
+    private function authorizeLihatPengajuan(CutiPengajuan $pengajuan, $user): void
+    {
+        // 1. Admin Cuti & Super Admin selalu memiliki akses penuh
+        if ($user->isAdminCuti()) {
+            return;
+        }
+
+        $pegawai = $user->pegawai;
+
+        // 2. Pemilik permohonan cuti
+        if ($pegawai && $pengajuan->pegawai_id === $pegawai->id) {
+            return;
+        }
+
+        // 3. Atasan langsung dari pemohon
+        if ($pegawai) {
+            $isAtasan = CutiPemetaanAtasan::where('pegawai_id', $pengajuan->pegawai_id)
+                ->where('atasan_id', $pegawai->id)
+                ->aktif()
+                ->exists();
+
+            if ($isAtasan) {
+                return;
+            }
+        }
+
+        // 4. Pejabat Berwenang (PyBMC) atau Pimpinan OPD
+        if ($user->isPimpinanOrAtasan()) {
+            return;
+        }
+
+        abort(403, 'Anda tidak diizinkan mengakses pengajuan cuti ini.');
+    }
+
+    /**
+     * Validasi hak akses mengubah permohonan cuti (mode revisi).
+     */
+    private function authorizeUbahPengajuan(CutiPengajuan $pengajuan, $user): void
+    {
+        if ($user->isAdminCuti()) {
+            return;
+        }
+
+        $pegawai = $user->pegawai;
+        if ($pegawai && $pengajuan->pegawai_id === $pegawai->id) {
+            return;
+        }
+
+        abort(403, 'Anda tidak diizinkan mengubah pengajuan cuti ini.');
     }
 }

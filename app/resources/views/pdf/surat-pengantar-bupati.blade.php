@@ -183,7 +183,7 @@
             <tr>
                 <td>Unit Kerja</td>
                 <td>:</td>
-                <td>{{ $pegawai->unitKerja->nama }}</td>
+                <td>{{ $pegawai->unitKerja?->nama ?? 'Inspektorat Daerah Kabupaten Trenggalek' }}</td>
             </tr>
             <tr>
                 <td>Lamanya Cuti</td>

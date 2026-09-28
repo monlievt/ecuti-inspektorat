@@ -502,4 +502,90 @@ class PengajuanCutiTest extends TestCase
         $this->assertStringNotContainsString('Dipotong 3 hr', $renderedFormulir);
         $this->assertStringContainsString('<br><br><br><br>', $renderedFormulir);
     }
+
+    public function test_admin_cuti_tanpa_pegawai_dapat_melihat_detail_dan_unduh_pdf_pengajuan(): void
+    {
+        // 1. Buat User Admin Cuti tanpa keterikatan data pegawai (pegawai_id null)
+        $adminMurni = \App\Models\User::create([
+            'name' => 'Admin Cuti Kepegawaian',
+            'email' => 'admin_murni@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin_cuti',
+            'bisa_beri_izin_sementara' => false,
+        ]);
+        $this->assertNull($adminMurni->pegawai);
+
+        // 2. Buat Pengajuan Cuti dari pegawai lain
+        $pengajuan = CutiPengajuan::create([
+            'pegawai_id' => $this->pegawai->id,
+            'jenis_cuti_id' => $this->cutiTahunan->id,
+            'nomor_pengajuan' => 'CUTI/2026/09/888',
+            'tanggal_mulai' => now()->addDays(5)->toDateString(),
+            'tanggal_selesai' => now()->addDays(7)->toDateString(),
+            'jumlah_hari_kerja' => 3,
+            'satuan_hari' => 'hari_kerja',
+            'alasan' => 'Liburan keluarga',
+            'alamat_selama_cuti' => 'Trenggalek',
+            'telp_selama_cuti' => '081234567890',
+            'status' => CutiPengajuan::STATUS_DITERBITKAN,
+        ]);
+
+        // 3. Admin Cuti membuka halaman detail pengajuan (/pengajuan/{id})
+        $resShow = $this->actingAs($adminMurni)->get(route('pengajuan.show', $pengajuan));
+        $resShow->assertStatus(200);
+        $resShow->assertSee('Detail Permohonan Cuti');
+        $resShow->assertSee($this->pegawai->nama_lengkap);
+
+        // 4. Admin Cuti membuka / mengunduh Formulir BKN 1.b (/pengajuan/{id}/pdf)
+        $resPdf = $this->actingAs($adminMurni)->get(route('pengajuan.pdf', $pengajuan));
+        $resPdf->assertStatus(200);
+        $this->assertStringContainsString('application/pdf', $resPdf->headers->get('content-type'));
+
+        // 5. Admin Cuti membuka / mengunduh Surat Izin Cuti Dinas (/pengajuan/{id}/surat-izin-pdf)
+        $resIzin = $this->actingAs($adminMurni)->get(route('pengajuan.surat-izin-pdf', $pengajuan));
+        $resIzin->assertStatus(200);
+        $this->assertStringContainsString('application/pdf', $resIzin->headers->get('content-type'));
+
+        // 6. Uji pengajuan jika pemohon adalah Inspektur (menghasilkan Surat Pengantar ke Bupati)
+        $unitKerja = \App\Models\UnitKerja::firstOrCreate(
+            ['kode' => 'INSP'],
+            ['nama' => 'Inspektorat Daerah Kabupaten Trenggalek', 'aktif' => true]
+        );
+        $userInspektur = \App\Models\User::create([
+            'name' => 'Ir. WIJIONO, S.T., M.MKes.',
+            'email' => 'inspektur@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pegawai',
+        ]);
+        $pegawaiInspektur = \App\Models\Pegawai::create([
+            'user_id' => $userInspektur->id,
+            'unit_kerja_id' => $unitKerja->id,
+            'nip' => '197308051997031007',
+            'nama_lengkap' => 'Ir. WIJIONO, S.T., M.MKes.',
+            'jenis_kelamin' => 'L',
+            'tmt_cpns' => Carbon::parse('1997-03-01'),
+            'jabatan' => 'Inspektur Daerah Kabupaten Trenggalek',
+            'pangkat_golongan' => 'Pembina Utama Muda (IV/c)',
+            'jenis_pegawai' => 'PNS',
+            'aktif' => true,
+        ]);
+
+        $pengajuanInspektur = CutiPengajuan::create([
+            'pegawai_id' => $pegawaiInspektur->id,
+            'jenis_cuti_id' => $this->cutiTahunan->id,
+            'nomor_pengajuan' => 'CUTI/2026/09/889',
+            'tanggal_mulai' => now()->addDays(15)->toDateString(),
+            'tanggal_selesai' => now()->addDays(17)->toDateString(),
+            'jumlah_hari_kerja' => 3,
+            'satuan_hari' => 'hari_kerja',
+            'alasan' => 'Urusan keluarga penting',
+            'alamat_selama_cuti' => 'Trenggalek',
+            'telp_selama_cuti' => '081234567890',
+            'status' => CutiPengajuan::STATUS_DITERBITKAN,
+        ]);
+
+        $resPengantar = $this->actingAs($adminMurni)->get(route('pengajuan.surat-izin-pdf', $pengajuanInspektur));
+        $resPengantar->assertStatus(200);
+        $this->assertStringContainsString('application/pdf', $resPengantar->headers->get('content-type'));
+    }
 }

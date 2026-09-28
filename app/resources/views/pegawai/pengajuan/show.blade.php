@@ -128,7 +128,7 @@
                                             Status: <span class="font-semibold text-slate-800">{{ str_replace('_', ' ', ucfirst($log->status_sesudah)) }}</span>
                                         </p>
                                         <p class="text-xs text-slate-400 mt-0.5">
-                                            Oleh: <span class="font-semibold text-slate-600">{{ $log->aktor->name }}</span> ({{ ucfirst($log->peran_aktor) }})
+                                            Oleh: <span class="font-semibold text-slate-600">{{ $log->aktor?->name ?? 'Sistem / Administrator' }}</span> ({{ ucfirst($log->peran_aktor) }})
                                         </p>
                                         @if($log->catatan)
                                             <p class="text-xs text-slate-600 italic mt-1.5 bg-slate-50 p-2 rounded border border-slate-100">

@@ -279,7 +279,31 @@ class SuratCutiPdfService
 
         // Cari data pimpinan PyBMC
         $pybmcUser = $approvalPybmc?->aktor;
-        $pybmcPegawai = $pybmcUser?->pegawai;
+        $pybmcPegawai = $pybmcUser?->pegawai 
+            ?? ($approvalPybmc ? \App\Models\Pegawai::where('user_id', $approvalPybmc->aktor_id)->first() : null);
+
+        if (!$pybmcPegawai) {
+            // Cek dari pendelegasian wewenang PyBMC aktif
+            $delegasiPybmc = \App\Models\CutiPemetaanPejabatBerwenang::where(function($q) use ($pegawai) {
+                    $q->where('unit_kerja_id', $pegawai->unit_kerja_id)->orWhereNull('unit_kerja_id');
+                })
+                ->where(function($q) use ($pengajuan) {
+                    $q->where('jenis_cuti_id', $pengajuan->jenis_cuti_id)->orWhereNull('jenis_cuti_id');
+                })
+                ->aktif()
+                ->latest('id')
+                ->first();
+
+            $pybmcPegawai = $delegasiPybmc?->pejabat;
+        }
+
+        if (!$pybmcPegawai) {
+            // Default Inspektur (pimpinan tertinggi instansi)
+            $pybmcPegawai = \App\Models\Pegawai::where('jabatan', 'LIKE', '%INSPEKTUR%')
+                ->where('jabatan', 'NOT LIKE', '%PEMBANTU%')
+                ->where('aktif', true)
+                ->first();
+        }
 
         // Klasifikasi nomor surat berdasarkan jenis cuti
         $kodeKlasifikasi = self::getKodeKlasifikasiSurat($pengajuan->jenisCuti?->kode);
@@ -391,9 +415,10 @@ class SuratCutiPdfService
     {
         $pengajuan->load(['pegawai.unitKerja', 'jenisCuti', 'suratTerbit']);
 
-        $pegawai = $pegawai = $pengajuan->pegawai;
+        $pegawai = $pengajuan->pegawai;
         $tahun = $pengajuan->tanggal_mulai->year;
 
+        $kodeKlasifikasi = self::getKodeKlasifikasiSurat($pengajuan->jenisCuti?->kode);
         $nomorSurat = $pengajuan->suratTerbit?->nomor_surat ?? ("{$kodeKlasifikasi}/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/406.008/{$tahun}");
 
         $durasiAngka = (int) $pengajuan->jumlah_hari_kerja;
