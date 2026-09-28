@@ -690,4 +690,52 @@ class PengajuanCutiTest extends TestCase
         $this->assertEquals(CutiPengajuan::STATUS_DITERBITKAN, $pengajuanFinal->status);
         $this->assertNotNull($pengajuanFinal->suratTerbit);
     }
+
+    public function test_admin_dapat_menghapus_pengajuan_dan_mengembalikan_saldo()
+    {
+        // 1. Update saldo pegawai yang sudah ada di setUp()
+        $saldo = CutiSaldoTahunan::where('pegawai_id', $this->pegawai->id)
+            ->where('tahun', now()->year)
+            ->first();
+        $saldo->update(['terpakai' => 3]);
+
+        // 2. Buat pengajuan cuti yang sudah diterbitkan
+        $pengajuan = CutiPengajuan::create([
+            'nomor_pengajuan' => 'CUTI/2026/TEST/001',
+            'pegawai_id' => $this->pegawai->id,
+            'jenis_cuti_id' => $this->cutiTahunan->id,
+            'tanggal_mulai' => now()->addDays(5)->toDateString(),
+            'tanggal_selesai' => now()->addDays(7)->toDateString(),
+            'jumlah_hari_kerja' => 3,
+            'satuan_hari' => 'hari_kerja',
+            'alasan' => 'Testing cuti tahunan',
+            'status' => CutiPengajuan::STATUS_DITERBITKAN,
+        ]);
+
+        // 3. User Admin Cuti
+        $adminUser = User::create([
+            'name' => 'Admin Kepegawaian',
+            'email' => 'admin_cuti_test@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin_cuti',
+        ]);
+
+        // 4. Admin melihat halaman detail pengajuan, pastikan tombol hapus muncul
+        $resShow = $this->actingAs($adminUser)->get(route('pengajuan.show', $pengajuan));
+        $resShow->assertStatus(200);
+        $resShow->assertSee('Hapus Pengajuan Ini &amp; Kembalikan Saldo', false);
+
+        // 5. Admin menghapus pengajuan
+        $resDelete = $this->actingAs($adminUser)->delete(route('pengajuan.destroy', $pengajuan));
+        $resDelete->assertRedirect(route('dashboard'));
+        $resDelete->assertSessionHas('success');
+
+        // 6. Cek pengajuan sudah terhapus
+        $this->assertDatabaseMissing('cuti_pengajuan', ['id' => $pengajuan->id]);
+
+        // 7. Cek saldo pegawai otomatis kembali (terpakai berkurang dari 3 menjadi 0)
+        $saldoUpdated = $saldo->fresh();
+        $this->assertEquals(0, $saldoUpdated->terpakai);
+    }
 }
+

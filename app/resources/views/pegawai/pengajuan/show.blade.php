@@ -245,6 +245,83 @@
                 </div>
             </div>
         @endif
+
+        {{-- Tindakan Hapus / Batalkan Permohonan --}}
+        @php
+            $user = auth()->user();
+            $isAdmin = $user->isAdminCuti();
+            $isPemilik = $user->pegawai && ($pengajuan->pegawai_id === $user->pegawai->id);
+            $bisaBatalMandiri = $isPemilik && in_array($pengajuan->status, ['diajukan', 'menunggu_atasan', 'direvisi']);
+        @endphp
+
+        @if($isAdmin || $bisaBatalMandiri)
+            <div class="bg-red-50/60 border border-red-200 rounded-2xl p-5 shadow-sm space-y-3" x-data="{ openDeleteModal: false }">
+                <div class="flex items-center space-x-3">
+                    <div class="h-9 w-9 rounded-xl bg-red-100 flex items-center justify-center text-red-600 flex-shrink-0">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-red-900 uppercase tracking-wider">
+                            {{ $isAdmin ? 'Hapus Permohonan (Admin)' : 'Batalkan Permohonan' }}
+                        </h4>
+                        <p class="text-[11px] text-red-600 mt-0.5">
+                            {{ $isAdmin ? 'Hapus data permohonan & otomatis pulihkan saldo terpotong.' : 'Batalkan permohonan cuti yang belum diproses.' }}
+                        </p>
+                    </div>
+                </div>
+
+                <button type="button" @click="openDeleteModal = true" class="inline-flex w-full items-center justify-center rounded-xl bg-red-600 py-2.5 px-4 text-xs font-semibold text-white shadow-sm hover:bg-red-500 transition">
+                    <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    {{ $isAdmin ? 'Hapus Pengajuan Ini & Kembalikan Saldo' : 'Batalkan Permohonan Ini' }}
+                </button>
+
+                <!-- Modal Konfirmasi Hapus -->
+                <div x-show="openDeleteModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 text-left" style="display: none;">
+                    <div @click.away="openDeleteModal = false" class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4">
+                        <div class="flex items-center space-x-3 text-red-600">
+                            <div class="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                            </div>
+                            <h3 class="text-base font-bold text-slate-900">
+                                {{ $isAdmin ? 'Konfirmasi Hapus Pengajuan' : 'Konfirmasi Batalkan Permohonan' }}
+                            </h3>
+                        </div>
+
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Apakah Anda yakin ingin menghapus permohonan cuti <strong>{{ $pengajuan->nomor_pengajuan }}</strong> ({{ $pengajuan->pegawai->nama_lengkap }})?
+                        </p>
+
+                        @if($isAdmin && in_array($pengajuan->status, ['diterbitkan', 'disetujui_pybmc']) && $pengajuan->jenisCuti->kode === \App\Models\CutiJenis::TAHUNAN)
+                            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 flex items-start space-x-2">
+                                <svg class="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Saldo cuti tahunan pegawai sebanyak <strong>{{ $pengajuan->jumlah_hari_kerja }} hari kerja</strong> yang sebelumnya telah terpotong akan <strong>otomatis dikembalikan</strong>.</span>
+                            </div>
+                        @endif
+
+                        <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                            <button type="button" @click="openDeleteModal = false" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                                Batal
+                            </button>
+                            <form action="{{ route('pengajuan.destroy', $pengajuan->id) }}" method="POST">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-sm transition">
+                                    {{ $isAdmin ? 'Ya, Hapus Sekarang' : 'Ya, Batalkan' }}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 </div>
 @endsection

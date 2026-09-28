@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class PengajuanCutiController extends Controller
 {
@@ -514,5 +515,82 @@ class PengajuanCutiController extends Controller
         }
 
         abort(403, 'Anda tidak diizinkan mengubah pengajuan cuti ini.');
+    }
+
+    /**
+     * Hapus pengajuan cuti (testing / pembatalan) dan pulihkan saldo cuti pegawai.
+     */
+    public function destroy(CutiPengajuan $pengajuan, Request $request)
+    {
+        $user = $request->user();
+        $isAdmin = $user->isAdminCuti();
+        $isPemilik = $user->pegawai && ($pengajuan->pegawai_id === $user->pegawai->id);
+
+        if (!$isAdmin) {
+            if (!$isPemilik) {
+                abort(403, 'Anda tidak memiliki hak akses untuk membatalkan pengajuan cuti ini.');
+            }
+            // Pemohon hanya boleh membatalkan jika status belum disetujui / diterbitkan
+            $bisaBatal = in_array($pengajuan->status, [
+                CutiPengajuan::STATUS_DIAJUKAN,
+                CutiPengajuan::STATUS_MENUNGGU_ATASAN,
+                CutiPengajuan::STATUS_DIREVISI,
+            ]);
+            if (!$bisaBatal) {
+                return back()->with('error', 'Permohonan yang telah diproses oleh atasan/pejabat tidak dapat dibatalkan mandiri. Silakan hubungi Admin Cuti.');
+            }
+        }
+
+        $nomorPengajuan = $pengajuan->nomor_pengajuan;
+        $namaPegawai = $pengajuan->pegawai?->nama_lengkap ?? 'Pegawai';
+        $saldoDikembalikan = false;
+        $jumlahHari = (int) $pengajuan->jumlah_hari_kerja;
+
+        DB::transaction(function () use ($pengajuan, &$saldoDikembalikan, $jumlahHari) {
+            // 1. Jika cuti tahunan dan statusnya sudah diterbitkan/disetujui (saldo telah terpotong), kembalikan saldo
+            if (in_array($pengajuan->status, [CutiPengajuan::STATUS_DITERBITKAN, CutiPengajuan::STATUS_DISETUJUI_PYBMC]) 
+                && $pengajuan->jenisCuti 
+                && $pengajuan->jenisCuti->kode === CutiJenis::TAHUNAN) {
+                
+                $tahun = $pengajuan->tanggal_mulai ? $pengajuan->tanggal_mulai->year : now()->year;
+                $this->saldoCutiService->kembalikanSaldo(
+                    $pengajuan->pegawai_id,
+                    $jumlahHari,
+                    $tahun
+                );
+                $saldoDikembalikan = true;
+            }
+
+            // 2. Hapus file fisik dokumen lampiran jika ada
+            foreach ($pengajuan->dokumen as $dok) {
+                if ($dok->file_path && Storage::disk('public')->exists($dok->file_path)) {
+                    Storage::disk('public')->delete($dok->file_path);
+                }
+                $dok->delete();
+            }
+
+            // 3. Hapus approval logs, surat terbit, cltn
+            $pengajuan->approvalLogs()->delete();
+            if ($pengajuan->suratTerbit) {
+                $pengajuan->suratTerbit()->delete();
+            }
+            if ($pengajuan->cltn) {
+                $pengajuan->cltn()->delete();
+            }
+
+            // 4. Hapus pengajuan
+            $pengajuan->delete();
+        });
+
+        $pesan = "Permohonan cuti [{$nomorPengajuan}] milik {$namaPegawai} berhasil dihapus.";
+        if ($saldoDikembalikan) {
+            $pesan .= " Saldo cuti tahunan sebanyak {$jumlahHari} hari kerja telah otomatis dikembalikan.";
+        }
+
+        if ($isAdmin) {
+            return redirect()->route('dashboard')->with('success', $pesan);
+        }
+
+        return redirect()->route('dashboard')->with('success', 'Permohonan cuti Anda berhasil dibatalkan.');
     }
 }

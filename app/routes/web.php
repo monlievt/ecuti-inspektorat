@@ -48,6 +48,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Izin Sementara (Jalur Darurat)
     Route::post('/pengajuan/{pengajuan}/izin-sementara', [PengajuanCutiController::class, 'izinSementara'])->name('pengajuan.izin-sementara');
+    Route::delete('/pengajuan/{pengajuan}', [PengajuanCutiController::class, 'destroy'])->name('pengajuan.destroy');
 
     // ── Approval Atasan Langsung ────────────────────────────────────────────
     Route::get('/approval/atasan', [AtasanController::class, 'index'])->name('approval.atasan');
