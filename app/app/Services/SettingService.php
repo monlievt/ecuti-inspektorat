@@ -109,7 +109,7 @@ class SettingService
                 return;
             }
         $defaults = [
-            // ── Telegram Backup ─────────────────────────────────────────────
+            // Telegram Backup
             [
                 'key' => 'telegram_bot_token',
                 'value' => env('TELEGRAM_BACKUP_BOT_TOKEN', env('TELEGRAM_BOT_TOKEN', '')),
@@ -127,7 +127,7 @@ class SettingService
                 'deskripsi' => 'ID Grup atau Channel Telegram tujuan pengiriman berkas backup database (contoh: -1001234567890).'
             ],
 
-            // ── WhatsApp Gateway (WAHA) ─────────────────────────────────────
+            // WhatsApp Gateway (WAHA)
             [
                 'key' => 'waha_base_url',
                 'value' => env('WAHA_BASE_URL', 'http://localhost:3000'),
@@ -153,7 +153,7 @@ class SettingService
                 'deskripsi' => 'Kunci otorisasi jika server WAHA Anda dilindungi header X-Api-Key.'
             ],
 
-            // ── Google reCAPTCHA v2 / v3 ────────────────────────────────────
+            // Google reCAPTCHA v2 / v3
             [
                 'key' => 'recaptcha_enabled',
                 'value' => env('RECAPTCHA_ENABLED', '0'),
@@ -179,7 +179,7 @@ class SettingService
                 'deskripsi' => 'Secret key rahasia untuk verifikasi backend Google reCAPTCHA.'
             ],
 
-            // ── Google Spreadsheet Webhook ─────────────────────────────────
+            // Google Spreadsheet Webhook
             [
                 'key' => 'spreadsheet_sync_enabled',
                 'value' => env('SPREADSHEET_SYNC_ENABLED', '0'),
@@ -197,7 +197,7 @@ class SettingService
                 'deskripsi' => 'URL Web App Google Apps Script (contoh: https://script.google.com/macros/s/.../exec).'
             ],
 
-            // ── Profil Instansi & Kop Surat ─────────────────────────────────
+            // Profil Instansi & Kop Surat
             [
                 'key' => 'instansi_nama',
                 'value' => 'PEMERINTAH KABUPATEN TRENGGALEK',
@@ -247,7 +247,7 @@ class SettingService
                 'deskripsi' => 'Alamat portal website resmi.'
             ],
 
-            // ── Pejabat Penandatangan Kepala BKPSDM ─────────────────────────
+            // Pejabat Penandatangan Kepala BKPSDM
             [
                 'key' => 'kepala_bkpsdm_nama',
                 'value' => 'HERI YULIANTO, S.Sos., M.Si.',

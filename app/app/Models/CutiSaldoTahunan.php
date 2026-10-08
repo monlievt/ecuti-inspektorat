@@ -26,7 +26,7 @@ class CutiSaldoTahunan extends Model
         return $this->belongsTo(Pegawai::class);
     }
 
-    // ── Computed (tidak disimpan di DB) ─────────────────────────────────────
+    // Computed (tidak disimpan di DB)
 
     /**
      * Saldo total aktif = semua komponen - terpakai.

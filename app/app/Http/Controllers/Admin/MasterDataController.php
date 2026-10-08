@@ -27,7 +27,7 @@ class MasterDataController extends Controller
         $this->saldoCutiService = $saldoCutiService;
     }
 
-    // ── 1. Pemetaan Atasan Langsung ──────────────────────────────────────────
+    // 1. Pemetaan Atasan Langsung
 
     public function pemetaanAtasan()
     {
@@ -88,7 +88,7 @@ class MasterDataController extends Controller
         return redirect()->route('admin.master.atasan')->with('success', 'Data pemetaan atasan berhasil dihapus.');
     }
 
-    // ── 2. Pemetaan Pejabat Berwenang (PyBMC) ───────────────────────────────
+    // 2. Pemetaan Pejabat Berwenang (PyBMC)
 
     public function pemetaanPejabat()
     {
@@ -174,7 +174,7 @@ class MasterDataController extends Controller
         return redirect()->route('admin.master.pejabat')->with('success', 'Data delegasi PyBMC berhasil dihapus.');
     }
 
-    // ── 3. Hari Libur Nasional ──────────────────────────────────────────────
+    // 3. Hari Libur Nasional
 
     public function hariLibur()
     {
@@ -213,7 +213,7 @@ class MasterDataController extends Controller
         return redirect()->route('admin.master.libur')->with('success', 'Hari Libur Nasional berhasil dihapus.');
     }
 
-    // ── 4. Cuti Bersama ─────────────────────────────────────────────────────
+    // 4. Cuti Bersama
 
     public function cutiBersama()
     {
@@ -255,7 +255,7 @@ class MasterDataController extends Controller
         return redirect()->route('admin.master.cuti-bersama')->with('success', 'Cuti Bersama berhasil dihapus.');
     }
 
-    // ── 5. Koreksi Saldo Manual (Audit Trail) ───────────────────────────────
+    // 5. Koreksi Saldo Manual (Audit Trail)
 
     public function koreksiSaldo()
     {
@@ -362,7 +362,7 @@ class MasterDataController extends Controller
         }
     }
 
-    // ── 6. Pejabat Kepala BKPSDM ─────────────────────────────────────────────
+    // 6. Pejabat Kepala BKPSDM
 
     public function pejabatBkpsdm()
     {

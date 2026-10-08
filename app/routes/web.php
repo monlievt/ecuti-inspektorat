@@ -7,7 +7,7 @@ use App\Http\Controllers\Pegawai\PengajuanCutiController;
 use App\Http\Controllers\Approval\AtasanController;
 use App\Http\Controllers\Approval\PejabatBerwenangController;
 
-// ── Auth Routes ─────────────────────────────────────────────────────────────
+// Auth Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:5,1');
@@ -21,7 +21,7 @@ Route::get('/', function () {
     return view('landing');
 });
 
-// ── Protected App Routes ────────────────────────────────────────────────────
+// Protected App Routes
 Route::middleware(['auth'])->group(function () {
     
     // Dashboard
@@ -50,20 +50,20 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/pengajuan/{pengajuan}/izin-sementara', [PengajuanCutiController::class, 'izinSementara'])->name('pengajuan.izin-sementara');
     Route::delete('/pengajuan/{pengajuan}', [PengajuanCutiController::class, 'destroy'])->name('pengajuan.destroy');
 
-    // ── Approval Atasan Langsung ────────────────────────────────────────────
+    // Approval Atasan Langsung
     Route::get('/approval/atasan', [AtasanController::class, 'index'])->name('approval.atasan');
     Route::post('/approval/atasan/{pengajuan}/setujui', [AtasanController::class, 'setujui'])->name('approval.atasan.setujui');
     Route::post('/approval/atasan/{pengajuan}/tolak', [AtasanController::class, 'tolak'])->name('approval.atasan.tolak');
     Route::post('/approval/atasan/{pengajuan}/minta-revisi', [AtasanController::class, 'mintaRevisi'])->name('approval.atasan.revisi');
 
-    // ── Approval Pejabat Berwenang (PyBMC) ──────────────────────────────────
+    // Approval Pejabat Berwenang (PyBMC)
     Route::get('/approval/pejabat', [PejabatBerwenangController::class, 'index'])->name('approval.pejabat');
     Route::post('/approval/pejabat/{pengajuan}/setujui', [PejabatBerwenangController::class, 'setujui'])->name('approval.pejabat.setujui');
     Route::post('/approval/pejabat/{pengajuan}/ratifikasi', [PejabatBerwenangController::class, 'ratifikasi'])->name('approval.pejabat.ratifikasi');
     Route::post('/approval/pejabat/{pengajuan}/tangguhkan', [PejabatBerwenangController::class, 'tangguhkan'])->name('approval.pejabat.tangguhkan');
     Route::post('/approval/pejabat/{pengajuan}/tolak', [PejabatBerwenangController::class, 'tolak'])->name('approval.pejabat.tolak');
 
-    // ── Admin Panel Routes (Protected by role middleware) ────────────────────
+    // Admin Panel Routes (Protected by role middleware)
     Route::middleware(['role:admin_cuti'])->prefix('admin')->group(function () {
         // CRUD Unit Kerja
         Route::get('/unit-kerja', [\App\Http\Controllers\Admin\UnitKerjaController::class, 'index'])->name('admin.unit-kerja.index');

@@ -40,7 +40,7 @@ class CutiPengajuan extends Model
     const STATUS_DITERBITKAN             = 'diterbitkan';
     const STATUS_DIPANGGIL_KEMBALI       = 'dipanggil_kembali';
 
-    // ── Relasi ──────────────────────────────────────────────────────────────
+    // Relasi
 
     public function pegawai(): BelongsTo
     {
@@ -72,7 +72,7 @@ class CutiPengajuan extends Model
         return $this->hasOne(CutiLuarTanggunganNegara::class, 'pengajuan_id');
     }
 
-    // ── Scopes ──────────────────────────────────────────────────────────────
+    // Scopes
 
     public function scopeDiterbitkan($query)
     {
@@ -89,7 +89,7 @@ class CutiPengajuan extends Model
         return $query->where('status', self::STATUS_MENUNGGU_PYBMC);
     }
 
-    // ── Helpers ─────────────────────────────────────────────────────────────
+    // Helpers
 
     public function isFinal(): bool
     {

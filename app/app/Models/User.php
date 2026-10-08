@@ -31,7 +31,7 @@ class User extends Authenticatable
         return $this->hasOne(Pegawai::class);
     }
 
-    // ── Role helpers ────────────────────────────────────────────────────────
+    // Role helpers
 
     public function isSuperAdmin(): bool
     {

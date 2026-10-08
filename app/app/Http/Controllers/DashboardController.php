@@ -28,18 +28,15 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        // ── KONDISI 1: JIKA USER ADALAH ADMIN KEPEGAWAIAN ─────────────────────
         if ($user->isAdminCuti() && !$user->pegawai) {
             $totalPegawai = Pegawai::where('aktif', true)->count();
             
-            // Hitung pegawai sedang cuti hari ini
             $today = now()->toDateString();
             $totalCutiAktif = CutiPengajuan::where('status', CutiPengajuan::STATUS_DITERBITKAN)
                 ->where('tanggal_mulai', '<=', $today)
                 ->where('tanggal_selesai', '>=', $today)
                 ->count();
 
-            // Hitung pengajuan pending
             $totalPending = CutiPengajuan::whereIn('status', [
                 CutiPengajuan::STATUS_DIAJUKAN,
                 CutiPengajuan::STATUS_MENUNGGU_ATASAN,
@@ -54,7 +51,6 @@ class DashboardController extends Controller
                   ->whereYear('tanggal_mulai', $tahun);
             }])->get();
 
-            // 5 Pengajuan terbaru
             $recentPengajuan = CutiPengajuan::with(['pegawai', 'jenisCuti'])
                 ->orderBy('created_at', 'desc')
                 ->take(5)
@@ -77,7 +73,6 @@ class DashboardController extends Controller
             ));
         }
 
-        // ── KONDISI 2: JIKA USER ADALAH PEGAWAI ──────────────────────────────
         $pegawai = $user->pegawai;
         if (!$pegawai) {
             abort(403, 'Akun Anda belum memiliki profil pegawai. Silakan hubungi admin.');
@@ -102,7 +97,7 @@ class DashboardController extends Controller
             ->take(3)
             ->get();
 
-        // ── KONDISI TAMBAHAN: DATA REKAP JIKA PEGAWAI ADALAH ATASAN ───────────
+        // Rekap atasan jika memiliki bawahan
         $isAtasan = CutiPemetaanAtasan::where('atasan_id', $pegawai->id)->aktif()->exists();
         $rekapAtasan = [];
         if ($isAtasan) {
@@ -120,7 +115,7 @@ class DashboardController extends Controller
             ];
         }
 
-        // ── KONDISI TAMBAHAN: DATA REKAP JIKA PEGAWAI ADALAH PYBMC ─────────────
+        // Rekap delegasi wewenang PyBMC
         $isPyBMC = CutiPemetaanPejabatBerwenang::where('pejabat_id', $pegawai->id)->aktif()->exists();
         $rekapPyBMC = [];
         if ($isPyBMC) {

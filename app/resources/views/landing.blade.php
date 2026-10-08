@@ -123,7 +123,7 @@
                         </svg>
                     </div>
                     <h3 class="text-lg font-bold text-slate-900">Cetak Formulir Resmi PDF</h3>
-                    <p class="text-sm text-slate-500">Menghasilkan dokumen **Anak Lampiran 1.b** resmi Perka BKN siap cetak berformat F4/Legal secara instan.</p>
+                    <p class="text-sm text-slate-500">Menghasilkan dokumen <strong>Anak Lampiran 1.b</strong> resmi Perka BKN siap cetak berformat F4/Legal secara instan.</p>
                 </div>
 
                 <!-- Jalur Darurat -->

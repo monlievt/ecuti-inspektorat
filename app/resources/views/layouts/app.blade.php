@@ -22,7 +22,7 @@
 </head>
 <body class="h-full flex flex-col">
     <!-- Navbar -->
-    <nav class="bg-white border-b border-slate-200">
+    <nav class="bg-white border-b border-slate-200" x-data="{ mobileMenuOpen: false }">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="flex h-16 justify-between">
                 <div class="flex">
@@ -106,64 +106,145 @@
                         </div>
                     @endauth
                 </div>
+
                 @auth
-                    <div class="hidden sm:ml-6 sm:flex sm:items-center">
-                        <div class="relative ml-3" x-data="{ open: false }">
-                            <div>
-                                <button @click="open = !open" type="button" class="flex max-w-xs items-center rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" id="user-menu-button">
-                                    <span class="sr-only">Buka menu user</span>
-                                    <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
-                                        {{ substr(auth()->user()->name, 0, 1) }}
-                                    </div>
-                                </button>
-                            </div>
-                            <div x-show="open" @click.away="open = false" class="absolute right-0 z-10 mt-2 w-52 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu">
-                                <div class="px-4 py-2 border-b border-slate-100">
-                                    <p class="text-sm font-semibold text-slate-800">{{ auth()->user()->name }}</p>
-                                    @if(auth()->user()->pegawai)
-                                        <p class="text-xs text-slate-500 truncate">{{ auth()->user()->pegawai->jabatan }}</p>
-                                    @endif
-                                    @php
-                                        $roleBadge = 'PEGAWAI';
-                                        if (auth()->user()->isSuperAdmin()) {
-                                            $roleBadge = 'SUPER ADMIN';
-                                        } elseif (auth()->user()->isAdminCuti()) {
-                                            $roleBadge = 'ADMIN KEPEGAWAIAN';
-                                        } elseif ($isPyBMC && $isAtasan) {
-                                            $roleBadge = 'ATASAN & PyBMC';
-                                        } elseif ($isPyBMC) {
-                                            $roleBadge = 'PyBMC / PIMPINAN';
-                                        } elseif ($isAtasan) {
-                                            $roleBadge = 'ATASAN LANGSUNG';
-                                        }
-                                    @endphp
-                                    <span class="mt-1 inline-block text-[11px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">{{ $roleBadge }}</span>
+                    <!-- Right Controls (Desktop Avatar & Mobile Hamburger) -->
+                    <div class="flex items-center">
+                        <!-- Desktop User Menu -->
+                        <div class="hidden sm:flex sm:items-center">
+                            <div class="relative ml-3" x-data="{ open: false }">
+                                <div>
+                                    <button @click="open = !open" type="button" class="min-w-[44px] min-h-[44px] p-1 flex items-center justify-center rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" id="user-menu-button" aria-label="Menu profil pengguna">
+                                        <span class="sr-only">Buka menu user</span>
+                                        <div class="h-9 w-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                                            {{ substr(auth()->user()->name, 0, 1) }}
+                                        </div>
+                                    </button>
                                 </div>
-                                <a href="{{ route('panduan') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center justify-between" role="menuitem">
-                                    <span class="font-medium text-indigo-600 flex items-center">
-                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                                        Buku Panduan
-                                    </span>
-                                    <span class="text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-bold">Manual</span>
-                                </a>
-                                @if(auth()->user()->isAdminCuti())
-                                    <a href="{{ Route::has('admin.setting.index') ? route('admin.setting.index') : url('/admin/setting') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 font-medium" role="menuitem">
-                                        Pengaturan Sistem
+                                <div x-show="open" @click.away="open = false" class="absolute right-0 z-10 mt-2 w-52 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu">
+                                    <div class="px-4 py-2 border-b border-slate-100">
+                                        <p class="text-sm font-semibold text-slate-800">{{ auth()->user()->name }}</p>
+                                        @if(auth()->user()->pegawai)
+                                            <p class="text-xs text-slate-500 truncate">{{ auth()->user()->pegawai->jabatan }}</p>
+                                        @endif
+                                        @php
+                                            $roleBadge = 'PEGAWAI';
+                                            if (auth()->user()->isSuperAdmin()) {
+                                                $roleBadge = 'SUPER ADMIN';
+                                            } elseif (auth()->user()->isAdminCuti()) {
+                                                $roleBadge = 'ADMIN KEPEGAWAIAN';
+                                            } elseif ($isPyBMC && $isAtasan) {
+                                                $roleBadge = 'ATASAN & PyBMC';
+                                            } elseif ($isPyBMC) {
+                                                $roleBadge = 'PyBMC / PIMPINAN';
+                                            } elseif ($isAtasan) {
+                                                $roleBadge = 'ATASAN LANGSUNG';
+                                            }
+                                        @endphp
+                                        <span class="mt-1 inline-block text-[11px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">{{ $roleBadge }}</span>
+                                    </div>
+                                    <a href="{{ route('panduan') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center justify-between" role="menuitem">
+                                        <span class="font-medium text-indigo-600 flex items-center">
+                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                            Buku Panduan
+                                        </span>
+                                        <span class="text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-bold">Manual</span>
                                     </a>
-                                @endif
-                                <a href="{{ route('profil.ubah-password') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50" role="menuitem">
-                                    Ubah Password
-                                </a>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50" role="menuitem">Keluar</button>
-                                </form>
+                                    @if(auth()->user()->isAdminCuti())
+                                        <a href="{{ Route::has('admin.setting.index') ? route('admin.setting.index') : url('/admin/setting') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 font-medium" role="menuitem">
+                                            Pengaturan Sistem
+                                        </a>
+                                    @endif
+                                    <a href="{{ route('profil.ubah-password') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50" role="menuitem">
+                                        Ubah Password
+                                    </a>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50" role="menuitem">Keluar</button>
+                                    </form>
+                                </div>
                             </div>
+                        </div>
+
+                        <!-- Mobile Hamburger Button -->
+                        <div class="flex items-center sm:hidden">
+                            <button @click="mobileMenuOpen = !mobileMenuOpen" type="button" class="min-w-[44px] min-h-[44px] p-2 inline-flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500" :aria-expanded="mobileMenuOpen" aria-label="Menu navigasi mobile">
+                                <span class="sr-only">Buka menu</span>
+                                <!-- Hamburger icon -->
+                                <svg x-show="!mobileMenuOpen" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                                <!-- Close icon -->
+                                <svg x-show="mobileMenuOpen" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display: none;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 @endauth
             </div>
         </div>
+
+        @auth
+            <!-- Mobile Navigation Drawer -->
+            <div x-show="mobileMenuOpen" x-transition class="sm:hidden border-t border-slate-200 bg-white" style="display: none;">
+                <div class="px-4 py-3 bg-slate-50 border-b border-slate-200">
+                    <p class="text-sm font-semibold text-slate-900">{{ auth()->user()->name }}</p>
+                    <p class="text-xs text-slate-500">{{ auth()->user()->email }}</p>
+                    <span class="mt-1 inline-block text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">{{ $roleBadge ?? 'PEGAWAI' }}</span>
+                </div>
+                <div class="py-2 space-y-1">
+                    <a href="{{ route('dashboard') }}" class="block px-4 py-3 text-sm font-medium {{ request()->routeIs('dashboard') ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+                        Dashboard
+                    </a>
+                    @if(auth()->user()->pegawai)
+                        <a href="{{ route('pengajuan.create') }}" class="block px-4 py-3 text-sm font-medium {{ request()->routeIs('pengajuan.create') ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+                            Ajukan Cuti
+                        </a>
+                    @endif
+                    @if($isAtasan)
+                        <a href="{{ route('approval.atasan') }}" class="block px-4 py-3 text-sm font-medium {{ request()->routeIs('approval.atasan*') ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+                            Persetujuan Atasan
+                        </a>
+                    @endif
+                    @if($isPyBMC)
+                        <a href="{{ route('approval.pejabat') }}" class="block px-4 py-3 text-sm font-medium {{ request()->routeIs('approval.pejabat*') ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+                            Persetujuan PyBMC
+                        </a>
+                    @endif
+                    @if(auth()->user()->isAdminCuti())
+                        <div class="pt-2 pb-1 border-t border-slate-100">
+                            <span class="px-4 text-[11px] font-bold tracking-wider text-slate-400 uppercase">Administrasi & Master</span>
+                        </div>
+                        <a href="{{ route('admin.unit-kerja.index') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Unit Kerja</a>
+                        <a href="{{ route('admin.pegawai.index') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Manajemen Pegawai</a>
+                        <a href="{{ route('admin.master.atasan') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Pemetaan Atasan</a>
+                        <a href="{{ route('admin.master.pejabat') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Delegasi PyBMC</a>
+                        <a href="{{ route('admin.master.libur') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Hari Libur Nasional</a>
+                        <a href="{{ route('admin.master.cuti-bersama') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Cuti Bersama</a>
+                        <a href="{{ route('admin.master.koreksi') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Koreksi Saldo Manual</a>
+                        <a href="{{ route('admin.backup.index') }}" class="block px-4 py-2.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50">Backup Database</a>
+                        <a href="{{ Route::has('admin.setting.index') ? route('admin.setting.index') : url('/admin/setting') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Pengaturan Sistem</a>
+                    @endif
+                    @if(auth()->user()->isAdminCuti() || auth()->user()->isPimpinanOrAtasan())
+                        <div class="pt-2 pb-1 border-t border-slate-100">
+                            <span class="px-4 text-[11px] font-bold tracking-wider text-slate-400 uppercase">Laporan & Rekap</span>
+                        </div>
+                        <a href="{{ route('admin.laporan.rekapitulasi') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Rekapitulasi Cuti</a>
+                        <a href="{{ route('admin.laporan.early-warning') }}" class="block px-4 py-2.5 text-sm font-medium text-rose-700 hover:bg-rose-50">Early Warning Saldo Hangus</a>
+                    @endif
+                    <div class="pt-2 pb-1 border-t border-slate-100">
+                        <span class="px-4 text-[11px] font-bold tracking-wider text-slate-400 uppercase">Akun & Dokumen</span>
+                    </div>
+                    <a href="{{ route('panduan') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Buku Panduan</a>
+                    <a href="{{ route('profil.ubah-password') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Ubah Password</a>
+                    <form method="POST" action="{{ route('logout') }}" class="pt-1">
+                        @csrf
+                        <button type="submit" class="block w-full text-left px-4 py-3 text-sm font-medium text-rose-600 hover:bg-rose-50">Keluar dari Akun</button>
+                    </form>
+                </div>
+            </div>
+        @endauth
     </nav>
 
     <!-- Main Content -->

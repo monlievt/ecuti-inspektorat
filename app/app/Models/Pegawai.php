@@ -24,7 +24,7 @@ class Pegawai extends Model
         'aktif'    => 'boolean',
     ];
 
-    // ── Relasi ──────────────────────────────────────────────────────────────
+    // Relasi
 
     public function user(): BelongsTo
     {
@@ -65,7 +65,7 @@ class Pegawai extends Model
             ->where(fn($q) => $q->whereNull('berlaku_sampai')->orWhere('berlaku_sampai', '>=', now()->toDateString()));
     }
 
-    // ── Computed helpers ────────────────────────────────────────────────────
+    // Computed helpers
 
     /**
      * Hitung masa kerja dalam bulan (dari tmt_cpns).

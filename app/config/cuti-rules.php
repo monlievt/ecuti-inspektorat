@@ -12,9 +12,7 @@
 
 return [
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // CUTI TAHUNAN (§4.1 PRD)
-    // ─────────────────────────────────────────────────────────────────────────
+    // Cuti Tahunan (§4.1 PRD)
     'cuti_tahunan' => [
         'hak_tahunan_hari'        => 12,  // Hak per tahun
         'carry_over_max_1_tahun'  => 18,  // Total max saldo jika 1 tahun tidak pakai
@@ -25,9 +23,7 @@ return [
         'dokumen_wajib'           => [],
     ],
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // CUTI BESAR (§4.2 PRD)
-    // ─────────────────────────────────────────────────────────────────────────
+    // Cuti Besar (§4.2 PRD)
     'cuti_besar' => [
         'syarat_masa_kerja_tahun'        => 5,   // Min masa kerja (tahun)
         'lama_maks_bulan'                => 3,   // Durasi maksimum
@@ -38,9 +34,7 @@ return [
         'dokumen_wajib'                  => [],
     ],
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // CUTI SAKIT (§4.3 PRD)
-    // ─────────────────────────────────────────────────────────────────────────
+    // Cuti Sakit (§4.3 PRD)
     'cuti_sakit' => [
         'ambang_perlu_dokter_hari'            => 1,   // > 1 hari wajib surat dokter
         'ambang_perlu_dokter_pemerintah_hari' => 14,  // > 14 hari wajib dokter pemerintah
@@ -50,9 +44,7 @@ return [
         'dokumen_wajib'                       => ['surat_keterangan_dokter'],
     ],
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // CUTI MELAHIRKAN (§4.4 PRD)
-    // ─────────────────────────────────────────────────────────────────────────
+    // Cuti Melahirkan (§4.4 PRD)
     'cuti_melahirkan' => [
         'lama_hari'       => 90,       // 3 bulan kalender
         'berlaku_anak_ke' => [1, 2, 3], // Anak ke-4+ → pakai skema Cuti Besar
@@ -60,9 +52,7 @@ return [
         'dokumen_wajib'   => [],
     ],
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // CUTI KARENA ALASAN PENTING (§4.5 PRD)
-    // ─────────────────────────────────────────────────────────────────────────
+    // Cuti Karena Alasan Penting (§4.5 PRD)
     'cuti_alasan_penting' => [
         'lama_maks_bulan'          => 1,
         'satuan'                   => 'hari_kalender',
@@ -76,9 +66,7 @@ return [
         'ada_jalur_izin_sementara' => true, // §6.3 PRD — jalur darurat
     ],
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // CUTI BERSAMA (§4.6 PRD)
-    // ─────────────────────────────────────────────────────────────────────────
+    // Cuti Bersama (§4.6 PRD)
     'cuti_bersama' => [
         'dikelola_admin'              => true,  // Input oleh Admin dari Keppres
         'mengurangi_cuti_tahunan'     => false, // Tidak mengurangi hak tahunan
@@ -87,9 +75,7 @@ return [
         'dokumen_wajib'               => [],
     ],
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // CUTI DI LUAR TANGGUNGAN NEGARA / CLTN (§4.7 PRD)
-    // ─────────────────────────────────────────────────────────────────────────
+    // Cuti di Luar Tanggungan Negara / CLTN (§4.7 PRD)
     'cltn' => [
         'syarat_masa_kerja_tahun' => 5,
         'lama_maks_tahun'         => 3,

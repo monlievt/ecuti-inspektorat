@@ -517,8 +517,8 @@
 
                     <p class="text-xs text-slate-600">Kode Google Apps Script ini secara cerdas akan membuat dan mengisi <strong>2 Tab lembar kerja</strong> dalam 1 spreadsheet Anda:</p>
                     <ul class="list-disc pl-5 space-y-1 text-slate-600">
-                        <li><strong>Tab 1: Rekap Pengajuan Cuti</strong> &mdash; Mencatat nomor pengajuan, tanggal, jenis cuti, status persetujuan terkini, dan alasan.</li>
-                        <li><strong>Tab 2: Master Pegawai &amp; Saldo</strong> &mdash; Menampilkan seluruh pegawai (NIP, nama, jabatan, unit kerja) beserta saldo cuti aktif (N, N-1, N-2, dan total sisa).</li>
+                        <li><strong>Tab 1: Rekap Pengajuan Cuti:</strong> Mencatat nomor pengajuan, tanggal, jenis cuti, status persetujuan terkini, dan alasan.</li>
+                        <li><strong>Tab 2: Master Pegawai &amp; Saldo:</strong> Menampilkan seluruh pegawai (NIP, nama, jabatan, unit kerja) beserta saldo cuti aktif (N, N-1, N-2, dan total sisa).</li>
                     </ul>
 
                     <ol class="list-decimal pl-5 space-y-2 leading-relaxed">
@@ -707,7 +707,7 @@
                         <li>Atur pengaturannya sebagai berikut:
                             <ul class="list-disc pl-5 mt-1 space-y-1">
                                 <li><strong>Jalankan sebagai (Execute as):</strong> <em>Saya (Me / akun Google Anda)</em>.</li>
-                                <li><strong>Siapa yang memiliki akses (Who has access):</strong> <strong><em>Siapa saja (Anyone)</em></strong> &mdash; <em>(Penting agar server dapat mengirim data tanpa login akun Google)</em>.</li>
+                                <li><strong>Siapa yang memiliki akses (Who has access):</strong> <strong><em>Siapa saja (Anyone)</em></strong> - <em>(Penting agar server dapat mengirim data tanpa login akun Google)</em>.</li>
                             </ul>
                         </li>
                         <li>Klik <strong>Terapkan (Deploy)</strong>. Jika muncul jendela izin otorisasi Google, izinkan aksesnya.</li>

@@ -16,7 +16,7 @@ class SecurityHeaders
     {
         $response = $next($request);
 
-        // ── Header yang selalu aktif (local & production) ──────────────────────
+        // Header yang selalu aktif (local & production)
 
         // Cegah halaman dimuat dalam iframe situs lain (Clickjacking & Defacement Iframe)
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
@@ -59,7 +59,7 @@ class SecurityHeaders
         // Cegah Adobe Flash/PDF plugin lintas domain
         $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
 
-        // ── Header khusus Production (non-local) ──────────────────────────────
+        // Header khusus Production (non-local)
 
         if (config('app.env') !== 'local') {
 
