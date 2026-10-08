@@ -25,7 +25,10 @@ php artisan event:cache
 echo "🔗 [5/6] Memastikan storage symlink aktif..."
 php artisan storage:link || true
 
-echo "🔒 [6/6] Memperbarui izin akses direktori storage dan cache..."
+echo "🔒 [6/7] Memperbarui izin akses direktori storage dan cache..."
 chmod -R 775 storage bootstrap/cache
 
-echo "✨ Deployment berhasil diselesaikan dengan sempurna!"
+echo "🛡️ [7/7] Menjalankan audit keamanan & verifikasi sistem..."
+php artisan cuti:audit-keamanan
+
+echo "✨ Deployment dan verifikasi keamanan berhasil diselesaikan dengan sempurna!"
