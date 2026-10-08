@@ -26,7 +26,11 @@ php artisan view:cache
 php artisan event:cache
 
 echo "🔗 [5/6] Memastikan storage symlink aktif..."
-php artisan storage:link || true
+if [ ! -L "public/storage" ] && [ ! -e "public/storage" ]; then
+    php artisan storage:link || true
+else
+    echo "   Link [public/storage] sudah terpasang dengan benar."
+fi
 
 echo "🔒 [6/7] Memperbarui izin akses direktori storage dan cache..."
 chmod -R 775 storage bootstrap/cache
