@@ -6,6 +6,9 @@
 
 set -e
 
+# Izinkan eksekusi composer plugin jika dijalankan sebagai root di VPS
+export COMPOSER_ALLOW_SUPERUSER=1
+
 echo "🚀 [1/6] Menarik perubahan kode terbaru dari Git..."
 git pull origin main
 
