@@ -57,11 +57,32 @@
         </div>
     @endif
 
+    <!-- Selector Tahun Anggaran -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center gap-3">
+            <span class="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 flex-shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            </span>
+            <div>
+                <h3 class="text-sm font-bold text-slate-900">Tahun Anggaran Saldo &amp; Riwayat</h3>
+                <p class="text-xs text-slate-500">Melihat perhitungan saldo cuti (N, N-1, N-2) dan data pada tahun terpilih.</p>
+            </div>
+        </div>
+        <form method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-2">
+            <label for="tahun" class="text-xs font-semibold text-slate-600">Pilih Tahun:</label>
+            <select name="tahun" id="tahun" onchange="this.form.submit()" class="rounded-xl border-slate-300 py-1.5 px-3 text-xs font-bold text-indigo-700 bg-indigo-50/50 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm cursor-pointer">
+                @foreach($tahunList as $t)
+                    <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>Tahun {{ $t }}</option>
+                @endforeach
+            </select>
+        </form>
+    </div>
+
     <!-- Saldo Grid -->
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
         <!-- Sisa Saldo (Primary Card) -->
         <div class="overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 p-5 text-white shadow-md">
-            <p class="text-xs font-semibold uppercase tracking-wider text-indigo-100">Sisa Saldo Cuti</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-indigo-100">Sisa Saldo Cuti ({{ $tahun }})</p>
             <p class="mt-2 text-4xl font-bold">{{ $saldoBreakdown['sisa'] }}</p>
             <p class="mt-1 text-xs text-indigo-200">Hari Kerja Aktif</p>
             @if($saldoBreakdown['jatah_dibekukan'])
@@ -71,7 +92,7 @@
 
         <!-- Jatah Tahun Ini -->
         <div class="overflow-hidden rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
-            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Jatah Tahun Ini (N)</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Jatah Tahun {{ $tahun }} (N)</p>
             <p class="mt-2 text-3xl font-bold text-slate-900">{{ $saldoBreakdown['sisa_n'] }}</p>
             <p class="mt-1 text-xs text-slate-500">
                 @if($saldoBreakdown['terpakai_n'] > 0)
@@ -84,7 +105,7 @@
 
         <!-- Carry Over N-1 -->
         <div class="overflow-hidden rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
-            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Carry Over N-1</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Carry Over N-1 ({{ $tahun - 1 }})</p>
             <p class="mt-2 text-3xl font-bold text-slate-900">{{ $saldoBreakdown['sisa_n1'] }}</p>
             <p class="mt-1 text-xs text-slate-500">
                 @if($saldoBreakdown['terpakai_n1'] > 0)
@@ -97,7 +118,7 @@
 
         <!-- Carry Over N-2 -->
         <div class="overflow-hidden rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
-            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Carry Over N-2</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Carry Over N-2 ({{ $tahun - 2 }})</p>
             <p class="mt-2 text-3xl font-bold text-slate-900">{{ $saldoBreakdown['sisa_n2'] }}</p>
             <p class="mt-1 text-xs text-slate-500">
                 @if($saldoBreakdown['terpakai_n2'] > 0)
@@ -140,9 +161,27 @@
         <!-- Riwayat Cuti (Left/Main Column) -->
         <div class="lg:col-span-2 space-y-6">
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                <div class="px-6 py-5 border-b border-slate-200">
-                    <h3 class="text-lg font-semibold leading-6 text-slate-900">Riwayat Permohonan Cuti</h3>
-                    <p class="mt-1 text-sm text-slate-500">Daftar semua pengajuan cuti yang pernah diajukan.</p>
+                <div class="px-6 py-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-lg font-semibold leading-6 text-slate-900">Riwayat Permohonan Cuti</h3>
+                        <p class="mt-1 text-sm text-slate-500">
+                            @if($filterTahun && $filterTahun !== 'semua')
+                                Menampilkan pengajuan cuti pada Tahun <strong>{{ $filterTahun }}</strong>.
+                            @else
+                                Daftar semua pengajuan cuti yang pernah diajukan.
+                            @endif
+                        </p>
+                    </div>
+                    <form method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-2 self-start sm:self-auto">
+                        <input type="hidden" name="tahun" value="{{ $tahun }}">
+                        <label for="tahun_riwayat" class="text-xs font-semibold text-slate-500">Filter Riwayat:</label>
+                        <select name="tahun_riwayat" id="tahun_riwayat" onchange="this.form.submit()" class="rounded-xl border-slate-300 py-1.5 px-3 text-xs font-semibold text-slate-700 bg-slate-50 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer">
+                            <option value="semua" {{ $filterTahun === 'semua' ? 'selected' : '' }}>Semua Tahun</option>
+                            @foreach($tahunList as $t)
+                                <option value="{{ $t }}" {{ $filterTahun == $t ? 'selected' : '' }}>Tahun {{ $t }}</option>
+                            @endforeach
+                        </select>
+                    </form>
                 </div>
                 
                 @if($riwayatPengajuan->isEmpty())

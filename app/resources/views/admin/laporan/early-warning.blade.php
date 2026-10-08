@@ -45,10 +45,14 @@
                 </select>
             </div>
 
-            <div class="w-36">
+            <div class="w-40">
                 <label for="tahun" class="block text-xs font-medium text-slate-700">Tahun Saldo</label>
-                <input type="number" name="tahun" id="tahun" value="{{ $tahun }}" 
-                       class="mt-1 block w-full rounded-xl border-slate-300 py-2 px-3 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <select name="tahun" id="tahun" 
+                        class="mt-1 block w-full rounded-xl border-slate-300 py-2 px-3 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-semibold text-slate-800 bg-white">
+                    @foreach($tahunList as $t)
+                        <option value="{{ $t }}" {{ (int)$tahun === (int)$t ? 'selected' : '' }}>Tahun {{ $t }}</option>
+                    @endforeach
+                </select>
             </div>
 
             <button type="submit" class="rounded-xl bg-slate-900 py-2 px-5 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 transition-colors">

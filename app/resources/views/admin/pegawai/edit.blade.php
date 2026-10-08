@@ -281,9 +281,25 @@
                 </div>
             </div>
             
-            <!-- Manajemen Saldo Cuti (Tahun Berjalan) -->
+            <!-- Manajemen Saldo Cuti -->
             <div class="border-t border-slate-200 pt-6">
-                <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Manajemen Saldo Cuti (Tahun {{ $tahun }})</h4>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Manajemen Saldo Cuti Pegawai (Tahun {{ $tahun }})</h4>
+                        <p class="text-xs text-slate-500 mt-0.5">Atur kuota, carry-over, dan pemakaian cuti tahunan pegawai untuk tahun anggaran yang dipilih.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="pilih_tahun_saldo" class="text-xs font-semibold text-slate-600 whitespace-nowrap">Tahun Anggaran:</label>
+                        <select id="pilih_tahun_saldo" onchange="window.location.href='{{ route('admin.pegawai.edit', $pegawai->id) }}?tahun=' + this.value"
+                                class="rounded-xl border-slate-300 py-1.5 px-3 text-xs font-semibold text-slate-800 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-slate-50">
+                            @foreach($tahunList as $t)
+                                <option value="{{ $t }}" {{ (int)$tahun === (int)$t ? 'selected' : '' }}>Tahun {{ $t }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <input type="hidden" name="tahun" value="{{ $tahun }}">
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-5">
                     <div>
                         <label for="jatah_tahun_berjalan" class="block text-xs font-semibold text-slate-700">Jatah Tahun Berjalan</label>

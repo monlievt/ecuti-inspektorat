@@ -31,6 +31,7 @@ class LaporanController extends Controller
      */
     public function rekapitulasi(Request $request)
     {
+        $tahun = $request->input('tahun');
         $unitKerjaId = $request->input('unit_kerja_id');
         $jenisCutiId = $request->input('jenis_cuti_id');
         $status = $request->input('status');
@@ -39,6 +40,10 @@ class LaporanController extends Controller
 
         $query = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti', 'suratTerbit'])
             ->latest();
+
+        if ($tahun) {
+            $query->whereYear('tanggal_mulai', $tahun);
+        }
 
         if ($unitKerjaId) {
             $query->whereHas('pegawai', function ($q) use ($unitKerjaId) {
@@ -80,14 +85,28 @@ class LaporanController extends Controller
         $unitKerjaList = UnitKerja::where('aktif', true)->get();
         $jenisCutiList = CutiJenis::where('aktif', true)->get();
 
+        $dbYears = CutiPengajuan::whereNotNull('tanggal_mulai')
+            ->pluck('tanggal_mulai')
+            ->map(fn($tgl) => (int) Carbon::parse($tgl)->format('Y'))
+            ->unique()
+            ->values()
+            ->all();
+        $tahunList = collect(array_merge([now()->year, now()->year - 1, now()->year - 2], $dbYears))
+            ->unique()
+            ->sortDesc()
+            ->values()
+            ->all();
+
         return view('admin.laporan.rekapitulasi', compact(
             'pengajuanList',
             'unitKerjaList',
             'jenisCutiList',
+            'tahunList',
             'totalPengajuan',
             'disetujuiCount',
             'prosesCount',
             'ditolakCount',
+            'tahun',
             'unitKerjaId',
             'jenisCutiId',
             'status',
@@ -101,6 +120,7 @@ class LaporanController extends Controller
      */
     public function eksporExcel(Request $request): StreamedResponse
     {
+        $tahun = $request->input('tahun');
         $unitKerjaId = $request->input('unit_kerja_id');
         $jenisCutiId = $request->input('jenis_cuti_id');
         $status = $request->input('status');
@@ -109,6 +129,10 @@ class LaporanController extends Controller
 
         $query = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti', 'suratTerbit'])
             ->latest();
+
+        if ($tahun) {
+            $query->whereYear('tanggal_mulai', $tahun);
+        }
 
         if ($unitKerjaId) {
             $query->whereHas('pegawai', function ($q) use ($unitKerjaId) {
@@ -186,6 +210,7 @@ class LaporanController extends Controller
      */
     public function eksporPdf(Request $request)
     {
+        $tahun = $request->input('tahun');
         $unitKerjaId = $request->input('unit_kerja_id');
         $jenisCutiId = $request->input('jenis_cuti_id');
         $status = $request->input('status');
@@ -194,6 +219,10 @@ class LaporanController extends Controller
 
         $query = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti', 'suratTerbit'])
             ->latest();
+
+        if ($tahun) {
+            $query->whereYear('tanggal_mulai', $tahun);
+        }
 
         if ($unitKerjaId) {
             $query->whereHas('pegawai', function ($q) use ($unitKerjaId) {
@@ -221,6 +250,7 @@ class LaporanController extends Controller
             'pengajuanList' => $pengajuanList,
             'unitKerja' => $unitKerja,
             'jenisCuti' => $jenisCuti,
+            'tahun' => $tahun,
             'tanggalMulai' => $tanggalMulai,
             'tanggalSelesai' => $tanggalSelesai,
             'tanggalCetak' => Carbon::now()->translatedFormat('d F Y')
@@ -282,7 +312,15 @@ class LaporanController extends Controller
 
         $unitKerjaList = UnitKerja::where('aktif', true)->get();
 
-        return view('admin.laporan.early-warning', compact('daftarKritis', 'unitKerjaList', 'tahun', 'unitKerjaId'));
+        $tahunList = CutiSaldoTahunan::distinct()->orderByDesc('tahun')->pluck('tahun')->toArray();
+        if (empty($tahunList)) {
+            $tahunList = [now()->year];
+        }
+        if (!in_array(now()->year, $tahunList)) {
+            array_unshift($tahunList, now()->year);
+        }
+
+        return view('admin.laporan.early-warning', compact('daftarKritis', 'unitKerjaList', 'tahun', 'unitKerjaId', 'tahunList'));
     }
 
     /**

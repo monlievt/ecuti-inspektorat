@@ -78,14 +78,34 @@ class DashboardController extends Controller
             abort(403, 'Akun Anda belum memiliki profil pegawai. Silakan hubungi admin.');
         }
 
-        $tahun = Carbon::now()->year;
+        $tahun = (int) $request->input('tahun', Carbon::now()->year);
         $saldoBreakdown = $this->saldoService->breakdown($pegawai->id, $tahun);
 
-        // Riwayat pribadi
-        $riwayatPengajuan = CutiPengajuan::with('jenisCuti')
+        // Ambil daftar tahun unik dari riwayat pengajuan cuti pegawai + saldo
+        $pegawaiYears = CutiPengajuan::where('pegawai_id', $pegawai->id)
+            ->whereNotNull('tanggal_mulai')
+            ->pluck('tanggal_mulai')
+            ->map(fn($tgl) => (int) Carbon::parse($tgl)->format('Y'))
+            ->unique()
+            ->values()
+            ->all();
+
+        $tahunList = collect(array_merge([now()->year, now()->year - 1], $pegawaiYears))
+            ->unique()
+            ->sortDesc()
+            ->values()
+            ->all();
+
+        $filterTahun = $request->input('tahun_riwayat', $tahun);
+        $riwayatQuery = CutiPengajuan::with('jenisCuti')
             ->where('pegawai_id', $pegawai->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderBy('created_at', 'desc');
+
+        if ($filterTahun && $filterTahun !== 'semua') {
+            $riwayatQuery->whereYear('tanggal_mulai', (int) $filterTahun);
+        }
+
+        $riwayatPengajuan = $riwayatQuery->get();
 
         $atasanMapping = CutiPemetaanAtasan::with('atasan')
             ->where('pegawai_id', $pegawai->id)
@@ -138,6 +158,9 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'pegawai',
+            'tahun',
+            'tahunList',
+            'filterTahun',
             'saldoBreakdown',
             'riwayatPengajuan',
             'atasanMapping',

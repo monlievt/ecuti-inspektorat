@@ -54,7 +54,17 @@
 
     <!-- Filter Form Bar -->
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <form method="GET" action="{{ route('admin.laporan.rekapitulasi') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-5 items-end">
+        <form method="GET" action="{{ route('admin.laporan.rekapitulasi') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-6 items-end">
+            <div>
+                <label for="tahun" class="block text-xs font-semibold text-slate-700">Tahun Anggaran</label>
+                <select name="tahun" id="tahun" class="mt-1 block w-full rounded-xl border-slate-300 py-2 px-3 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-semibold text-indigo-900 bg-indigo-50/40">
+                    <option value="">Semua Tahun</option>
+                    @foreach($tahunList as $t)
+                        <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>Tahun {{ $t }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             <div>
                 <label for="unit_kerja_id" class="block text-xs font-medium text-slate-700">Unit Kerja / Bidang</label>
                 <select name="unit_kerja_id" id="unit_kerja_id" class="mt-1 block w-full rounded-xl border-slate-300 py-2 px-3 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">

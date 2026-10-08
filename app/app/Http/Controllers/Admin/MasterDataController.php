@@ -176,10 +176,30 @@ class MasterDataController extends Controller
 
     // 3. Hari Libur Nasional
 
-    public function hariLibur()
+    public function hariLibur(Request $request)
     {
-        $hariLibur = CutiHariLibur::orderBy('tanggal', 'desc')->get();
-        return view('admin.master.libur', compact('hariLibur'));
+        $tahun = $request->input('tahun');
+        $query = CutiHariLibur::query();
+
+        if ($tahun) {
+            $query->whereYear('tanggal', $tahun);
+        }
+
+        $hariLibur = $query->orderBy('tanggal', 'desc')->get();
+
+        $tahunList = CutiHariLibur::whereNotNull('tanggal')
+            ->pluck('tanggal')
+            ->map(fn($tgl) => (int) Carbon::parse($tgl)->format('Y'))
+            ->unique()
+            ->sortDesc()
+            ->values()
+            ->toArray();
+
+        if (empty($tahunList)) {
+            $tahunList = [now()->year];
+        }
+
+        return view('admin.master.libur', compact('hariLibur', 'tahunList', 'tahun'));
     }
 
     public function storeHariLibur(Request $request)
@@ -215,11 +235,31 @@ class MasterDataController extends Controller
 
     // 4. Cuti Bersama
 
-    public function cutiBersama()
+    public function cutiBersama(Request $request)
     {
-        $cutiBersama = CutiBersama::with('pengecualian.pegawai')->get();
+        $tahun = $request->input('tahun');
+        $query = CutiBersama::with('pengecualian.pegawai');
+
+        if ($tahun) {
+            $query->whereYear('tanggal', $tahun);
+        }
+
+        $cutiBersama = $query->orderBy('tanggal', 'desc')->get();
         $pegawai = Pegawai::where('aktif', true)->orderBy('nama_lengkap')->get();
-        return view('admin.master.cuti-bersama', compact('cutiBersama', 'pegawai'));
+
+        $tahunList = CutiBersama::whereNotNull('tanggal')
+            ->pluck('tanggal')
+            ->map(fn($tgl) => (int) Carbon::parse($tgl)->format('Y'))
+            ->unique()
+            ->sortDesc()
+            ->values()
+            ->toArray();
+
+        if (empty($tahunList)) {
+            $tahunList = [now()->year];
+        }
+
+        return view('admin.master.cuti-bersama', compact('cutiBersama', 'pegawai', 'tahunList', 'tahun'));
     }
 
     public function storeCutiBersama(Request $request)
@@ -257,11 +297,24 @@ class MasterDataController extends Controller
 
     // 5. Koreksi Saldo Manual (Audit Trail)
 
-    public function koreksiSaldo()
+    public function koreksiSaldo(Request $request)
     {
-        $koreksi = CutiSaldoKoreksi::with(['pegawai', 'dikoreksiOleh'])->orderBy('created_at', 'desc')->get();
+        $tahun = $request->input('tahun');
+        $query = CutiSaldoKoreksi::with(['pegawai', 'dikoreksiOleh']);
+
+        if ($tahun) {
+            $query->where('tahun', $tahun);
+        }
+
+        $koreksi = $query->orderBy('created_at', 'desc')->get();
         $pegawai = Pegawai::where('aktif', true)->orderBy('nama_lengkap')->get();
-        return view('admin.master.koreksi', compact('koreksi', 'pegawai'));
+
+        $tahunList = CutiSaldoKoreksi::distinct()->orderByDesc('tahun')->pluck('tahun')->toArray();
+        if (empty($tahunList)) {
+            $tahunList = [now()->year];
+        }
+
+        return view('admin.master.koreksi', compact('koreksi', 'pegawai', 'tahunList', 'tahun'));
     }
 
     public function storeKoreksiSaldo(Request $request)

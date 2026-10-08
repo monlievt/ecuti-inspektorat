@@ -84,15 +84,24 @@ class PegawaiController extends Controller
         }
     }
 
-    public function edit(Pegawai $pegawai)
+    public function edit(Request $request, Pegawai $pegawai)
     {
         $unitKerja = UnitKerja::where('aktif', true)->get();
         $pegawai->load('user');
         
-        $tahun = Carbon::now()->year;
+        $tahun = (int)$request->input('tahun', Carbon::now()->year);
         $saldo = $pegawai->saldoTahunan()->where('tahun', $tahun)->first();
 
-        return view('admin.pegawai.edit', compact('pegawai', 'unitKerja', 'saldo', 'tahun'));
+        $tahunList = $pegawai->saldoTahunan()->distinct()->pluck('tahun')->toArray();
+        if (!in_array(Carbon::now()->year, $tahunList)) {
+            $tahunList[] = Carbon::now()->year;
+        }
+        if (!in_array($tahun, $tahunList)) {
+            $tahunList[] = $tahun;
+        }
+        rsort($tahunList);
+
+        return view('admin.pegawai.edit', compact('pegawai', 'unitKerja', 'saldo', 'tahun', 'tahunList'));
     }
 
     public function update(Request $request, Pegawai $pegawai)
@@ -113,6 +122,7 @@ class PegawaiController extends Controller
             'role' => 'required|in:pegawai,admin_cuti,super_admin',
             'bisa_beri_izin_sementara' => 'required|boolean',
             'aktif' => 'required|boolean',
+            'tahun' => 'nullable|integer|min:2020|max:2050',
             
             // Validasi Saldo Cuti
             'jatah_tahun_berjalan' => 'required|integer|min:0',
@@ -181,8 +191,8 @@ class PegawaiController extends Controller
                     'aktif' => $request->aktif,
                 ]);
 
-                // 3. Update / Create Saldo Cuti Tahunan untuk tahun berjalan
-                $tahun = Carbon::now()->year;
+                // 3. Update / Create Saldo Cuti Tahunan untuk tahun yang dipilih
+                $tahun = (int)$request->input('tahun', Carbon::now()->year);
                 $pegawai->saldoTahunan()->updateOrCreate(
                     ['tahun' => $tahun],
                     [

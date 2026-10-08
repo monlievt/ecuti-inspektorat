@@ -52,11 +52,21 @@
         <!-- Daftar Hari Libur (Right Column - 2/3) -->
         <div class="lg:col-span-2 space-y-6">
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+                <div class="px-6 py-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <h3 class="text-sm font-semibold text-slate-900">Daftar Hari Libur Nasional</h3>
-                        <p class="mt-1 text-xs text-slate-500">Kalender hari libur nasional resmi (Total: {{ $hariLibur->count() }} hari).</p>
+                        <p class="mt-1 text-xs text-slate-500">Kalender hari libur nasional resmi (Total: {{ $hariLibur->count() }} hari{{ $tahun ? ' di tahun ' . $tahun : '' }}).</p>
                     </div>
+                    <form method="GET" action="{{ route('admin.master.libur') }}" class="flex items-center gap-2">
+                        <label for="filter_tahun" class="text-xs font-semibold text-slate-600 whitespace-nowrap">Tahun:</label>
+                        <select name="tahun" id="filter_tahun" onchange="this.form.submit()"
+                                class="rounded-xl border-slate-300 py-1.5 px-3 text-xs font-semibold text-slate-800 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-slate-50">
+                            <option value="">Semua Tahun</option>
+                            @foreach($tahunList as $t)
+                                <option value="{{ $t }}" {{ (string)$tahun === (string)$t ? 'selected' : '' }}>{{ $t }}</option>
+                            @endforeach
+                        </select>
+                    </form>
                 </div>
 
                 @if($hariLibur->isEmpty())
