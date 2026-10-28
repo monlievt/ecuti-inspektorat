@@ -8,6 +8,7 @@ use App\Models\CutiPengajuan;
 use App\Models\CutiPemetaanPejabatBerwenang;
 use App\Models\CutiSuratTerbit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Exception;
 
 class PejabatBerwenangController extends Controller
@@ -122,41 +123,68 @@ class PejabatBerwenangController extends Controller
     {
         $this->validateAkses($request, $pengajuan);
 
+        // Jika permohonan sudah pernah disetujui / diterbitkan, hindari proses ganda
+        if ($pengajuan->status === CutiPengajuan::STATUS_DITERBITKAN) {
+            return redirect()->route('approval.pejabat')->with('info', 'Permohonan cuti ini telah disetujui dan Surat Izin telah diterbitkan sebelumnya.');
+        }
+
         try {
-            // 1. Transisi ke 'disetujui_pyBMC'
-            $this->workflowService->transisi(
-                $pengajuan,
-                CutiPengajuan::STATUS_DISETUJUI_PYBMC,
-                $request->user(),
-                'pyBMC',
-                $request->catatan
-            );
+            $nomorSurat = null;
 
-            // 2. Generate nomor surat otomatis sesuai klasifikasi jenis cuti (Format: 800.1.11.x/ [Counter] /406.012/ [Tahun])
-            // Kita hitung jumlah surat terbit di tahun berjalan untuk counter
-            $tahun = now()->year;
-            $counter = CutiSuratTerbit::whereYear('tanggal_terbit', $tahun)->count() + 1;
-            $kodeKlasifikasi = \App\Services\SuratCutiPdfService::getKodeKlasifikasiSurat($pengajuan->jenisCuti?->kode);
-            $nomorSurat = sprintf("%s/%04d/406.012/%d", $kodeKlasifikasi, $counter, $tahun);
+            DB::transaction(function () use ($request, $pengajuan, &$nomorSurat) {
+                // Lock row untuk mencegah race condition / double-click
+                $lockedPengajuan = CutiPengajuan::lockForUpdate()->find($pengajuan->id);
 
-            // 3. Simpan data surat terbit (Path PDF dummy untuk saat ini, akan digenerate saat diunduh / dipanggil di service)
-            $pathPdf = "cuti_surat/{$pengajuan->nomor_pengajuan}.pdf";
-            
-            CutiSuratTerbit::create([
-                'pengajuan_id' => $pengajuan->id,
-                'nomor_surat' => $nomorSurat,
-                'ditandatangani_oleh' => $request->user()->pegawai->id,
-                'tanggal_terbit' => now()->toDateString(),
-                'path_pdf' => $pathPdf,
-            ]);
+                if ($lockedPengajuan->status === CutiPengajuan::STATUS_DITERBITKAN) {
+                    $nomorSurat = $lockedPengajuan->suratTerbit?->nomor_surat;
+                    return;
+                }
 
-            // 4. Transisi ke status final 'diterbitkan' (yang memotong saldo / membekukan jatah)
-            $this->workflowService->transisi(
-                $pengajuan,
-                CutiPengajuan::STATUS_DITERBITKAN,
-                $request->user(),
-                'sistem'
-            );
+                // 1. Transisi ke 'disetujui_pyBMC' jika belum
+                if ($lockedPengajuan->status !== CutiPengajuan::STATUS_DISETUJUI_PYBMC) {
+                    $this->workflowService->transisi(
+                        $lockedPengajuan,
+                        CutiPengajuan::STATUS_DISETUJUI_PYBMC,
+                        $request->user(),
+                        'pyBMC',
+                        $request->catatan
+                    );
+                }
+
+                // 2. Generate nomor surat otomatis sesuai klasifikasi jenis cuti jika belum ada
+                $suratTerbit = CutiSuratTerbit::where('pengajuan_id', $lockedPengajuan->id)->first();
+                if (!$suratTerbit) {
+                    $tahun = now()->year;
+                    $counter = CutiSuratTerbit::whereYear('tanggal_terbit', $tahun)->count() + 1;
+                    $kodeKlasifikasi = \App\Services\SuratCutiPdfService::getKodeKlasifikasiSurat($lockedPengajuan->jenisCuti?->kode);
+                    $nomorSurat = sprintf("%s/%04d/406.012/%d", $kodeKlasifikasi, $counter, $tahun);
+                    $pathPdf = "cuti_surat/{$lockedPengajuan->nomor_pengajuan}.pdf";
+
+                    $penandatanganId = $request->user()->pegawai?->id 
+                        ?? \App\Models\Pegawai::where('jabatan', 'LIKE', '%INSPEKTUR%')->first()?->id 
+                        ?? 1;
+
+                    $suratTerbit = CutiSuratTerbit::create([
+                        'pengajuan_id' => $lockedPengajuan->id,
+                        'nomor_surat' => $nomorSurat,
+                        'ditandatangani_oleh' => $penandatanganId,
+                        'tanggal_terbit' => now()->toDateString(),
+                        'path_pdf' => $pathPdf,
+                    ]);
+                } else {
+                    $nomorSurat = $suratTerbit->nomor_surat;
+                }
+
+                // 3. Transisi ke status final 'diterbitkan' (yang memotong saldo / membekukan jatah)
+                if ($lockedPengajuan->status !== CutiPengajuan::STATUS_DITERBITKAN) {
+                    $this->workflowService->transisi(
+                        $lockedPengajuan,
+                        CutiPengajuan::STATUS_DITERBITKAN,
+                        $request->user(),
+                        'sistem'
+                    );
+                }
+            });
 
             return redirect()->route('approval.pejabat')->with('success', "Permohonan cuti disetujui dan Surat Izin nomor {$nomorSurat} telah diterbitkan.");
         } catch (Exception $e) {
@@ -172,14 +200,25 @@ class PejabatBerwenangController extends Controller
         $this->validateAkses($request, $pengajuan);
         $request->validate(['catatan' => 'required|string']);
 
+        if (in_array($pengajuan->status, [CutiPengajuan::STATUS_DITANGGUHKAN_PYBMC, CutiPengajuan::STATUS_DITERBITKAN, CutiPengajuan::STATUS_DITOLAK_PYBMC])) {
+            return redirect()->route('approval.pejabat')->with('info', 'Permohonan cuti ini telah diproses sebelumnya.');
+        }
+
         try {
-            $this->workflowService->transisi(
-                $pengajuan,
-                CutiPengajuan::STATUS_DITANGGUHKAN_PYBMC,
-                $request->user(),
-                'pyBMC',
-                $request->catatan
-            );
+            DB::transaction(function () use ($request, $pengajuan) {
+                $lockedPengajuan = CutiPengajuan::lockForUpdate()->find($pengajuan->id);
+                if (in_array($lockedPengajuan->status, [CutiPengajuan::STATUS_DITANGGUHKAN_PYBMC, CutiPengajuan::STATUS_DITERBITKAN, CutiPengajuan::STATUS_DITOLAK_PYBMC])) {
+                    return;
+                }
+
+                $this->workflowService->transisi(
+                    $lockedPengajuan,
+                    CutiPengajuan::STATUS_DITANGGUHKAN_PYBMC,
+                    $request->user(),
+                    'pyBMC',
+                    $request->catatan
+                );
+            });
 
             return redirect()->route('approval.pejabat')->with('success', 'Permohonan cuti telah ditangguhkan.');
         } catch (Exception $e) {
@@ -195,14 +234,25 @@ class PejabatBerwenangController extends Controller
         $this->validateAkses($request, $pengajuan);
         $request->validate(['catatan' => 'required|string']);
 
+        if (in_array($pengajuan->status, [CutiPengajuan::STATUS_DITOLAK_PYBMC, CutiPengajuan::STATUS_DITERBITKAN, CutiPengajuan::STATUS_DITANGGUHKAN_PYBMC])) {
+            return redirect()->route('approval.pejabat')->with('info', 'Permohonan cuti ini telah diproses sebelumnya.');
+        }
+
         try {
-            $this->workflowService->transisi(
-                $pengajuan,
-                CutiPengajuan::STATUS_DITOLAK_PYBMC,
-                $request->user(),
-                'pyBMC',
-                $request->catatan
-            );
+            DB::transaction(function () use ($request, $pengajuan) {
+                $lockedPengajuan = CutiPengajuan::lockForUpdate()->find($pengajuan->id);
+                if (in_array($lockedPengajuan->status, [CutiPengajuan::STATUS_DITOLAK_PYBMC, CutiPengajuan::STATUS_DITERBITKAN, CutiPengajuan::STATUS_DITANGGUHKAN_PYBMC])) {
+                    return;
+                }
+
+                $this->workflowService->transisi(
+                    $lockedPengajuan,
+                    CutiPengajuan::STATUS_DITOLAK_PYBMC,
+                    $request->user(),
+                    'pyBMC',
+                    $request->catatan
+                );
+            });
 
             return redirect()->route('approval.pejabat')->with('success', 'Permohonan cuti telah ditolak.');
         } catch (Exception $e) {
@@ -247,46 +297,76 @@ class PejabatBerwenangController extends Controller
     {
         $this->validateAkses($request, $pengajuan);
 
+        if ($pengajuan->status === CutiPengajuan::STATUS_DITERBITKAN) {
+            return redirect()->route('approval.pejabat')->with('info', 'Permohonan cuti ini telah diratifikasi dan diterbitkan sebelumnya.');
+        }
+
         try {
-            // 1. Ubah status izin_sementara_aktif -> menunggu_ratifikasi
-            $this->workflowService->transisi(
-                $pengajuan,
-                CutiPengajuan::STATUS_MENUNGGU_RATIFIKASI,
-                $request->user(),
-                'sistem'
-            );
+            $nomorSurat = null;
 
-            // 2. Ubah status menunggu_ratifikasi -> diratifikasi
-            $this->workflowService->transisi(
-                $pengajuan,
-                CutiPengajuan::STATUS_DIRATIFIKASI,
-                $request->user(),
-                'pyBMC',
-                $request->catatan ?: 'Mengesahkan izin sementara yang telah diambil.'
-            );
+            DB::transaction(function () use ($request, $pengajuan, &$nomorSurat) {
+                $lockedPengajuan = CutiPengajuan::lockForUpdate()->find($pengajuan->id);
 
-            // 3. Generate nomor surat resmi sesuai klasifikasi jenis cuti
-            $tahun = now()->year;
-            $counter = CutiSuratTerbit::whereYear('tanggal_terbit', $tahun)->count() + 1;
-            $kodeKlasifikasi = \App\Services\SuratCutiPdfService::getKodeKlasifikasiSurat($pengajuan->jenisCuti?->kode);
-            $nomorSurat = sprintf("%s/%04d/406.012/%d", $kodeKlasifikasi, $counter, $tahun);
-            $pathPdf = "cuti_surat/{$pengajuan->nomor_pengajuan}.pdf";
+                if ($lockedPengajuan->status === CutiPengajuan::STATUS_DITERBITKAN) {
+                    $nomorSurat = $lockedPengajuan->suratTerbit?->nomor_surat;
+                    return;
+                }
 
-            CutiSuratTerbit::create([
-                'pengajuan_id' => $pengajuan->id,
-                'nomor_surat' => $nomorSurat,
-                'ditandatangani_oleh' => $request->user()->pegawai?->id ?? \App\Models\Pegawai::where('jabatan', 'LIKE', '%INSPEKTUR%')->first()?->id ?? 1,
-                'tanggal_terbit' => now()->toDateString(),
-                'path_pdf' => $pathPdf,
-            ]);
+                // 1. Ubah status izin_sementara_aktif -> menunggu_ratifikasi jika belum
+                if ($lockedPengajuan->status === CutiPengajuan::STATUS_IZIN_SEMENTARA_AKTIF) {
+                    $this->workflowService->transisi(
+                        $lockedPengajuan,
+                        CutiPengajuan::STATUS_MENUNGGU_RATIFIKASI,
+                        $request->user(),
+                        'sistem'
+                    );
+                }
 
-            // 4. Terbitkan
-            $this->workflowService->transisi(
-                $pengajuan,
-                CutiPengajuan::STATUS_DITERBITKAN,
-                $request->user(),
-                'sistem'
-            );
+                // 2. Ubah status menunggu_ratifikasi -> diratifikasi jika belum
+                if ($lockedPengajuan->status === CutiPengajuan::STATUS_MENUNGGU_RATIFIKASI) {
+                    $this->workflowService->transisi(
+                        $lockedPengajuan,
+                        CutiPengajuan::STATUS_DIRATIFIKASI,
+                        $request->user(),
+                        'pyBMC',
+                        $request->catatan ?: 'Mengesahkan izin sementara yang telah diambil.'
+                    );
+                }
+
+                // 3. Generate nomor surat resmi sesuai klasifikasi jenis cuti jika belum ada
+                $suratTerbit = CutiSuratTerbit::where('pengajuan_id', $lockedPengajuan->id)->first();
+                if (!$suratTerbit) {
+                    $tahun = now()->year;
+                    $counter = CutiSuratTerbit::whereYear('tanggal_terbit', $tahun)->count() + 1;
+                    $kodeKlasifikasi = \App\Services\SuratCutiPdfService::getKodeKlasifikasiSurat($lockedPengajuan->jenisCuti?->kode);
+                    $nomorSurat = sprintf("%s/%04d/406.012/%d", $kodeKlasifikasi, $counter, $tahun);
+                    $pathPdf = "cuti_surat/{$lockedPengajuan->nomor_pengajuan}.pdf";
+
+                    $penandatanganId = $request->user()->pegawai?->id 
+                        ?? \App\Models\Pegawai::where('jabatan', 'LIKE', '%INSPEKTUR%')->first()?->id 
+                        ?? 1;
+
+                    CutiSuratTerbit::create([
+                        'pengajuan_id' => $lockedPengajuan->id,
+                        'nomor_surat' => $nomorSurat,
+                        'ditandatangani_oleh' => $penandatanganId,
+                        'tanggal_terbit' => now()->toDateString(),
+                        'path_pdf' => $pathPdf,
+                    ]);
+                } else {
+                    $nomorSurat = $suratTerbit->nomor_surat;
+                }
+
+                // 4. Terbitkan
+                if ($lockedPengajuan->status !== CutiPengajuan::STATUS_DITERBITKAN) {
+                    $this->workflowService->transisi(
+                        $lockedPengajuan,
+                        CutiPengajuan::STATUS_DITERBITKAN,
+                        $request->user(),
+                        'sistem'
+                    );
+                }
+            });
 
             return redirect()->route('approval.pejabat')->with('success', "Ratifikasi berhasil. Surat Izin nomor {$nomorSurat} telah resmi diterbitkan.");
         } catch (Exception $e) {

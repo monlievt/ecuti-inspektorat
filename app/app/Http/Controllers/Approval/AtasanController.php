@@ -7,6 +7,7 @@ use App\Services\ApprovalWorkflowService;
 use App\Models\CutiPengajuan;
 use App\Models\CutiPemetaanAtasan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Exception;
 
 class AtasanController extends Controller
@@ -51,22 +52,39 @@ class AtasanController extends Controller
     {
         $this->validateAkses($request, $pengajuan);
 
-        try {
-            $this->workflowService->transisi(
-                $pengajuan,
-                CutiPengajuan::STATUS_DISETUJUI_ATASAN,
-                $request->user(),
-                'atasan_langsung',
-                $request->catatan
-            );
+        // Jika sudah disetujui sebelumnya, lewati
+        if (in_array($pengajuan->status, [CutiPengajuan::STATUS_DISETUJUI_ATASAN, CutiPengajuan::STATUS_MENUNGGU_PYBMC, CutiPengajuan::STATUS_DISETUJUI_PYBMC, CutiPengajuan::STATUS_DITERBITKAN])) {
+            return redirect()->route('approval.atasan')->with('info', 'Permohonan cuti ini telah disetujui sebelumnya.');
+        }
 
-            // Transisi otomatis selanjutnya ke 'menunggu_pyBMC' oleh sistem
-            $this->workflowService->transisi(
-                $pengajuan,
-                CutiPengajuan::STATUS_MENUNGGU_PYBMC,
-                $request->user(),
-                'sistem'
-            );
+        try {
+            DB::transaction(function () use ($request, $pengajuan) {
+                $lockedPengajuan = CutiPengajuan::lockForUpdate()->find($pengajuan->id);
+
+                if (in_array($lockedPengajuan->status, [CutiPengajuan::STATUS_DISETUJUI_ATASAN, CutiPengajuan::STATUS_MENUNGGU_PYBMC, CutiPengajuan::STATUS_DISETUJUI_PYBMC, CutiPengajuan::STATUS_DITERBITKAN])) {
+                    return;
+                }
+
+                if ($lockedPengajuan->status === CutiPengajuan::STATUS_MENUNGGU_ATASAN) {
+                    $this->workflowService->transisi(
+                        $lockedPengajuan,
+                        CutiPengajuan::STATUS_DISETUJUI_ATASAN,
+                        $request->user(),
+                        'atasan_langsung',
+                        $request->catatan
+                    );
+                }
+
+                // Transisi otomatis selanjutnya ke 'menunggu_pyBMC' oleh sistem
+                if ($lockedPengajuan->status === CutiPengajuan::STATUS_DISETUJUI_ATASAN) {
+                    $this->workflowService->transisi(
+                        $lockedPengajuan,
+                        CutiPengajuan::STATUS_MENUNGGU_PYBMC,
+                        $request->user(),
+                        'sistem'
+                    );
+                }
+            });
 
             return redirect()->route('approval.atasan')->with('success', 'Permohonan cuti disetujui dan telah diteruskan ke Pejabat Yang Berwenang (PyBMC).');
         } catch (Exception $e) {
@@ -82,14 +100,26 @@ class AtasanController extends Controller
         $this->validateAkses($request, $pengajuan);
         $request->validate(['catatan' => 'required|string']);
 
+        if (in_array($pengajuan->status, [CutiPengajuan::STATUS_DITOLAK_ATASAN, CutiPengajuan::STATUS_DITERBITKAN, CutiPengajuan::STATUS_DITOLAK_PYBMC])) {
+            return redirect()->route('approval.atasan')->with('info', 'Permohonan cuti ini telah diproses sebelumnya.');
+        }
+
         try {
-            $this->workflowService->transisi(
-                $pengajuan,
-                CutiPengajuan::STATUS_DITOLAK_ATASAN,
-                $request->user(),
-                'atasan_langsung',
-                $request->catatan
-            );
+            DB::transaction(function () use ($request, $pengajuan) {
+                $lockedPengajuan = CutiPengajuan::lockForUpdate()->find($pengajuan->id);
+
+                if (in_array($lockedPengajuan->status, [CutiPengajuan::STATUS_DITOLAK_ATASAN, CutiPengajuan::STATUS_DITERBITKAN, CutiPengajuan::STATUS_DITOLAK_PYBMC])) {
+                    return;
+                }
+
+                $this->workflowService->transisi(
+                    $lockedPengajuan,
+                    CutiPengajuan::STATUS_DITOLAK_ATASAN,
+                    $request->user(),
+                    'atasan_langsung',
+                    $request->catatan
+                );
+            });
 
             return redirect()->route('approval.atasan')->with('success', 'Permohonan cuti telah ditolak.');
         } catch (Exception $e) {
@@ -105,14 +135,26 @@ class AtasanController extends Controller
         $this->validateAkses($request, $pengajuan);
         $request->validate(['catatan' => 'required|string']);
 
+        if ($pengajuan->status === CutiPengajuan::STATUS_DIREVISI) {
+            return redirect()->route('approval.atasan')->with('info', 'Permohonan cuti ini sudah dikembalikan untuk direvisi sebelumnya.');
+        }
+
         try {
-            $this->workflowService->transisi(
-                $pengajuan,
-                CutiPengajuan::STATUS_DIREVISI,
-                $request->user(),
-                'atasan_langsung',
-                $request->catatan
-            );
+            DB::transaction(function () use ($request, $pengajuan) {
+                $lockedPengajuan = CutiPengajuan::lockForUpdate()->find($pengajuan->id);
+
+                if ($lockedPengajuan->status === CutiPengajuan::STATUS_DIREVISI) {
+                    return;
+                }
+
+                $this->workflowService->transisi(
+                    $lockedPengajuan,
+                    CutiPengajuan::STATUS_DIREVISI,
+                    $request->user(),
+                    'atasan_langsung',
+                    $request->catatan
+                );
+            });
 
             return redirect()->route('approval.atasan')->with('success', 'Permohonan cuti telah dikembalikan untuk direvisi oleh pegawai.');
         } catch (Exception $e) {

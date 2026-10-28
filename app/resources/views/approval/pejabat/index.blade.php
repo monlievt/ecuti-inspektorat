@@ -3,7 +3,7 @@
 @section('title', 'Persetujuan Pejabat Berwenang (PyBMC) - e-Cuti')
 
 @section('content')
-<div class="space-y-6" x-data="{ activeTab: 'antrian', selectedId: null, actionType: '', actionNotes: '' }">
+<div class="space-y-6" x-data="{ activeTab: 'antrian', selectedId: null, actionType: '', actionNotes: '', isSubmitting: false }">
     <div class="md:flex md:items-center md:justify-between">
         <div class="min-w-0 flex-1">
             <h2 class="text-2xl font-bold leading-7 text-slate-900 sm:truncate sm:text-3xl tracking-tight">Keputusan Pejabat Yang Berwenang Memberikan Cuti (PyBMC)</h2>
@@ -239,34 +239,46 @@
                 <textarea x-model="actionNotes" rows="3" class="mt-4 block w-full rounded-xl border-slate-300 py-3 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm placeholder:text-slate-400" placeholder="Tulis catatan di sini..."></textarea>
                 
                 <div class="mt-6 flex justify-end space-x-3">
-                    <button @click="selectedId = null" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">Batal</button>
+                    <button type="button" @click="selectedId = null; isSubmitting = false" :disabled="isSubmitting" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50">Batal</button>
                     
                     <!-- Ratifikasi Form -->
-                    <form x-show="actionType === 'ratifikasi'" :action="'/approval/pejabat/' + selectedId + '/ratifikasi'" method="POST">
+                    <form x-show="actionType === 'ratifikasi'" :action="'/approval/pejabat/' + selectedId + '/ratifikasi'" method="POST" @submit="isSubmitting = true">
                         @csrf
                         <input type="hidden" name="catatan" :value="actionNotes">
-                        <button type="submit" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 transition shadow-sm">Ratifikasi &amp; Terbitkan SK</button>
+                        <button type="submit" :disabled="isSubmitting" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 transition shadow-sm disabled:opacity-50 flex items-center gap-2">
+                            <span x-show="isSubmitting" class="inline-block animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full"></span>
+                            <span x-text="isSubmitting ? 'Memproses...' : 'Ratifikasi & Terbitkan SK'"></span>
+                        </button>
                     </form>
 
                     <!-- Setujui Form -->
-                    <form x-show="actionType === 'setujui'" :action="'/approval/pejabat/' + selectedId + '/setujui'" method="POST">
+                    <form x-show="actionType === 'setujui'" :action="'/approval/pejabat/' + selectedId + '/setujui'" method="POST" @submit="isSubmitting = true">
                         @csrf
                         <input type="hidden" name="catatan" :value="actionNotes">
-                        <button type="submit" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition shadow-sm">Setuju & Terbitkan</button>
+                        <button type="submit" :disabled="isSubmitting" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition shadow-sm disabled:opacity-50 flex items-center gap-2">
+                            <span x-show="isSubmitting" class="inline-block animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full"></span>
+                            <span x-text="isSubmitting ? 'Memproses...' : 'Setuju & Terbitkan'"></span>
+                        </button>
                     </form>
                     
                     <!-- Tangguhkan Form -->
-                    <form x-show="actionType === 'tangguhkan'" :action="'/approval/pejabat/' + selectedId + '/tangguhkan'" method="POST">
+                    <form x-show="actionType === 'tangguhkan'" :action="'/approval/pejabat/' + selectedId + '/tangguhkan'" method="POST" @submit="isSubmitting = true">
                         @csrf
                         <input type="hidden" name="catatan" :value="actionNotes">
-                        <button type="submit" :disabled="actionNotes.trim() === ''" class="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-400 transition shadow-sm disabled:opacity-50">Tangguhkan Cuti</button>
+                        <button type="submit" :disabled="isSubmitting || actionNotes.trim() === ''" class="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-400 transition shadow-sm disabled:opacity-50 flex items-center gap-2">
+                            <span x-show="isSubmitting" class="inline-block animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full"></span>
+                            <span x-text="isSubmitting ? 'Memproses...' : 'Tangguhkan Cuti'"></span>
+                        </button>
                     </form>
 
                     <!-- Tolak Form -->
-                    <form x-show="actionType === 'tolak'" :action="'/approval/pejabat/' + selectedId + '/tolak'" method="POST">
+                    <form x-show="actionType === 'tolak'" :action="'/approval/pejabat/' + selectedId + '/tolak'" method="POST" @submit="isSubmitting = true">
                         @csrf
                         <input type="hidden" name="catatan" :value="actionNotes">
-                        <button type="submit" :disabled="actionNotes.trim() === ''" class="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 transition shadow-sm disabled:opacity-50">Tolak Permohonan</button>
+                        <button type="submit" :disabled="isSubmitting || actionNotes.trim() === ''" class="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 transition shadow-sm disabled:opacity-50 flex items-center gap-2">
+                            <span x-show="isSubmitting" class="inline-block animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full"></span>
+                            <span x-text="isSubmitting ? 'Memproses...' : 'Tolak Permohonan'"></span>
+                        </button>
                     </form>
                 </div>
             </div>

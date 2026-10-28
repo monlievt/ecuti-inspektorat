@@ -78,6 +78,12 @@ class ApprovalWorkflowService
     {
         $statusLama = $pengajuan->status;
 
+        // Idempotent guard: Jika status pengajuan sudah sama dengan status baru tujuan, lewati tanpa error
+        if ($statusLama === $statusBaru) {
+            \Illuminate\Support\Facades\Log::info("Transisi pengajuan ID {$pengajuan->id} dilewati karena status saat ini sudah '{$statusBaru}' (idempotent).");
+            return $pengajuan;
+        }
+
         // Validasi transisi
         if (!isset($this->allowedTransitions[$statusLama]) || !in_array($statusBaru, $this->allowedTransitions[$statusLama])) {
             throw new Exception("Transisi status ilegal dari '{$statusLama}' ke '{$statusBaru}'.");
