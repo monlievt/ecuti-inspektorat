@@ -76,27 +76,27 @@
                         <table class="min-w-full divide-y divide-slate-200 text-left">
                             <thead class="bg-slate-50">
                                 <tr>
-                                    <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Pegawai</th>
-                                    <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Jenis</th>
-                                    <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Durasi</th>
-                                    <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Aksi</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Pegawai</th>
+                                    <th class="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Jenis</th>
+                                    <th class="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Durasi</th>
+                                    <th class="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200 bg-white">
                                 @foreach($recentPengajuan as $p)
                                     <tr class="hover:bg-slate-50/60 transition">
-                                        <td class="px-6 py-4">
-                                            <a href="{{ route('pengajuan.show', $p->id) }}" class="text-sm font-semibold text-slate-900 hover:text-indigo-600 transition block">
+                                        <td class="px-4 py-3">
+                                            <a href="{{ route('pengajuan.show', $p->id) }}" class="text-sm font-semibold text-slate-900 hover:text-indigo-600 transition block leading-snug">
                                                 {{ $p->pegawai->nama_lengkap }}
                                             </a>
-                                            <p class="text-xs text-slate-500">NIP. {{ $p->pegawai->nip }} &bull; {{ $p->pegawai->unitKerja?->nama }}</p>
+                                            <p class="text-xs text-slate-500 leading-tight mt-0.5">NIP. {{ $p->pegawai->nip }} &bull; {{ $p->pegawai->unitKerja?->nama }}</p>
                                         </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-900 font-semibold">{{ $p->jenisCuti->nama }}</td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
-                                            {{ $p->jumlah_hari_kerja }} {{ str_replace('_', ' ', $p->satuan_hari) }}
+                                        <td class="whitespace-nowrap px-3 py-3 text-xs text-slate-800 font-medium">{{ $p->jenisCuti->nama }}</td>
+                                        <td class="whitespace-nowrap px-3 py-3 text-xs text-slate-500">
+                                            {{ $p->jumlah_hari_kerja }} hari
                                         </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm">
+                                        <td class="whitespace-nowrap px-3 py-3 text-xs">
                                             @php
                                                 $badgeClass = match($p->status) {
                                                     'diajukan', 'menunggu_atasan', 'menunggu_pyBMC', 'menunggu_ratifikasi' => 'bg-blue-50 text-blue-700 border-blue-200/50',
@@ -110,18 +110,36 @@
                                                 {{ str_replace('_', ' ', ucfirst($p->status)) }}
                                             </span>
                                         </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-right">
-                                            <div class="flex items-center justify-end gap-1.5">
-                                                <a href="{{ route('pengajuan.show', $p->id) }}" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-xs">
-                                                    Detail
+                                        <td class="whitespace-nowrap px-4 py-3 text-xs text-right">
+                                            <div class="inline-flex items-center justify-end gap-1.5" x-data="{ open: false }">
+                                                <a href="{{ route('pengajuan.show', $p->id) }}" class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition shadow-xs">
+                                                    <span>Detail</span>
+                                                    <svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                    </svg>
                                                 </a>
                                                 @if(in_array($p->status, ['diterbitkan', 'disetujui_pybmc', 'disetujui_pyBMC']))
-                                                    <a href="{{ route('pengajuan.surat-izin-pdf', $p->id) }}" class="inline-flex items-center rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition shadow-xs" target="_blank" title="Unduh Surat Izin">
-                                                        Surat Izin
-                                                    </a>
-                                                    <a href="{{ route('pengajuan.pdf', $p->id) }}" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition shadow-xs" target="_blank" title="Formulir Cuti BKN">
-                                                        BKN 1.b
-                                                    </a>
+                                                    <div class="relative">
+                                                        <button @click="open = !open" @click.outside="open = false" type="button" class="inline-flex items-center justify-center h-6.5 w-6.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition shadow-xs" title="Unduh Dokumen Surat / Formulir">
+                                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                            </svg>
+                                                        </button>
+                                                        <div x-show="open" x-transition.origin.top.right class="absolute right-0 z-30 mt-1 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-lg text-left" style="display: none;">
+                                                            <a href="{{ route('pengajuan.surat-izin-pdf', $p->id) }}" target="_blank" class="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition">
+                                                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                </svg>
+                                                                Surat Izin Cuti (PDF)
+                                                            </a>
+                                                            <a href="{{ route('pengajuan.pdf', $p->id) }}" target="_blank" class="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition">
+                                                                <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                                </svg>
+                                                                Formulir BKN 1.b (PDF)
+                                                            </a>
+                                                        </div>
+                                                    </div>
                                                 @endif
                                             </div>
                                         </td>
@@ -149,32 +167,33 @@
                         <table class="min-w-full divide-y divide-slate-200 text-left">
                             <thead class="bg-slate-50">
                                 <tr>
-                                    <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Pegawai</th>
-                                    <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Unit Kerja</th>
-                                    <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Masa Cuti</th>
-                                    <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Kategori</th>
-                                    <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Aksi</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Pegawai</th>
+                                    <th class="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Masa Cuti</th>
+                                    <th class="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Jenis Cuti</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200 bg-white">
                                 @foreach($pegawaiCutiHariIni as $pc)
                                     <tr class="hover:bg-slate-50/60 transition">
-                                        <td class="px-6 py-4">
-                                            <a href="{{ route('pengajuan.show', $pc->id) }}" class="text-sm font-semibold text-slate-900 hover:text-indigo-600 transition block">
+                                        <td class="px-4 py-3">
+                                            <a href="{{ route('pengajuan.show', $pc->id) }}" class="text-sm font-semibold text-slate-900 hover:text-indigo-600 transition block leading-snug">
                                                 {{ $pc->pegawai->nama_lengkap }}
                                             </a>
-                                            <p class="text-xs text-slate-500">NIP. {{ $pc->pegawai->nip }}</p>
+                                            <p class="text-xs text-slate-500 leading-tight mt-0.5">NIP. {{ $pc->pegawai->nip }} &bull; {{ $pc->pegawai->unitKerja->nama }}</p>
                                         </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-500 font-semibold">{{ $pc->pegawai->unitKerja->nama }}</td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
+                                        <td class="whitespace-nowrap px-3 py-3 text-xs text-slate-500">
                                             {{ $pc->tanggal_mulai->format('d/m/Y') }} s/d {{ $pc->tanggal_selesai->format('d/m/Y') }}
                                         </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm font-semibold text-indigo-600">
+                                        <td class="whitespace-nowrap px-3 py-3 text-xs font-semibold text-indigo-600">
                                             {{ $pc->jenisCuti->nama }}
                                         </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-right">
-                                            <a href="{{ route('pengajuan.show', $pc->id) }}" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-xs">
-                                                Detail
+                                        <td class="whitespace-nowrap px-4 py-3 text-xs text-right">
+                                            <a href="{{ route('pengajuan.show', $pc->id) }}" class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition shadow-xs">
+                                                <span>Detail</span>
+                                                <svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                </svg>
                                             </a>
                                         </td>
                                     </tr>
