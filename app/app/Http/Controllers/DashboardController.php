@@ -51,9 +51,9 @@ class DashboardController extends Controller
                   ->whereYear('tanggal_mulai', $tahun);
             }])->get();
 
-            $recentPengajuan = CutiPengajuan::with(['pegawai', 'jenisCuti'])
+            $recentPengajuan = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti', 'suratTerbit'])
                 ->orderBy('created_at', 'desc')
-                ->take(5)
+                ->take(10)
                 ->get();
 
             // Pegawai yang sedang cuti hari ini beserta jenis cutinya

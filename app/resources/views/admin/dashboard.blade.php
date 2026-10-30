@@ -57,9 +57,14 @@
         <!-- 5 Pengajuan Terbaru (Left Column - 2/3) -->
         <div class="lg:col-span-2 space-y-6">
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                <div class="px-6 py-5 border-b border-slate-200">
-                    <h3 class="text-lg font-semibold text-slate-900">Pengajuan Cuti Terbaru</h3>
-                    <p class="mt-1 text-sm text-slate-500">Tinjau permohonan cuti terbaru yang masuk di dalam sistem.</p>
+                <div class="px-6 py-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-lg font-semibold text-slate-900">Pengajuan Cuti Terbaru</h3>
+                        <p class="mt-1 text-sm text-slate-500">Tinjau dan buka permohonan cuti terbaru yang masuk di dalam sistem.</p>
+                    </div>
+                    <a href="{{ route('admin.laporan.rekapitulasi') }}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1 self-start sm:self-auto">
+                        Lihat Semua di Rekapitulasi &rarr;
+                    </a>
                 </div>
                 
                 @if($recentPengajuan->isEmpty())
@@ -75,14 +80,17 @@
                                     <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Jenis</th>
                                     <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Durasi</th>
                                     <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200 bg-white">
                                 @foreach($recentPengajuan as $p)
-                                    <tr>
+                                    <tr class="hover:bg-slate-50/60 transition">
                                         <td class="px-6 py-4">
-                                            <p class="text-sm font-semibold text-slate-900">{{ $p->pegawai->nama_lengkap }}</p>
-                                            <p class="text-xs text-slate-500">NIP. {{ $p->pegawai->nip }}</p>
+                                            <a href="{{ route('pengajuan.show', $p->id) }}" class="text-sm font-semibold text-slate-900 hover:text-indigo-600 transition block">
+                                                {{ $p->pegawai->nama_lengkap }}
+                                            </a>
+                                            <p class="text-xs text-slate-500">NIP. {{ $p->pegawai->nip }} &bull; {{ $p->pegawai->unitKerja?->nama }}</p>
                                         </td>
                                         <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-900 font-semibold">{{ $p->jenisCuti->nama }}</td>
                                         <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
@@ -98,9 +106,24 @@
                                                     default => 'bg-red-50 text-red-700 border-red-200/50',
                                                 };
                                             @endphp
-                                            <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium {{ $badgeClass }}">
+                                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold {{ $badgeClass }}">
                                                 {{ str_replace('_', ' ', ucfirst($p->status)) }}
                                             </span>
+                                        </td>
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-right">
+                                            <div class="flex items-center justify-end gap-1.5">
+                                                <a href="{{ route('pengajuan.show', $p->id) }}" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-xs">
+                                                    Detail
+                                                </a>
+                                                @if(in_array($p->status, ['diterbitkan', 'disetujui_pybmc', 'disetujui_pyBMC']))
+                                                    <a href="{{ route('pengajuan.surat-izin-pdf', $p->id) }}" class="inline-flex items-center rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition shadow-xs" target="_blank" title="Unduh Surat Izin">
+                                                        Surat Izin
+                                                    </a>
+                                                    <a href="{{ route('pengajuan.pdf', $p->id) }}" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition shadow-xs" target="_blank" title="Formulir Cuti BKN">
+                                                        BKN 1.b
+                                                    </a>
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -130,13 +153,16 @@
                                     <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Unit Kerja</th>
                                     <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Masa Cuti</th>
                                     <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Kategori</th>
+                                    <th class="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200 bg-white">
                                 @foreach($pegawaiCutiHariIni as $pc)
-                                    <tr>
+                                    <tr class="hover:bg-slate-50/60 transition">
                                         <td class="px-6 py-4">
-                                            <p class="text-sm font-semibold text-slate-900">{{ $pc->pegawai->nama_lengkap }}</p>
+                                            <a href="{{ route('pengajuan.show', $pc->id) }}" class="text-sm font-semibold text-slate-900 hover:text-indigo-600 transition block">
+                                                {{ $pc->pegawai->nama_lengkap }}
+                                            </a>
                                             <p class="text-xs text-slate-500">NIP. {{ $pc->pegawai->nip }}</p>
                                         </td>
                                         <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-500 font-semibold">{{ $pc->pegawai->unitKerja->nama }}</td>
@@ -145,6 +171,11 @@
                                         </td>
                                         <td class="whitespace-nowrap px-6 py-4 text-sm font-semibold text-indigo-600">
                                             {{ $pc->jenisCuti->nama }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-right">
+                                            <a href="{{ route('pengajuan.show', $pc->id) }}" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-xs">
+                                                Detail
+                                            </a>
                                         </td>
                                     </tr>
                                 @endforeach
