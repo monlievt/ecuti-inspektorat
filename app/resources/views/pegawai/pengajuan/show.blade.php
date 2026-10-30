@@ -30,17 +30,32 @@
 
             <div class="p-6">
                 <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                    <div class="sm:col-span-2 border-b border-slate-100 pb-4">
-                        <dt class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pegawai Pemohon</dt>
-                        <dd class="mt-1.5 flex items-center">
-                            <div class="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 font-bold text-sm">
-                                {{ substr($pengajuan->pegawai->nama_lengkap, 0, 1) }}
+                    <div class="sm:col-span-2 border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <dt class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pegawai Pemohon</dt>
+                            <dd class="mt-1.5 flex items-center">
+                                <div class="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 font-bold text-sm">
+                                    {{ substr($pengajuan->pegawai->nama_lengkap, 0, 1) }}
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-semibold text-slate-900">{{ $pengajuan->pegawai->nama_lengkap }}</p>
+                                    <p class="text-xs text-slate-500">NIP. {{ $pengajuan->pegawai->nip }} &bull; {{ $pengajuan->pegawai->jabatan }}</p>
+                                </div>
+                            </dd>
+                        </div>
+                        @if(auth()->user()->isAdminCuti() || auth()->user()->isPimpinanOrAtasan())
+                            <div class="self-start sm:self-center">
+                                <a href="{{ route('admin.laporan.rekapitulasi', ['search' => $pengajuan->pegawai->nip]) }}" 
+                                   target="_blank"
+                                   class="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50/80 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition shadow-2xs"
+                                   title="Lihat seluruh rekapitulasi riwayat cuti pegawai ini">
+                                    <svg class="h-3.5 w-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>Riwayat &amp; Rekap Cuti Pegawai &rarr;</span>
+                                </a>
                             </div>
-                            <div class="ml-3">
-                                <p class="text-sm font-semibold text-slate-900">{{ $pengajuan->pegawai->nama_lengkap }}</p>
-                                <p class="text-xs text-slate-500">NIP. {{ $pengajuan->pegawai->nip }} &bull; {{ $pengajuan->pegawai->jabatan }}</p>
-                            </div>
-                        </dd>
+                        @endif
                     </div>
 
                     <div>
