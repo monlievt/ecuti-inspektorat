@@ -400,5 +400,71 @@ class PerbaikanLaporanDanAdminTest extends TestCase
             'nomor_sk_delegasi' => 'SK/GLOBAL/001',
         ]);
     }
+
+    public function test_rekapitulasi_dapat_difilter_per_nama_pegawai_dan_bulan(): void
+    {
+        $jenisCuti = CutiJenis::firstOrCreate(
+            ['kode' => 'tahunan'],
+            [
+                'nama' => 'Cuti Tahunan',
+                'kuota_tahunan' => 12,
+                'maksimal_hari_berurutan' => 12,
+                'butuh_lampiran' => false,
+                'pengurangan_saldo' => true,
+                'aktif' => true,
+            ]
+        );
+
+        $userBudi = User::create([
+            'name' => 'Budi Santoso',
+            'email' => 'budi@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pegawai',
+        ]);
+
+        $pegawaiBudi = Pegawai::create([
+            'user_id' => $userBudi->id,
+            'nip' => '198501012010011001',
+            'nama_lengkap' => 'Budi Santoso',
+            'jenis_kelamin' => 'L',
+            'tmt_cpns' => '2010-01-01',
+            'pangkat_golongan' => 'III/a',
+            'jabatan' => 'Auditor Pertama',
+            'jenis_pegawai' => 'PNS',
+            'unit_kerja_id' => $this->unitKerja->id,
+            'aktif' => true,
+        ]);
+
+        CutiPengajuan::create([
+            'nomor_pengajuan' => 'CUTI/2026/BUDI/01',
+            'pegawai_id' => $pegawaiBudi->id,
+            'jenis_cuti_id' => $jenisCuti->id,
+            'alasan' => 'Liburan',
+            'alamat_selama_cuti' => 'Trenggalek',
+            'telepon_selama_cuti' => '081234567890',
+            'tanggal_mulai' => '2026-11-05',
+            'tanggal_selesai' => '2026-11-06',
+            'jumlah_hari_kerja' => 2,
+            'status' => CutiPengajuan::STATUS_DITERBITKAN,
+        ]);
+
+        // Cari berdasarkan nama "Budi" dan bulan 11 (November)
+        $response = $this->actingAs($this->adminUser)->get(route('admin.laporan.rekapitulasi', [
+            'search' => 'Budi',
+            'bulan' => 11,
+            'tahun' => 2026,
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Budi Santoso');
+
+        // Cari nama lain yang tidak ada
+        $responseMiss = $this->actingAs($this->adminUser)->get(route('admin.laporan.rekapitulasi', [
+            'search' => 'NamaTidakDitemukan',
+        ]));
+
+        $responseMiss->assertStatus(200);
+        $responseMiss->assertDontSee('Budi Santoso');
+    }
 }
 

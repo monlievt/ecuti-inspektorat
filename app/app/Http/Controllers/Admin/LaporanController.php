@@ -33,6 +33,7 @@ class LaporanController extends Controller
     {
         $accessiblePegawaiIds = $this->getAccessiblePegawaiIds($request);
 
+        $search = $request->input('search');
         $tahun = $request->input('tahun');
         $bulan = $request->input('bulan');
         $unitKerjaId = $request->input('unit_kerja_id');
@@ -47,6 +48,13 @@ class LaporanController extends Controller
         // Batasi hanya untuk bawahan jika user adalah Atasan Langsung (Irban, Kasubag, dll.)
         if ($accessiblePegawaiIds !== null) {
             $query->whereIn('pegawai_id', $accessiblePegawaiIds);
+        }
+
+        if ($search) {
+            $query->whereHas('pegawai', function ($q) use ($search) {
+                $q->where('nama_lengkap', 'like', "%{$search}%")
+                  ->orWhere('nip', 'like', "%{$search}%");
+            });
         }
 
         if ($tahun) {
@@ -167,6 +175,7 @@ class LaporanController extends Controller
             'ditolakCount',
             'tahun',
             'bulan',
+            'search',
             'unitKerjaId',
             'jenisCutiId',
             'status',
@@ -183,6 +192,7 @@ class LaporanController extends Controller
     {
         $accessiblePegawaiIds = $this->getAccessiblePegawaiIds($request);
 
+        $search = $request->input('search');
         $tahun = $request->input('tahun');
         $bulan = $request->input('bulan');
         $unitKerjaId = $request->input('unit_kerja_id');
@@ -196,6 +206,13 @@ class LaporanController extends Controller
 
         if ($accessiblePegawaiIds !== null) {
             $query->whereIn('pegawai_id', $accessiblePegawaiIds);
+        }
+
+        if ($search) {
+            $query->whereHas('pegawai', function ($q) use ($search) {
+                $q->where('nama_lengkap', 'like', "%{$search}%")
+                  ->orWhere('nip', 'like', "%{$search}%");
+            });
         }
 
         if ($tahun) {
@@ -294,6 +311,7 @@ class LaporanController extends Controller
     {
         $accessiblePegawaiIds = $this->getAccessiblePegawaiIds($request);
 
+        $search = $request->input('search');
         $tahun = $request->input('tahun');
         $bulan = $request->input('bulan');
         $unitKerjaId = $request->input('unit_kerja_id');
@@ -307,6 +325,13 @@ class LaporanController extends Controller
 
         if ($accessiblePegawaiIds !== null) {
             $query->whereIn('pegawai_id', $accessiblePegawaiIds);
+        }
+
+        if ($search) {
+            $query->whereHas('pegawai', function ($q) use ($search) {
+                $q->where('nama_lengkap', 'like', "%{$search}%")
+                  ->orWhere('nip', 'like', "%{$search}%");
+            });
         }
 
         if ($tahun) {

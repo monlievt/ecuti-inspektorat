@@ -54,7 +54,20 @@
 
     <!-- Filter Form Bar -->
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <form method="GET" action="{{ route('admin.laporan.rekapitulasi') }}" class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 items-end">
+        <form method="GET" action="{{ route('admin.laporan.rekapitulasi') }}" class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 items-end">
+            <div class="sm:col-span-2">
+                <label for="search" class="block text-xs font-semibold text-slate-700">Cari Pegawai (Nama / NIP)</label>
+                <div class="relative mt-1">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="text" name="search" id="search" value="{{ $search }}" placeholder="Ketik nama atau NIP pegawai..." 
+                           class="block w-full rounded-xl border-slate-300 pl-9 pr-3 py-2 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+            </div>
+
             <div>
                 <label for="tahun" class="block text-xs font-semibold text-slate-700">Tahun Anggaran</label>
                 <select name="tahun" id="tahun" class="mt-1 block w-full rounded-xl border-slate-300 py-2 px-3 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-semibold text-indigo-900 bg-indigo-50/40">
@@ -107,12 +120,6 @@
                     <option value="direvisi" {{ $status == 'direvisi' ? 'selected' : '' }}>Perlu Revisi</option>
                     <option value="izin_sementara_aktif" {{ $status == 'izin_sementara_aktif' ? 'selected' : '' }}>Izin Sementara (Darurat)</option>
                 </select>
-            </div>
-
-            <div>
-                <label for="tanggal_mulai" class="block text-xs font-medium text-slate-700">Mulai Tanggal</label>
-                <input type="date" name="tanggal_mulai" id="tanggal_mulai" value="{{ $tanggalMulai }}" 
-                       class="mt-1 block w-full rounded-xl border-slate-300 py-2 px-3 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
             </div>
 
             <div class="flex gap-2">
