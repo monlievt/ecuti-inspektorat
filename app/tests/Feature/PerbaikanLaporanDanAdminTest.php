@@ -9,6 +9,7 @@ use App\Models\UnitKerja;
 use App\Models\CutiJenis;
 use App\Models\CutiPemetaanAtasan;
 use App\Models\CutiPemetaanPejabatBerwenang;
+use App\Models\CutiPengajuan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class PerbaikanLaporanDanAdminTest extends TestCase
@@ -97,6 +98,123 @@ class PerbaikanLaporanDanAdminTest extends TestCase
         $response = $this->actingAs($this->wijionoUser)->get(route('admin.laporan.rekapitulasi'));
         $response->assertStatus(200);
         $response->assertSee('Rekapitulasi Pengajuan Cuti');
+    }
+
+    public function test_rekapitulasi_for_atasan_irban_only_shows_subordinates(): void
+    {
+        $unit2 = UnitKerja::create(['kode' => 'IRBAN2', 'nama' => 'Irban Wilayah II', 'aktif' => true]);
+        $unit3 = UnitKerja::create(['kode' => 'IRBAN3', 'nama' => 'Irban Wilayah III', 'aktif' => true]);
+
+        // Buat Akun IRBAN II
+        $userIrban = User::create([
+            'name' => 'SIGIT PRASETYO',
+            'email' => 'sigit@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pegawai',
+        ]);
+        $pegawaiIrban = Pegawai::create([
+            'user_id' => $userIrban->id,
+            'nip' => '197310211993101001',
+            'nama_lengkap' => 'SIGIT PRASETYO, S.IP., M.AP',
+            'jenis_kelamin' => 'L',
+            'tmt_cpns' => '1993-10-01',
+            'pangkat_golongan' => 'IV/a',
+            'jabatan' => 'Inspektur Pembantu Wilayah II',
+            'unit_kerja_id' => $unit2->id,
+            'jenis_pegawai' => 'PNS',
+            'aktif' => true,
+        ]);
+
+        // Buat Bawahan Irban II
+        $userBawahan = User::create([
+            'name' => 'FELLIS ENRICHA',
+            'email' => 'fellis@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pegawai',
+        ]);
+        $pegawaiBawahan = Pegawai::create([
+            'user_id' => $userBawahan->id,
+            'nip' => '199907122025062006',
+            'nama_lengkap' => 'FELLIS ENRICHA PUTRI, S.Ak.',
+            'jenis_kelamin' => 'P',
+            'tmt_cpns' => '2025-06-01',
+            'pangkat_golongan' => 'III/a',
+            'jabatan' => 'Auditor Ahli Pertama',
+            'unit_kerja_id' => $unit2->id,
+            'jenis_pegawai' => 'PNS',
+            'aktif' => true,
+        ]);
+
+        // Petakan sebagai bawahan Irban II
+        CutiPemetaanAtasan::create([
+            'pegawai_id' => $pegawaiBawahan->id,
+            'atasan_id' => $pegawaiIrban->id,
+            'berlaku_mulai' => now()->subMonth()->toDateString(),
+            'aktif' => true,
+        ]);
+
+        // Buat Pegawai Lain di Irban III (bukan bawahan Irban II)
+        $userLain = User::create([
+            'name' => 'FEREN FEBRIYANTI',
+            'email' => 'feren@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pegawai',
+        ]);
+        $pegawaiLain = Pegawai::create([
+            'user_id' => $userLain->id,
+            'nip' => '199912212025032003',
+            'nama_lengkap' => 'FEREN FEBRIYANTI, S.Ak',
+            'jenis_kelamin' => 'P',
+            'tmt_cpns' => '2025-03-01',
+            'pangkat_golongan' => 'III/a',
+            'jabatan' => 'Auditor Ahli Pertama',
+            'unit_kerja_id' => $unit3->id,
+            'jenis_pegawai' => 'PNS',
+            'aktif' => true,
+        ]);
+
+        $cutiTahunan = \App\Models\CutiJenis::firstOrCreate(
+            ['kode' => 'tahunan'],
+            ['nama' => 'Cuti Tahunan', 'kuota_tahunan' => 12, 'satuan' => 'hari_kerja', 'aktif' => true]
+        );
+
+        // Buat permohonan cuti untuk bawahan Irban II
+        CutiPengajuan::create([
+            'pegawai_id' => $pegawaiBawahan->id,
+            'jenis_cuti_id' => $cutiTahunan->id,
+            'nomor_pengajuan' => 'CUTI/2026/TEST/01',
+            'tanggal_mulai' => now()->toDateString(),
+            'tanggal_selesai' => now()->addDays(2)->toDateString(),
+            'jumlah_hari_kerja' => 2,
+            'satuan_hari' => 'hari_kerja',
+            'alasan' => 'Urusan keluarga',
+            'status' => CutiPengajuan::STATUS_MENUNGGU_ATASAN,
+        ]);
+
+        // Buat permohonan cuti untuk pegawai lain (Irban III)
+        CutiPengajuan::create([
+            'pegawai_id' => $pegawaiLain->id,
+            'jenis_cuti_id' => $cutiTahunan->id,
+            'nomor_pengajuan' => 'CUTI/2026/TEST/02',
+            'tanggal_mulai' => now()->toDateString(),
+            'tanggal_selesai' => now()->addDays(2)->toDateString(),
+            'jumlah_hari_kerja' => 2,
+            'satuan_hari' => 'hari_kerja',
+            'alasan' => 'Acara luar kota',
+            'status' => CutiPengajuan::STATUS_MENUNGGU_ATASAN,
+        ]);
+
+        // Irban II mengakses rekapitulasi: hanya boleh melihat bawahannya (FELLIS), tidak boleh melihat FEREN
+        $response = $this->actingAs($userIrban)->get(route('admin.laporan.rekapitulasi'));
+        $response->assertStatus(200);
+        $response->assertSee('FELLIS ENRICHA PUTRI');
+        $response->assertDontSee('FEREN FEBRIYANTI');
+
+        // Admin Kepegawaian melihat rekapitulasi: melihat keduanya
+        $resAdmin = $this->actingAs($this->adminUser)->get(route('admin.laporan.rekapitulasi'));
+        $resAdmin->assertStatus(200);
+        $resAdmin->assertSee('FELLIS ENRICHA PUTRI');
+        $resAdmin->assertSee('FEREN FEBRIYANTI');
     }
 
     public function test_early_warning_accessible_by_wijiono(): void

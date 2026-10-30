@@ -8,7 +8,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
         <div>
             <h2 class="text-2xl font-bold tracking-tight text-slate-900">Rekapitulasi Pengajuan Cuti</h2>
-            <p class="mt-1 text-sm text-slate-500">Laporan pemanfaatan dan riwayat pengajuan cuti seluruh pegawai di Inspektorat Kabupaten Trenggalek.</p>
+            <p class="mt-1 text-sm text-slate-500">Laporan pemanfaatan dan riwayat pengajuan cuti {{ !empty($isScopeBawahan) ? 'bawahan di lingkungan kerja Anda.' : 'seluruh pegawai di Inspektorat Kabupaten Trenggalek.' }}</p>
         </div>
         <div class="mt-4 sm:ml-4 sm:mt-0" style="display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 12px !important;">
             <a href="{{ route('admin.laporan.ekspor-excel', request()->query()) }}" 

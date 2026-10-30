@@ -31,6 +31,8 @@ class LaporanController extends Controller
      */
     public function rekapitulasi(Request $request)
     {
+        $accessiblePegawaiIds = $this->getAccessiblePegawaiIds($request);
+
         $tahun = $request->input('tahun');
         $unitKerjaId = $request->input('unit_kerja_id');
         $jenisCutiId = $request->input('jenis_cuti_id');
@@ -40,6 +42,11 @@ class LaporanController extends Controller
 
         $query = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti', 'suratTerbit'])
             ->latest();
+
+        // Batasi hanya untuk bawahan jika user adalah Atasan Langsung (Irban, Kasubag, dll.)
+        if ($accessiblePegawaiIds !== null) {
+            $query->whereIn('pegawai_id', $accessiblePegawaiIds);
+        }
 
         if ($tahun) {
             $query->whereYear('tanggal_mulai', $tahun);
@@ -71,22 +78,43 @@ class LaporanController extends Controller
 
         // Data Ringkasan Statistik
         $totalPengajuan = (clone $query)->count();
-        $disetujuiCount = (clone $query)->where('status', CutiPengajuan::STATUS_DISETUJUI_PYBMC)->count();
+        $disetujuiCount = (clone $query)->whereIn('status', [
+            CutiPengajuan::STATUS_DISETUJUI_PYBMC,
+            CutiPengajuan::STATUS_DIRATIFIKASI,
+            CutiPengajuan::STATUS_DITERBITKAN,
+        ])->count();
         $prosesCount = (clone $query)->whereIn('status', [
             CutiPengajuan::STATUS_DIAJUKAN,
+            CutiPengajuan::STATUS_MENUNGGU_ATASAN,
             CutiPengajuan::STATUS_DISETUJUI_ATASAN,
-            CutiPengajuan::STATUS_IZIN_SEMENTARA_AKTIF
+            CutiPengajuan::STATUS_MENUNGGU_PYBMC,
+            'menunggu_pybmc',
+            CutiPengajuan::STATUS_IZIN_SEMENTARA_AKTIF,
+            CutiPengajuan::STATUS_MENUNGGU_RATIFIKASI,
         ])->count();
         $ditolakCount = (clone $query)->whereIn('status', [
             CutiPengajuan::STATUS_DITOLAK_ATASAN,
-            CutiPengajuan::STATUS_DITOLAK_PYBMC
+            CutiPengajuan::STATUS_DITOLAK_PYBMC,
+            CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
         ])->count();
 
-        $unitKerjaList = UnitKerja::where('aktif', true)->get();
+        if ($accessiblePegawaiIds !== null) {
+            $accessibleUnitKerjaIds = Pegawai::whereIn('id', $accessiblePegawaiIds)
+                ->pluck('unit_kerja_id')
+                ->filter()
+                ->unique();
+            $unitKerjaList = UnitKerja::whereIn('id', $accessibleUnitKerjaIds)->where('aktif', true)->get();
+        } else {
+            $unitKerjaList = UnitKerja::where('aktif', true)->get();
+        }
+        $isScopeBawahan = ($accessiblePegawaiIds !== null);
         $jenisCutiList = CutiJenis::where('aktif', true)->get();
 
-        $dbYears = CutiPengajuan::whereNotNull('tanggal_mulai')
-            ->pluck('tanggal_mulai')
+        $dbYearsQuery = CutiPengajuan::whereNotNull('tanggal_mulai');
+        if ($accessiblePegawaiIds !== null) {
+            $dbYearsQuery->whereIn('pegawai_id', $accessiblePegawaiIds);
+        }
+        $dbYears = $dbYearsQuery->pluck('tanggal_mulai')
             ->map(fn($tgl) => (int) Carbon::parse($tgl)->format('Y'))
             ->unique()
             ->values()
@@ -111,7 +139,8 @@ class LaporanController extends Controller
             'jenisCutiId',
             'status',
             'tanggalMulai',
-            'tanggalSelesai'
+            'tanggalSelesai',
+            'isScopeBawahan'
         ));
     }
 
@@ -120,6 +149,8 @@ class LaporanController extends Controller
      */
     public function eksporExcel(Request $request): StreamedResponse
     {
+        $accessiblePegawaiIds = $this->getAccessiblePegawaiIds($request);
+
         $tahun = $request->input('tahun');
         $unitKerjaId = $request->input('unit_kerja_id');
         $jenisCutiId = $request->input('jenis_cuti_id');
@@ -129,6 +160,10 @@ class LaporanController extends Controller
 
         $query = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti', 'suratTerbit'])
             ->latest();
+
+        if ($accessiblePegawaiIds !== null) {
+            $query->whereIn('pegawai_id', $accessiblePegawaiIds);
+        }
 
         if ($tahun) {
             $query->whereYear('tanggal_mulai', $tahun);
@@ -210,6 +245,8 @@ class LaporanController extends Controller
      */
     public function eksporPdf(Request $request)
     {
+        $accessiblePegawaiIds = $this->getAccessiblePegawaiIds($request);
+
         $tahun = $request->input('tahun');
         $unitKerjaId = $request->input('unit_kerja_id');
         $jenisCutiId = $request->input('jenis_cuti_id');
@@ -219,6 +256,10 @@ class LaporanController extends Controller
 
         $query = CutiPengajuan::with(['pegawai.unitKerja', 'jenisCuti', 'suratTerbit'])
             ->latest();
+
+        if ($accessiblePegawaiIds !== null) {
+            $query->whereIn('pegawai_id', $accessiblePegawaiIds);
+        }
 
         if ($tahun) {
             $query->whereYear('tanggal_mulai', $tahun);
@@ -273,13 +314,18 @@ class LaporanController extends Controller
      */
     public function earlyWarning(Request $request)
     {
+        $accessiblePegawaiIds = $this->getAccessiblePegawaiIds($request);
+
         $tahun = (int)$request->input('tahun', now()->year);
         $unitKerjaId = $request->input('unit_kerja_id');
 
         $query = CutiSaldoTahunan::with(['pegawai.unitKerja', 'pegawai.user'])
             ->where('tahun', $tahun)
-            ->whereHas('pegawai', function ($q) use ($unitKerjaId) {
+            ->whereHas('pegawai', function ($q) use ($unitKerjaId, $accessiblePegawaiIds) {
                 $q->where('aktif', true);
+                if ($accessiblePegawaiIds !== null) {
+                    $q->whereIn('id', $accessiblePegawaiIds);
+                }
                 if ($unitKerjaId) {
                     $q->where('unit_kerja_id', $unitKerjaId);
                 }
@@ -310,7 +356,15 @@ class LaporanController extends Controller
             return $s->sisa_n2_hangus * 2 + $s->sisa_n1_terancam;
         });
 
-        $unitKerjaList = UnitKerja::where('aktif', true)->get();
+        if ($accessiblePegawaiIds !== null) {
+            $accessibleUnitKerjaIds = Pegawai::whereIn('id', $accessiblePegawaiIds)
+                ->pluck('unit_kerja_id')
+                ->filter()
+                ->unique();
+            $unitKerjaList = UnitKerja::whereIn('id', $accessibleUnitKerjaIds)->where('aktif', true)->get();
+        } else {
+            $unitKerjaList = UnitKerja::where('aktif', true)->get();
+        }
 
         $tahunList = CutiSaldoTahunan::distinct()->orderByDesc('tahun')->pluck('tahun')->toArray();
         if (empty($tahunList)) {
@@ -320,7 +374,9 @@ class LaporanController extends Controller
             array_unshift($tahunList, now()->year);
         }
 
-        return view('admin.laporan.early-warning', compact('daftarKritis', 'unitKerjaList', 'tahun', 'unitKerjaId', 'tahunList'));
+        $isScopeBawahan = ($accessiblePegawaiIds !== null);
+
+        return view('admin.laporan.early-warning', compact('daftarKritis', 'unitKerjaList', 'tahun', 'unitKerjaId', 'tahunList', 'isScopeBawahan'));
     }
 
     /**
@@ -328,6 +384,11 @@ class LaporanController extends Controller
      */
     public function kirimReminderWa(Pegawai $pegawai, Request $request)
     {
+        $accessiblePegawaiIds = $this->getAccessiblePegawaiIds($request);
+        if ($accessiblePegawaiIds !== null && !in_array($pegawai->id, $accessiblePegawaiIds)) {
+            abort(403, 'Anda tidak berwenang mengirim pengingat ke pegawai di luar bawahan Anda.');
+        }
+
         $sisaHari = (int)$request->input('sisa_hari', 0);
         $nomorHp = $pegawai->nomor_hp;
 
@@ -347,5 +408,60 @@ class LaporanController extends Controller
         }
 
         return back()->with('error', "Gagal mengirim notifikasi WhatsApp ke {$pegawai->nama_lengkap}.");
+    }
+
+    /**
+     * Dapatkan daftar ID pegawai yang dapat diakses oleh user yang sedang login.
+     * - Admin Cuti / Super Admin / Pimpinan Tertinggi (Inspektur): null (seluruh pegawai).
+     * - Atasan Langsung (Irban, Kasubag, dll.): hanya bawahan langsung yang dipetakan.
+     * - Delegasi PyBMC: pegawai di bawah unit kerja / jenis cuti yang didelegasikan.
+     */
+    protected function getAccessiblePegawaiIds(Request $request): ?array
+    {
+        $user = $request->user();
+        if (!$user) {
+            return [];
+        }
+
+        if ($user->isAdminCuti()) {
+            return null; // Bebas akses semua
+        }
+
+        $pegawai = $user->pegawai;
+        if (!$pegawai) {
+            return [];
+        }
+
+        // Jika pimpinan tertinggi OPD (Inspektur), akses penuh seluruh pegawai
+        if ($pegawai->isInspektur()) {
+            return null;
+        }
+
+        $accessibleIds = [];
+
+        // 1. Bawahan langsung dari pemetaan atasan
+        $bawahanIds = \App\Models\CutiPemetaanAtasan::where('atasan_id', $pegawai->id)
+            ->aktif()
+            ->pluck('pegawai_id')
+            ->toArray();
+        $accessibleIds = array_merge($accessibleIds, $bawahanIds);
+
+        // 2. Delegasi PyBMC (jika pejabat login memiliki delegasi wewenang PyBMC)
+        $delegasiPybmc = \App\Models\CutiPemetaanPejabatBerwenang::where('pejabat_id', $pegawai->id)
+            ->aktif()
+            ->get();
+        if ($delegasiPybmc->isNotEmpty()) {
+            foreach ($delegasiPybmc as $del) {
+                if (is_null($del->unit_kerja_id)) {
+                    return null; // PyBMC dengan wewenang seluruh unit kerja
+                }
+                $pegawaiUnitIds = Pegawai::where('unit_kerja_id', $del->unit_kerja_id)
+                    ->pluck('id')
+                    ->toArray();
+                $accessibleIds = array_merge($accessibleIds, $pegawaiUnitIds);
+            }
+        }
+
+        return array_values(array_unique($accessibleIds));
     }
 }
