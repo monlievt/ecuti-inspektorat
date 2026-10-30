@@ -229,7 +229,76 @@ class PengajuanCutiController extends Controller
 
         $pengajuan->load(['jenisCuti', 'pegawai.unitKerja', 'approvalLogs.aktor', 'dokumen']);
 
-        return view('pegawai.pengajuan.show', compact('pengajuan'));
+        $tahun = $pengajuan->tanggal_mulai ? $pengajuan->tanggal_mulai->year : now()->year;
+        $saldoTahunan = $this->saldoCutiService->breakdown($pengajuan->pegawai_id, $tahun);
+
+        $sudahDipotong = in_array($pengajuan->status, [CutiPengajuan::STATUS_DITERBITKAN]);
+        $rincianSaldo = $this->saldoCutiService->hitungRincianSisaPerTahun(
+            $pengajuan->pegawai_id,
+            $tahun,
+            (int) $pengajuan->jumlah_hari_kerja,
+            $sudahDipotong
+        );
+
+        // Rekam jejak cuti non-tahunan tahun berjalan jika relevan
+        $riwayatCutiNonTahunan = null;
+        if ($pengajuan->jenis_cuti_id != 1) {
+            $totalHariDipakai = CutiPengajuan::where('pegawai_id', $pengajuan->pegawai_id)
+                ->where('jenis_cuti_id', $pengajuan->jenis_cuti_id)
+                ->whereYear('tanggal_mulai', $tahun)
+                ->whereNotIn('status', [
+                    CutiPengajuan::STATUS_DITOLAK_ATASAN,
+                    CutiPengajuan::STATUS_DITOLAK_PYBMC,
+                    CutiPengajuan::STATUS_DITOLAK_RATIFIKASI,
+                ])
+                ->sum('jumlah_hari_kerja');
+
+            $riwayatCutiNonTahunan = [
+                'total_hari_tahun_ini' => $totalHariDipakai,
+                'jenis' => $pengajuan->jenisCuti?->nama,
+                'kuota_maksimal' => $pengajuan->jenisCuti?->kuota_tahunan,
+            ];
+        }
+
+        $userPegawai = $request->user()->pegawai;
+        $isAtasanPemohon = false;
+        $isPyBmcPemohon = false;
+
+        if ($userPegawai) {
+            if ($pengajuan->status === CutiPengajuan::STATUS_MENUNGGU_ATASAN) {
+                $isAtasanPemohon = CutiPemetaanAtasan::where('pegawai_id', $pengajuan->pegawai_id)
+                    ->where('atasan_id', $userPegawai->id)
+                    ->aktif()
+                    ->exists();
+            }
+
+            if (in_array($pengajuan->status, [CutiPengajuan::STATUS_MENUNGGU_PYBMC, 'menunggu_pybmc', CutiPengajuan::STATUS_MENUNGGU_RATIFIKASI])) {
+                if ($userPegawai->isInspektur()) {
+                    $isPyBmcPemohon = true;
+                } else {
+                    $isPyBmcPemohon = \App\Models\CutiPemetaanPejabatBerwenang::where('pejabat_id', $userPegawai->id)
+                        ->aktif()
+                        ->where(function ($q) use ($pengajuan) {
+                            $q->whereNull('unit_kerja_id')
+                              ->orWhere('unit_kerja_id', $pengajuan->pegawai?->unit_kerja_id);
+                        })
+                        ->where(function ($q) use ($pengajuan) {
+                            $q->whereNull('jenis_cuti_id')
+                              ->orWhere('jenis_cuti_id', $pengajuan->jenis_cuti_id);
+                        })
+                        ->exists();
+                }
+            }
+        }
+
+        return view('pegawai.pengajuan.show', compact(
+            'pengajuan',
+            'saldoTahunan',
+            'rincianSaldo',
+            'riwayatCutiNonTahunan',
+            'isAtasanPemohon',
+            'isPyBmcPemohon'
+        ));
     }
 
     /**

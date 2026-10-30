@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Approval;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApprovalWorkflowService;
+use App\Services\SaldoCutiService;
 use App\Models\CutiPengajuan;
 use App\Models\CutiPemetaanAtasan;
 use Illuminate\Http\Request;
@@ -13,10 +14,14 @@ use Exception;
 class AtasanController extends Controller
 {
     protected ApprovalWorkflowService $workflowService;
+    protected SaldoCutiService $saldoCutiService;
 
-    public function __construct(ApprovalWorkflowService $workflowService)
-    {
+    public function __construct(
+        ApprovalWorkflowService $workflowService,
+        SaldoCutiService $saldoCutiService
+    ) {
         $this->workflowService = $workflowService;
+        $this->saldoCutiService = $saldoCutiService;
     }
 
     /**
@@ -41,6 +46,11 @@ class AtasanController extends Controller
             ->where('status', CutiPengajuan::STATUS_MENUNGGU_ATASAN)
             ->orderBy('created_at', 'asc')
             ->get();
+
+        foreach ($pengajuanMenunggu as $p) {
+            $tahun = $p->tanggal_mulai ? $p->tanggal_mulai->year : now()->year;
+            $p->sisa_cuti_tahunan = $this->saldoCutiService->hitungSaldoBisaDipakai($p->pegawai_id, $tahun);
+        }
 
         return view('approval.atasan.index', compact('pengajuanMenunggu'));
     }

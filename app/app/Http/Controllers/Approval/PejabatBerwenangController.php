@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Approval;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApprovalWorkflowService;
+use App\Services\SaldoCutiService;
 use App\Models\CutiPengajuan;
 use App\Models\CutiPemetaanPejabatBerwenang;
 use App\Models\CutiSuratTerbit;
@@ -14,10 +15,14 @@ use Exception;
 class PejabatBerwenangController extends Controller
 {
     protected ApprovalWorkflowService $workflowService;
+    protected SaldoCutiService $saldoCutiService;
 
-    public function __construct(ApprovalWorkflowService $workflowService)
-    {
+    public function __construct(
+        ApprovalWorkflowService $workflowService,
+        SaldoCutiService $saldoCutiService
+    ) {
         $this->workflowService = $workflowService;
+        $this->saldoCutiService = $saldoCutiService;
     }
 
     /**
@@ -111,6 +116,11 @@ class PejabatBerwenangController extends Controller
 
                 $riwayatKeputusan = $queryRiwayat->orderBy('updated_at', 'desc')->take(30)->get();
             }
+        }
+
+        foreach ($pengajuanMenunggu as $p) {
+            $tahun = $p->tanggal_mulai ? $p->tanggal_mulai->year : now()->year;
+            $p->sisa_cuti_tahunan = $this->saldoCutiService->hitungSaldoBisaDipakai($p->pegawai_id, $tahun);
         }
 
         return view('approval.pejabat.index', compact('pengajuanMenunggu', 'riwayatKeputusan'));

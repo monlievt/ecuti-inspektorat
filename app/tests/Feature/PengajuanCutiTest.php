@@ -635,10 +635,11 @@ class PengajuanCutiTest extends TestCase
             'status' => CutiPengajuan::STATUS_MENUNGGU_ATASAN,
         ]);
 
-        // 3. Atasan melihat halaman approval atasan, tombol Izin Darurat harus muncul
+        // 3. Atasan melihat halaman approval atasan, tombol Izin Darurat & info sisa cuti bawahan harus muncul
         $resAtasanView = $this->actingAs($userAtasan)->get(route('approval.atasan'));
         $resAtasanView->assertStatus(200);
         $resAtasanView->assertSee('Izin Darurat');
+        $resAtasanView->assertSee('Sisa Cuti:');
 
         // 4. Atasan mengaktifkan Izin Sementara (Jalur Darurat)
         $resAktifkan = $this->actingAs($userAtasan)->post(route('pengajuan.izin-sementara', $pengajuan), [
@@ -647,10 +648,12 @@ class PengajuanCutiTest extends TestCase
         $resAktifkan->assertSessionHas('success');
         $this->assertEquals(CutiPengajuan::STATUS_IZIN_SEMENTARA_AKTIF, $pengajuan->fresh()->status);
 
-        // 5. Cek tampilan detail pengajuan cuti, ada info Izin Darurat Aktif
+        // 5. Cek tampilan detail pengajuan cuti, ada info Izin Darurat Aktif & rincian saldo cuti
         $resShow = $this->actingAs($userAtasan)->get(route('pengajuan.show', $pengajuan));
         $resShow->assertStatus(200);
         $resShow->assertSee('Izin Sementara (Jalur Darurat) Aktif');
+        $resShow->assertSee('Informasi Saldo & Sisa Cuti Pemohon');
+        $resShow->assertSee('Sisa Sebelum Permohonan');
 
         // 6. PyBMC (Inspektur) melihat antrian approval pejabat, ada permohonan dengan opsi Ratifikasi
         $unitKerja = $this->pegawai->unitKerja;
