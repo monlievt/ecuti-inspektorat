@@ -54,13 +54,23 @@
 
     <!-- Filter Form Bar -->
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <form method="GET" action="{{ route('admin.laporan.rekapitulasi') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-6 items-end">
+        <form method="GET" action="{{ route('admin.laporan.rekapitulasi') }}" class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 items-end">
             <div>
                 <label for="tahun" class="block text-xs font-semibold text-slate-700">Tahun Anggaran</label>
                 <select name="tahun" id="tahun" class="mt-1 block w-full rounded-xl border-slate-300 py-2 px-3 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-semibold text-indigo-900 bg-indigo-50/40">
                     <option value="">Semua Tahun</option>
                     @foreach($tahunList as $t)
                         <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>Tahun {{ $t }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label for="bulan" class="block text-xs font-semibold text-slate-700">Bulan Pelaksanaan</label>
+                <select name="bulan" id="bulan" class="mt-1 block w-full rounded-xl border-slate-300 py-2 px-3 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-semibold text-indigo-900 bg-indigo-50/40">
+                    <option value="">Semua Bulan</option>
+                    @foreach($bulanList as $num => $namaBulan)
+                        <option value="{{ $num }}" {{ $bulan == $num ? 'selected' : '' }}>{{ $namaBulan }}</option>
                     @endforeach
                 </select>
             </div>
@@ -86,14 +96,16 @@
             </div>
 
             <div>
-                <label for="status" class="block text-xs font-medium text-slate-700">Status</label>
+                <label for="status" class="block text-xs font-medium text-slate-700">Status Alur Cuti</label>
                 <select name="status" id="status" class="mt-1 block w-full rounded-xl border-slate-300 py-2 px-3 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     <option value="">Semua Status</option>
-                    <option value="diajukan" {{ $status == 'diajukan' ? 'selected' : '' }}>Diajukan (Menunggu Atasan)</option>
-                    <option value="disetujui_atasan" {{ $status == 'disetujui_atasan' ? 'selected' : '' }}>Disetujui Atasan (Menunggu PyBMC)</option>
-                    <option value="disetujui_pybmc" {{ $status == 'disetujui_pybmc' ? 'selected' : '' }}>Disetujui PyBMC (Selesai)</option>
-                    <option value="ditolak_atasan" {{ $status == 'ditolak_atasan' ? 'selected' : '' }}>Ditolak Atasan</option>
-                    <option value="ditolak_pybmc" {{ $status == 'ditolak_pybmc' ? 'selected' : '' }}>Ditolak PyBMC</option>
+                    <option value="menunggu_atasan" {{ $status == 'menunggu_atasan' ? 'selected' : '' }}>Menunggu Persetujuan Atasan</option>
+                    <option value="menunggu_pyBMC" {{ in_array($status, ['menunggu_pyBMC', 'disetujui_atasan']) ? 'selected' : '' }}>Disetujui Atasan (Menunggu PyBMC)</option>
+                    <option value="diterbitkan" {{ in_array($status, ['diterbitkan', 'disetujui_pybmc']) ? 'selected' : '' }}>Disetujui PyBMC (Terbit Surat)</option>
+                    <option value="ditolak_pyBMC" {{ $status == 'ditolak_pyBMC' ? 'selected' : '' }}>Ditolak PyBMC (Plt. Inspektur)</option>
+                    <option value="ditolak_atasan" {{ $status == 'ditolak_atasan' ? 'selected' : '' }}>Ditolak Atasan Langsung</option>
+                    <option value="direvisi" {{ $status == 'direvisi' ? 'selected' : '' }}>Perlu Revisi</option>
+                    <option value="izin_sementara_aktif" {{ $status == 'izin_sementara_aktif' ? 'selected' : '' }}>Izin Sementara (Darurat)</option>
                 </select>
             </div>
 
@@ -104,7 +116,7 @@
             </div>
 
             <div class="flex gap-2">
-                <button type="submit" class="flex-1 rounded-xl bg-slate-900 py-2 px-4 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 transition-colors">
+                <button type="submit" class="flex-1 rounded-xl bg-slate-900 py-2 px-3 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 transition-colors">
                     Filter
                 </button>
                 <a href="{{ route('admin.laporan.rekapitulasi') }}" class="rounded-xl border border-slate-300 py-2 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
@@ -151,16 +163,38 @@
                                 {{ $p->jumlah_hari }} {{ str_replace('_', ' ', $p->satuan_hari) }}
                             </td>
                             <td class="py-4 px-4">
-                                @if($p->status === 'disetujui_pybmc')
-                                    <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Disetujui PyBMC</span>
-                                @elseif($p->status === 'disetujui_atasan')
-                                    <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">Disetujui Atasan</span>
-                                @elseif($p->status === 'diajukan')
-                                    <span class="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">Diajukan</span>
-                                @elseif(str_contains($p->status, 'ditolak'))
-                                    <span class="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700">Ditolak</span>
+                                @if(in_array($p->status, ['diterbitkan', 'disetujui_pybmc', 'disetujui_pyBMC', 'diratifikasi']))
+                                    <span class="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                                        Disetujui Pimpinan (Terbit SK)
+                                    </span>
+                                @elseif(in_array($p->status, ['disetujui_atasan', 'menunggu_pyBMC', 'menunggu_pybmc', 'menunggu_ratifikasi']))
+                                    <span class="inline-flex items-center rounded-full bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
+                                        Disetujui Irban (Menunggu Plt. Inspektur)
+                                    </span>
+                                @elseif(in_array($p->status, ['diajukan', 'menunggu_atasan']))
+                                    <span class="inline-flex items-center rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                                        Menunggu Atasan (Irban)
+                                    </span>
+                                @elseif(in_array($p->status, ['ditolak_pyBMC', 'ditolak_pybmc', 'ditolak_ratifikasi']))
+                                    <span class="inline-flex items-center rounded-full bg-rose-50 border border-rose-200 px-2.5 py-0.5 text-xs font-semibold text-rose-700" title="Ditolak oleh Pejabat Yang Berwenang (Plt. Inspektur)">
+                                        Ditolak Plt. Inspektur (PyBMC)
+                                    </span>
+                                @elseif($p->status === 'ditolak_atasan')
+                                    <span class="inline-flex items-center rounded-full bg-rose-50 border border-rose-200 px-2.5 py-0.5 text-xs font-semibold text-rose-700" title="Ditolak oleh Atasan Langsung">
+                                        Ditolak Atasan (Irban)
+                                    </span>
+                                @elseif($p->status === 'izin_sementara_aktif')
+                                    <span class="inline-flex items-center rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+                                        Izin Sementara Aktif (Darurat)
+                                    </span>
+                                @elseif($p->status === 'direvisi')
+                                    <span class="inline-flex items-center rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+                                        Perlu Revisi
+                                    </span>
                                 @else
-                                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">{{ str_replace('_', ' ', $p->status) }}</span>
+                                    <span class="inline-flex items-center rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                                        {{ str_replace('_', ' ', ucfirst($p->status)) }}
+                                    </span>
                                 @endif
                             </td>
                             <td class="py-4 px-4 text-right text-xs">

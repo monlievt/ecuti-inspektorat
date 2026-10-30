@@ -77,13 +77,33 @@ class KirimNotifikasiWhatsApp
                     break;
 
                 case CutiPengajuan::STATUS_DITOLAK_ATASAN:
-                case CutiPengajuan::STATUS_DITOLAK_PYBMC:
                     // Kirim notifikasi penolakan ke Pegawai
                     $nomorPegawai = $pegawai->nomor_hp;
                     if ($nomorPegawai) {
                         $catatan = $pengajuan->approvalLogs()->latest()->first()?->catatan;
-                        $pesan = "Halo {$pegawai->nama_lengkap},\n\nPermohonan cuti Anda ({$pengajuan->nomor_pengajuan}) *DITOLAK*.\n\nCatatan Alasan Penolakan: \"{$catatan}\"\n\nTerima kasih.";
+                        $pesan = "Halo {$pegawai->nama_lengkap},\n\nPermohonan cuti Anda ({$pengajuan->nomor_pengajuan}) *DITOLAK* oleh Atasan Langsung.\n\nCatatan Alasan Penolakan: \"{$catatan}\"\n\nTerima kasih.";
                         $this->waService->kirim($nomorPegawai, $pesan);
+                    }
+                    break;
+
+                case CutiPengajuan::STATUS_DITOLAK_PYBMC:
+                    $catatan = $pengajuan->approvalLogs()->latest()->first()?->catatan;
+
+                    // 1. Kirim notifikasi penolakan ke Pegawai Pemohon
+                    $nomorPegawai = $pegawai->nomor_hp;
+                    if ($nomorPegawai) {
+                        $pesan = "Halo {$pegawai->nama_lengkap},\n\nPermohonan cuti Anda ({$pengajuan->nomor_pengajuan}) *DITOLAK* oleh Pejabat Yang Berwenang (PyBMC / Plt. Inspektur).\n\nCatatan Alasan Penolakan: \"{$catatan}\"\n\nTerima kasih.";
+                        $this->waService->kirim($nomorPegawai, $pesan);
+                    }
+
+                    // 2. Kirim notifikasi tembusan ke Atasan Langsung (Irban) agar mengetahui permohonan bawahannya ditolak di tingkat PyBMC
+                    $atasanMapping = CutiPemetaanAtasan::where('pegawai_id', $pegawai->id)->aktif()->first();
+                    if ($atasanMapping && $atasanMapping->atasan) {
+                        $nomorAtasan = $atasanMapping->atasan->nomor_hp;
+                        if ($nomorAtasan) {
+                            $pesanAtasan = "Halo Bapak/Ibu {$atasanMapping->atasan->nama_lengkap},\n\nInformasi Status: Permohonan cuti pegawai bawahan Anda *{$pegawai->nama_lengkap}* ({$pengajuan->nomor_pengajuan}) yang sebelumnya telah Anda setujui, telah *DITOLAK* oleh Pejabat Yang Berwenang (PyBMC / Plt. Inspektur).\n\nCatatan Penolakan Pimpinan: \"{$catatan}\"\n\nAnda dapat melihat riwayat lengkapnya di: " . route('pengajuan.show', $pengajuan->id) . "\n\nTerima kasih.";
+                            $this->waService->kirim($nomorAtasan, $pesanAtasan);
+                        }
                     }
                     break;
 

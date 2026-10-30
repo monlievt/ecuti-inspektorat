@@ -107,6 +107,16 @@ class FilterTahunFeatureTest extends TestCase
         $res2026->assertStatus(200);
         $res2026->assertSee('01 Jun 2026');
         $res2026->assertDontSee('01 May 2025');
+
+        // Filter Bulan Mei 2025
+        $resBulan5 = $this->actingAs($this->adminUser)->get('/admin/laporan/rekapitulasi?tahun=2025&bulan=5');
+        $resBulan5->assertStatus(200);
+        $resBulan5->assertSee('01 May 2025');
+
+        // Filter Bulan Juni 2025 (tidak ada pengajuan di bulan ini)
+        $resBulan6 = $this->actingAs($this->adminUser)->get('/admin/laporan/rekapitulasi?tahun=2025&bulan=6');
+        $resBulan6->assertStatus(200);
+        $resBulan6->assertDontSee('01 May 2025');
     }
 
     public function test_dashboard_can_switch_year_and_filter_history()

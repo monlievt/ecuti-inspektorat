@@ -34,6 +34,7 @@ class LaporanController extends Controller
         $accessiblePegawaiIds = $this->getAccessiblePegawaiIds($request);
 
         $tahun = $request->input('tahun');
+        $bulan = $request->input('bulan');
         $unitKerjaId = $request->input('unit_kerja_id');
         $jenisCutiId = $request->input('jenis_cuti_id');
         $status = $request->input('status');
@@ -52,6 +53,10 @@ class LaporanController extends Controller
             $query->whereYear('tanggal_mulai', $tahun);
         }
 
+        if ($bulan) {
+            $query->whereMonth('tanggal_mulai', $bulan);
+        }
+
         if ($unitKerjaId) {
             $query->whereHas('pegawai', function ($q) use ($unitKerjaId) {
                 $q->where('unit_kerja_id', $unitKerjaId);
@@ -63,7 +68,17 @@ class LaporanController extends Controller
         }
 
         if ($status) {
-            $query->where('status', $status);
+            if ($status === 'diterbitkan' || $status === 'disetujui_pybmc') {
+                $query->whereIn('status', [CutiPengajuan::STATUS_DITERBITKAN, CutiPengajuan::STATUS_DISETUJUI_PYBMC, CutiPengajuan::STATUS_DIRATIFIKASI]);
+            } elseif ($status === 'menunggu_pyBMC' || $status === 'disetujui_atasan') {
+                $query->whereIn('status', [CutiPengajuan::STATUS_MENUNGGU_PYBMC, 'menunggu_pybmc', CutiPengajuan::STATUS_DISETUJUI_ATASAN]);
+            } elseif ($status === 'menunggu_atasan' || $status === 'diajukan') {
+                $query->whereIn('status', [CutiPengajuan::STATUS_MENUNGGU_ATASAN, CutiPengajuan::STATUS_DIAJUKAN]);
+            } elseif ($status === 'ditolak_pyBMC') {
+                $query->whereIn('status', [CutiPengajuan::STATUS_DITOLAK_PYBMC, CutiPengajuan::STATUS_DITOLAK_RATIFIKASI]);
+            } else {
+                $query->where('status', $status);
+            }
         }
 
         if ($tanggalMulai) {
@@ -110,6 +125,21 @@ class LaporanController extends Controller
         $isScopeBawahan = ($accessiblePegawaiIds !== null);
         $jenisCutiList = CutiJenis::where('aktif', true)->get();
 
+        $bulanList = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ];
+
         $dbYearsQuery = CutiPengajuan::whereNotNull('tanggal_mulai');
         if ($accessiblePegawaiIds !== null) {
             $dbYearsQuery->whereIn('pegawai_id', $accessiblePegawaiIds);
@@ -130,11 +160,13 @@ class LaporanController extends Controller
             'unitKerjaList',
             'jenisCutiList',
             'tahunList',
+            'bulanList',
             'totalPengajuan',
             'disetujuiCount',
             'prosesCount',
             'ditolakCount',
             'tahun',
+            'bulan',
             'unitKerjaId',
             'jenisCutiId',
             'status',
@@ -152,6 +184,7 @@ class LaporanController extends Controller
         $accessiblePegawaiIds = $this->getAccessiblePegawaiIds($request);
 
         $tahun = $request->input('tahun');
+        $bulan = $request->input('bulan');
         $unitKerjaId = $request->input('unit_kerja_id');
         $jenisCutiId = $request->input('jenis_cuti_id');
         $status = $request->input('status');
@@ -169,6 +202,10 @@ class LaporanController extends Controller
             $query->whereYear('tanggal_mulai', $tahun);
         }
 
+        if ($bulan) {
+            $query->whereMonth('tanggal_mulai', $bulan);
+        }
+
         if ($unitKerjaId) {
             $query->whereHas('pegawai', function ($q) use ($unitKerjaId) {
                 $q->where('unit_kerja_id', $unitKerjaId);
@@ -178,7 +215,17 @@ class LaporanController extends Controller
             $query->where('jenis_cuti_id', $jenisCutiId);
         }
         if ($status) {
-            $query->where('status', $status);
+            if ($status === 'diterbitkan' || $status === 'disetujui_pybmc') {
+                $query->whereIn('status', [CutiPengajuan::STATUS_DITERBITKAN, CutiPengajuan::STATUS_DISETUJUI_PYBMC, CutiPengajuan::STATUS_DIRATIFIKASI]);
+            } elseif ($status === 'menunggu_pyBMC' || $status === 'disetujui_atasan') {
+                $query->whereIn('status', [CutiPengajuan::STATUS_MENUNGGU_PYBMC, 'menunggu_pybmc', CutiPengajuan::STATUS_DISETUJUI_ATASAN]);
+            } elseif ($status === 'menunggu_atasan' || $status === 'diajukan') {
+                $query->whereIn('status', [CutiPengajuan::STATUS_MENUNGGU_ATASAN, CutiPengajuan::STATUS_DIAJUKAN]);
+            } elseif ($status === 'ditolak_pyBMC') {
+                $query->whereIn('status', [CutiPengajuan::STATUS_DITOLAK_PYBMC, CutiPengajuan::STATUS_DITOLAK_RATIFIKASI]);
+            } else {
+                $query->where('status', $status);
+            }
         }
         if ($tanggalMulai) {
             $query->whereDate('tanggal_mulai', '>=', $tanggalMulai);
@@ -248,6 +295,7 @@ class LaporanController extends Controller
         $accessiblePegawaiIds = $this->getAccessiblePegawaiIds($request);
 
         $tahun = $request->input('tahun');
+        $bulan = $request->input('bulan');
         $unitKerjaId = $request->input('unit_kerja_id');
         $jenisCutiId = $request->input('jenis_cuti_id');
         $status = $request->input('status');
@@ -265,6 +313,10 @@ class LaporanController extends Controller
             $query->whereYear('tanggal_mulai', $tahun);
         }
 
+        if ($bulan) {
+            $query->whereMonth('tanggal_mulai', $bulan);
+        }
+
         if ($unitKerjaId) {
             $query->whereHas('pegawai', function ($q) use ($unitKerjaId) {
                 $q->where('unit_kerja_id', $unitKerjaId);
@@ -274,7 +326,17 @@ class LaporanController extends Controller
             $query->where('jenis_cuti_id', $jenisCutiId);
         }
         if ($status) {
-            $query->where('status', $status);
+            if ($status === 'diterbitkan' || $status === 'disetujui_pybmc') {
+                $query->whereIn('status', [CutiPengajuan::STATUS_DITERBITKAN, CutiPengajuan::STATUS_DISETUJUI_PYBMC, CutiPengajuan::STATUS_DIRATIFIKASI]);
+            } elseif ($status === 'menunggu_pyBMC' || $status === 'disetujui_atasan') {
+                $query->whereIn('status', [CutiPengajuan::STATUS_MENUNGGU_PYBMC, 'menunggu_pybmc', CutiPengajuan::STATUS_DISETUJUI_ATASAN]);
+            } elseif ($status === 'menunggu_atasan' || $status === 'diajukan') {
+                $query->whereIn('status', [CutiPengajuan::STATUS_MENUNGGU_ATASAN, CutiPengajuan::STATUS_DIAJUKAN]);
+            } elseif ($status === 'ditolak_pyBMC') {
+                $query->whereIn('status', [CutiPengajuan::STATUS_DITOLAK_PYBMC, CutiPengajuan::STATUS_DITOLAK_RATIFIKASI]);
+            } else {
+                $query->where('status', $status);
+            }
         }
         if ($tanggalMulai) {
             $query->whereDate('tanggal_mulai', '>=', $tanggalMulai);
@@ -287,11 +349,28 @@ class LaporanController extends Controller
         $unitKerja = $unitKerjaId ? UnitKerja::find($unitKerjaId) : null;
         $jenisCuti = $jenisCutiId ? CutiJenis::find($jenisCutiId) : null;
 
+        $bulanList = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ];
+
         $data = [
             'pengajuanList' => $pengajuanList,
             'unitKerja' => $unitKerja,
             'jenisCuti' => $jenisCuti,
             'tahun' => $tahun,
+            'bulan' => $bulan,
+            'namaBulan' => $bulan ? ($bulanList[$bulan] ?? $bulan) : null,
             'tanggalMulai' => $tanggalMulai,
             'tanggalSelesai' => $tanggalSelesai,
             'tanggalCetak' => Carbon::now()->translatedFormat('d F Y')
